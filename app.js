@@ -538,6 +538,36 @@ function makeStepper(minusId, plusId, displayId, key, min, max, onChange) {
   });
 }
 
+// ── Ready countdown ────────────────────────────────────
+function showCountdown(callback) {
+  const overlay = document.getElementById('countdown-overlay');
+  const el      = document.getElementById('countdown-number');
+  const steps   = ['3', '2', '1', 'GO!'];
+  let i = 0;
+
+  overlay.classList.add('active');
+
+  function tick() {
+    const isGo = steps[i] === 'GO!';
+    el.textContent = steps[i];
+    el.classList.remove('animating', 'countdown-go');
+    void el.offsetWidth;                    // force reflow → restart animation
+    el.classList.add('animating');
+    if (isGo) el.classList.add('countdown-go');
+
+    i++;
+    if (i < steps.length) {
+      setTimeout(tick, 950);
+    } else {
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        callback();
+      }, 800);
+    }
+  }
+  tick();
+}
+
 // ── Event wiring ───────────────────────────────────────
 function wireEvents() {
   // ── Setup steppers ──────────────────────────────────
@@ -558,7 +588,7 @@ function wireEvents() {
     gameState.teams[0] = { name: n0, score: 0, correctWords: [], skippedWords: [] };
     gameState.teams[1] = { name: n1, score: 0, correctWords: [], skippedWords: [] };
     gameState.turnDuration = computeTurnDuration();
-    startGame();
+    showCountdown(() => startGame());
   });
 
   // ── Resume ──────────────────────────────────────────

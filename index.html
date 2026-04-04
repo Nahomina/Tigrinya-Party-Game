@@ -12,16 +12,14 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=9" />
   <title>Mayim — ማይም</title>
 </head>
 <body>
 
-  <!-- ── Rotate-to-Landscape overlay (pure CSS, portrait guard) ── -->
-  <div id="rotate-prompt" aria-hidden="true">
-    <div class="rotate-icon">⟳</div>
-    <div class="rotate-title">ROTATE DEVICE</div>
-    <div class="rotate-sub">Turn your phone sideways to play</div>
+  <!-- ── Ready countdown overlay ─────────────────────────────── -->
+  <div id="countdown-overlay" aria-live="assertive" aria-atomic="true">
+    <span id="countdown-number" class="countdown-number"></span>
   </div>
 
   <!-- ── Theme toggle ─────────────────────────────────────────── -->
@@ -351,8 +349,8 @@
 
 
   <!-- ── Scripts ──────────────────────────────────────────────── -->
-  <script src="words.js?v=8"></script>
-  <script src="app.js?v=8"></script>
+  <script src="words.js?v=9"></script>
+  <script src="app.js?v=9"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
