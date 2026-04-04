@@ -1,11 +1,11 @@
-// Mayim Service Worker — Cache-first strategy with versioning
-// Updated for Supabase API caching
-const CACHE_VERSION = 'mayim-v2';
+// Mayim Service Worker — v3
+// index.html: network-first (always fresh)
+// Assets/fonts: cache-first (fast)
+// Supabase API: network-first with cache fallback
+const CACHE_VERSION = 'mayim-v3';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
-const ASSETS = [
-  './',
-  './index.html',
+const PRECACHE_ASSETS = [
   './style.css',
   './words.js',
   './app.js',
@@ -14,16 +14,16 @@ const ASSETS = [
   './assets/BebasNeue.woff2'
 ];
 
-// ── Install: pre-cache all assets ─────────────────────────────────────────
+// ── Install: pre-cache static assets (NOT index.html — network-first) ────
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(cache => cache.addAll(ASSETS))
-      .then(() => self.skipWaiting())
+      .then(cache => cache.addAll(PRECACHE_ASSETS))
+      .then(() => self.skipWaiting())  // activate immediately
   );
 });
 
-// ── Activate: clean up old caches ─────────────────────────────────────────
+// ── Activate: wipe all old caches immediately ─────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -33,39 +33,56 @@ self.addEventListener('activate', event => {
           .map(key => caches.delete(key))
       )
     ).then(() => {
-      // Notify all open clients that a new version is active
       self.clients.matchAll({ type: 'window' }).then(clients => {
         clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
       });
-      return self.clients.claim();
+      return self.clients.claim();  // take control of all open tabs immediately
     })
   );
 });
 
-// ── Fetch: serve from cache, fall back to network ─────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-  const isSbApi = url.hostname.includes('supabase.co');
+  const isHtml    = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '';
+  const isSbApi   = url.hostname.includes('supabase.co');
+  const isCdnJs   = url.hostname.includes('jsdelivr.net');
 
+  // ── index.html & Supabase: network-first, cache fallback ──────────────
+  if (isHtml || isSbApi) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            const key = isSbApi ? SUPABASE_API_CACHE : CACHE_VERSION;
+            caches.open(key).then(c => c.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // ── CDN scripts: network-first (don't cache — they version themselves) ─
+  if (isCdnJs) {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    return;
+  }
+
+  // ── Everything else: cache-first, network fallback ─────────────────────
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-
       return fetch(event.request).then(response => {
-        // Cache valid responses for future offline use
         if (response && response.status === 200 && response.type === 'basic') {
-          const responseClone = response.clone();
-          const cacheKey = isSbApi ? SUPABASE_API_CACHE : CACHE_VERSION;
-          caches.open(cacheKey).then(cache => cache.put(event.request, responseClone));
+          caches.open(CACHE_VERSION).then(c => c.put(event.request, response.clone()));
         }
         return response;
-      }).catch(() => {
-        // Return offline fallback
-        return caches.match(event.request);
-      });
+      }).catch(() => caches.match(event.request));
     })
   );
 });

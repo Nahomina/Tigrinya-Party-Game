@@ -617,6 +617,10 @@ function makeStepper(minusId, plusId, displayId, key, min, max, onChange) {
 function showCountdown(callback) {
   const overlay = document.getElementById('countdown-overlay');
   const el      = document.getElementById('countdown-number');
+
+  // Graceful fallback: stale cached HTML won't have the overlay element
+  if (!overlay || !el) { callback(); return; }
+
   const steps   = ['3', '2', '1', 'GO!'];
   let i = 0;
 
