@@ -18,12 +18,88 @@ function vibrate(pattern) {
 // ── Defaults ───────────────────────────────────────────
 const STORAGE_KEY  = 'mayim_state';
 const NAMES_KEY    = 'mayim_team_names';
+const THEME_KEY    = 'mayim_theme';
+const WORDS_CACHE_KEY = 'mayim_words_cache';
+const WORDS_CACHE_TTL = 86400000; // 24 hours in ms
+
 const DEFAULTS = {
   totalRounds:    3,
   wordsPerRound: 10,
   secondsPerWord: 6,
   teamNames:     ['Team Asmara', 'Team Massawa'],
 };
+
+// ── Supabase Configuration ──────────────────────────────
+// These are public credentials (anon key) — safe for frontend
+// Get from: https://supabase.com/dashboard → Settings → API
+const SUPABASE_URL = 'https://rzcrdngpybrsjlbenqep.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
+
+let supabase = null;
+
+// Initialize Supabase client (after window.supabase is loaded via CDN)
+function initSupabase() {
+  if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+}
+
+// ── Fetch Words from Supabase ───────────────────────────
+let gameWords = [];
+
+async function fetchWordsFromSupabase() {
+  try {
+    // Check local cache first
+    const cached = localStorage.getItem(WORDS_CACHE_KEY);
+    const cacheTime = localStorage.getItem(WORDS_CACHE_KEY + '_time');
+
+    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < WORDS_CACHE_TTL) {
+      console.log('✓ Using cached words (24h TTL)');
+      return JSON.parse(cached);
+    }
+
+    // Fetch from Supabase
+    if (!supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+
+    const { data, error } = await supabase
+      .from('words')
+      .select('*');
+
+    if (error) throw error;
+
+    // Cache locally
+    localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(WORDS_CACHE_KEY + '_time', Date.now().toString());
+
+    console.log(`✓ Fetched ${data.length} words from Supabase`);
+    return data;
+  } catch (err) {
+    console.warn('⚠ Failed to fetch from Supabase:', err);
+
+    // Fallback: use cached words if available
+    const cached = localStorage.getItem(WORDS_CACHE_KEY);
+    if (cached) {
+      console.log('✓ Using offline cached words');
+      return JSON.parse(cached);
+    }
+
+    // Last resort: use hardcoded WORDS array from words.js
+    console.log('✓ Using fallback words.js array');
+    return WORDS;
+  }
+}
+
+// Initialize words on app load
+async function initializeWords() {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+
+  gameWords = await fetchWordsFromSupabase();
+
+  if (overlay) overlay.classList.add('hidden');
+}
 
 // ── Team name persistence ──────────────────────────────
 function saveTeamNames(n0, n1) {
@@ -169,12 +245,12 @@ function buildDeck() {
   const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
 
   const usedSet = new Set(gameState.usedWords.map(w => w.word));
-  let available = WORDS.filter(w => !usedSet.has(w.word));
+  let available = gameWords.filter(w => !usedSet.has(w.word));
 
   // Recycle pool when too few words remain
   if (available.length < deckSize) {
     gameState.usedWords = [];
-    available = [...WORDS];
+    available = [...gameWords];
   }
 
   return shuffle(available).slice(0, deckSize);
@@ -715,8 +791,10 @@ function listenForSWUpdates() {
 }
 
 // ── Boot ───────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initTheme();          // apply theme before first paint
+  initSupabase();       // initialize Supabase client
+  await initializeWords(); // fetch words from Supabase (or fallback)
   wireEvents();
   listenForSWUpdates();
 

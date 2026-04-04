@@ -192,6 +192,40 @@ button {
   color: var(--text-muted);
 }
 
+/* ── Loading overlay (words fetch) ────────────────────── */
+#loading-overlay {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 1999;
+  background: rgba(0, 0, 0, 0.8);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+#loading-overlay.hidden { display: none; }
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--border);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+#loading-overlay p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Ready countdown overlay ──────────────────────────── */
 #countdown-overlay {
   display: none;

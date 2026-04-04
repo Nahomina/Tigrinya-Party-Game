@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mayim Admin Panel — Manage Tigrinya Words" />
+  <link rel="stylesheet" href="admin.css" />
+  <title>Mayim Admin — Word Management</title>
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <header id="admin-header" class="admin-header">
+    <div class="admin-header-content">
+      <h1>📚 Mayim Admin Panel</h1>
+      <div class="admin-header-actions">
+        <span id="admin-user-info" class="admin-user-info"></span>
+        <button id="btn-logout" class="btn btn-secondary" title="Log out">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Auth Screen ─────────────────────────────────────── -->
+  <section id="screen-auth" class="admin-screen">
+    <div class="auth-container">
+      <h2>Sign In to Admin Panel</h2>
+      <p class="auth-subtitle">Manage Tigrinya words in the database</p>
+      <form id="form-login" class="auth-form">
+        <input
+          type="email"
+          id="login-email"
+          placeholder="your@email.com"
+          required
+          autocomplete="email"
+        />
+        <button type="submit" class="btn btn-primary">Send Magic Link</button>
+      </form>
+      <p class="auth-note">📧 Check your email for a login link (valid for 24 hours)</p>
+    </div>
+  </section>
+
+  <!-- ── Admin Dashboard ────────────────────────────────── -->
+  <section id="screen-admin" class="admin-screen hidden">
+    <div class="admin-container">
+
+      <!-- ── Stats ─────────────────────────────────────── -->
+      <div class="admin-stats">
+        <div class="stat-card">
+          <span class="stat-label">Total Words</span>
+          <span id="stat-total" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Food</span>
+          <span id="stat-food" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Culture</span>
+          <span id="stat-culture" class="stat-value">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Daily Life</span>
+          <span id="stat-daily" class="stat-value">0</span>
+        </div>
+      </div>
+
+      <!-- ── Add Word Form ────────────────────────────── -->
+      <div class="admin-section">
+        <h2>➕ Add New Word</h2>
+        <form id="form-add-word" class="word-form">
+          <input
+            type="text"
+            id="input-word"
+            placeholder="Tigrinya (Ge'ez)"
+            required
+            title="Tigrinya word in Ge'ez script"
+          />
+          <input
+            type="text"
+            id="input-latin"
+            placeholder="Romanization (Latin)"
+            required
+          />
+          <input
+            type="text"
+            id="input-english"
+            placeholder="English meaning"
+            required
+          />
+          <select id="input-category" required>
+            <option value="">Select Category</option>
+            <option value="Food">Food</option>
+            <option value="Culture">Culture</option>
+            <option value="Daily Life">Daily Life</option>
+          </select>
+          <button type="submit" class="btn btn-success">Add Word</button>
+        </form>
+      </div>
+
+      <!-- ── Search & Filter ──────────────────────────– -->
+      <div class="admin-section">
+        <h2>🔍 Words List</h2>
+        <div class="filter-controls">
+          <input
+            type="text"
+            id="search-words"
+            placeholder="Search by English, Tigrinya, or Latin..."
+            class="search-input"
+          />
+          <select id="filter-category" class="filter-select">
+            <option value="">All Categories</option>
+            <option value="Food">Food</option>
+            <option value="Culture">Culture</option>
+            <option value="Daily Life">Daily Life</option>
+          </select>
+        </div>
+
+        <!-- ── Words Table ───────────────────────────── -->
+        <div class="words-table-container">
+          <table id="words-table" class="words-table">
+            <thead>
+              <tr>
+                <th>Tigrinya</th>
+                <th>Latin</th>
+                <th>English</th>
+                <th>Category</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="words-tbody">
+              <!-- Words will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Edit Modal ──────────────────────────────────────– -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Edit Word</h3>
+      <form id="form-edit-word" class="word-form">
+        <input type="hidden" id="edit-id" />
+        <input type="text" id="edit-word" placeholder="Tigrinya (Ge'ez)" required />
+        <input type="text" id="edit-latin" placeholder="Romanization (Latin)" required />
+        <input type="text" id="edit-english" placeholder="English meaning" required />
+        <select id="edit-category" required>
+          <option value="Food">Food</option>
+          <option value="Culture">Culture</option>
+          <option value="Daily Life">Daily Life</option>
+        </select>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-edit" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Confirmation Modal ──────────────────────────────– -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Delete Word?</h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button id="btn-cancel-confirm" class="btn btn-secondary">Cancel</button>
+        <button id="btn-confirm-delete" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast Notification ──────────────────────────────– -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ── Scripts ─────────────────────────────────────────– -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="admin.js"></script>
+
+</body>
+</html>

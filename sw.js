@@ -1,5 +1,7 @@
 // Mayim Service Worker — Cache-first strategy with versioning
-const CACHE_VERSION = 'mayim-v1';
+// Updated for Supabase API caching
+const CACHE_VERSION = 'mayim-v2';
+const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 const ASSETS = [
   './',
@@ -27,7 +29,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(key => key !== CACHE_VERSION)
+          .filter(key => key !== CACHE_VERSION && key !== SUPABASE_API_CACHE)
           .map(key => caches.delete(key))
       )
     ).then(() => {
@@ -45,16 +47,24 @@ self.addEventListener('fetch', event => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  const url = new URL(event.request.url);
+  const isSbApi = url.hostname.includes('supabase.co');
+
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
+
       return fetch(event.request).then(response => {
         // Cache valid responses for future offline use
         if (response && response.status === 200 && response.type === 'basic') {
           const responseClone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(event.request, responseClone));
+          const cacheKey = isSbApi ? SUPABASE_API_CACHE : CACHE_VERSION;
+          caches.open(cacheKey).then(cache => cache.put(event.request, responseClone));
         }
         return response;
+      }).catch(() => {
+        // Return offline fallback
+        return caches.match(event.request);
       });
     })
   );

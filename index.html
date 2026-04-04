@@ -12,10 +12,16 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
   <title>Mayim — ማይም</title>
 </head>
 <body>
+
+  <!-- ── Words loading overlay ────────────────────────────────── -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loader"></div>
+    <p>Loading word list...</p>
+  </div>
 
   <!-- ── Ready countdown overlay ─────────────────────────────── -->
   <div id="countdown-overlay" aria-live="assertive" aria-atomic="true">
@@ -349,8 +355,14 @@
 
 
   <!-- ── Scripts ──────────────────────────────────────────────── -->
-  <script src="words.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <!-- Supabase client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Fallback word list (used if Supabase unavailable) -->
+  <script src="words.js?v=10"></script>
+
+  <!-- Main app -->
+  <script src="app.js?v=10"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
