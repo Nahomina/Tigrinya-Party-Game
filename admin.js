@@ -9,20 +9,20 @@
 const SUPABASE_URL = 'https://rzcrdngpybrsjlbenqep.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
 
-let supabase = null;
+let _supabase = null;
 let currentUser = null;
 let allWords = [];
 
 // ── Init Supabase ────────────────────────────────────────
 function initSupabase() {
   if (window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 }
 
 // ── Auth Functions ───────────────────────────────────────
 async function checkAuth() {
-  const { data } = await supabase.auth.getSession();
+  const { data } = await _supabase.auth.getSession();
   currentUser = data.session?.user || null;
 
   if (currentUser) {
@@ -36,7 +36,7 @@ async function checkAuth() {
 
 async function loginUser(email) {
   try {
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await _supabase.auth.signInWithOtp({
       email: email,
       options: {
         emailRedirectTo: window.location.origin + '/admin.html',
@@ -54,7 +54,7 @@ async function loginUser(email) {
 
 async function logoutUser() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await _supabase.auth.signOut();
     if (error) throw error;
 
     currentUser = null;
@@ -69,7 +69,7 @@ async function logoutUser() {
 // ── Word CRUD Functions ──────────────────────────────────
 async function createWord(word, latin, english, category) {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await _supabase
       .from('words')
       .insert([{ word, latin, english, category }]);
 
@@ -86,7 +86,7 @@ async function createWord(word, latin, english, category) {
 
 async function updateWord(id, updates) {
   try {
-    const { error } = await supabase
+    const { error } = await _supabase
       .from('words')
       .update(updates)
       .eq('id', id);
@@ -104,7 +104,7 @@ async function updateWord(id, updates) {
 
 async function deleteWord(id, word) {
   try {
-    const { error } = await supabase
+    const { error } = await _supabase
       .from('words')
       .delete()
       .eq('id', id);
@@ -122,7 +122,7 @@ async function deleteWord(id, word) {
 
 async function loadAllWords() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await _supabase
       .from('words')
       .select('*')
       .order('category', { ascending: true })
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
 
   // Listen for auth changes
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  _supabase.auth.onAuthStateChange(async (event, session) => {
     currentUser = session?.user || null;
     if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
       showAdminScreen();

@@ -34,12 +34,13 @@ const DEFAULTS = {
 const SUPABASE_URL = 'https://rzcrdngpybrsjlbenqep.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
 
-let supabase = null;
+// Use _supabase (not 'supabase') to avoid collision with window.supabase global from CDN
+let _supabase = null;
 
 // Initialize Supabase client (after window.supabase is loaded via CDN)
 function initSupabase() {
   if (window.supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
 }
 
@@ -58,11 +59,11 @@ async function fetchWordsFromSupabase() {
     }
 
     // Fetch from Supabase
-    if (!supabase) {
+    if (!_supabase) {
       throw new Error('Supabase client not initialized');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await _supabase
       .from('words')
       .select('*');
 

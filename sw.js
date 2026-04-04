@@ -78,8 +78,10 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
+        // Only cache same-origin basic responses (not opaque/cors — can't clone those safely)
         if (response && response.status === 200 && response.type === 'basic') {
-          caches.open(CACHE_VERSION).then(c => c.put(event.request, response.clone()));
+          const toCache = response.clone();
+          caches.open(CACHE_VERSION).then(c => c.put(event.request, toCache));
         }
         return response;
       }).catch(() => caches.match(event.request));
