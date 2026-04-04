@@ -18,7 +18,6 @@ function vibrate(pattern) {
 // ── Defaults ───────────────────────────────────────────
 const STORAGE_KEY  = 'mayim_state';
 const NAMES_KEY    = 'mayim_team_names';
-const THEME_KEY    = 'mayim_theme';
 const WORDS_CACHE_KEY = 'mayim_words_cache';
 const WORDS_CACHE_TTL = 86400000; // 24 hours in ms
 
