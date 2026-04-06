@@ -314,6 +314,8 @@ button {
   overflow: hidden;
 }
 .screen.active { display: flex; }
+/* Bulletproof: never let two screens show at once */
+.screen:not(.active) { display: none !important; }
 
 /* ── Tablet & Desktop — centred card ─────────────────── */
 @media (min-width: 768px) {
@@ -1580,21 +1582,58 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 .home-card--words:hover .home-card-cta  { color: var(--red); }
 .home-card--proverbs:hover .home-card-cta { color: var(--correct); }
 
-/* Footer */
-.home-footer {
-  margin-top: auto;
-  padding-top: 0.5rem;
+/* FAQ */
+.home-faq {
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
 }
 
-.home-admin-link {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  text-decoration: none;
-  padding: 0.4rem 0.6rem;
-  border-radius: 6px;
-  transition: color 0.15s;
+.home-faq-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-sub);
+  margin: 0 0 1rem;
 }
-.home-admin-link:hover { color: var(--text-sub); }
+
+.faq-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.faq-item:last-child { border-bottom: none; }
+
+.faq-q {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin: 0 0 0.3rem;
+}
+
+.faq-a {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Footer */
+.home-footer {
+  width: 100%;
+  padding: 1rem 0 0.5rem;
+  text-align: center;
+}
+
+.home-copyright {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
 
 /* Portrait mobile: stack cards */
 @media (max-width: 480px) {
