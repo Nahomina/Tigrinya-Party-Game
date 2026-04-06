@@ -641,24 +641,35 @@ function nextRound() {
 }
 
 function playAgain() {
-  resetToDefaults();
-  render();
+  clearSavedState();
+  window.location.href = 'index.html';
 }
 
 // ── Renderers ──────────────────────────────────────────
 function renderSetup() {
-  document.getElementById('team1-name').value              = gameState.teams[0].name;
-  document.getElementById('team2-name').value              = gameState.teams[1].name;
-  document.getElementById('rounds-display').textContent    = gameState.totalRounds;
-  document.getElementById('words-display').textContent     = gameState.wordsPerRound;
-  document.getElementById('secs-display').textContent      = gameState.secondsPerWord;
+  document.getElementById('team1-name').value           = gameState.teams[0].name;
+  document.getElementById('team2-name').value           = gameState.teams[1].name;
+  document.getElementById('rounds-display').textContent = gameState.totalRounds;
 
-  // Sync mode toggle buttons
   const isProverbs = gameState.mode === 'proverbs';
-  document.getElementById('btn-mode-words')?.classList.toggle('active', !isProverbs);
-  document.getElementById('btn-mode-proverbs')?.classList.toggle('active', isProverbs);
-  document.getElementById('btn-mode-words')?.setAttribute('aria-pressed', String(!isProverbs));
-  document.getElementById('btn-mode-proverbs')?.setAttribute('aria-pressed', String(isProverbs));
+
+  // Mode-specific header branding
+  const titleEl    = document.getElementById('setup-game-title');
+  const geezEl     = document.getElementById('setup-geez-title');
+  const subtitleEl = document.getElementById('setup-game-subtitle');
+  if (titleEl)    titleEl.textContent    = isProverbs ? 'MISLA'            : 'MAYIM';
+  if (geezEl)     geezEl.textContent     = isProverbs ? 'ምስላ'              : 'ማይም';
+  if (subtitleEl) subtitleEl.textContent = isProverbs ? 'Tigrinya · Proverbs · Game' : 'Tigrinya · Party · Game';
+
+  // Hide word-mode-only config rows in proverb mode
+  const wordConfigRows = document.getElementById('word-config-rows');
+  if (wordConfigRows) wordConfigRows.classList.toggle('hidden', isProverbs);
+
+  // Word-mode steppers (only update when visible)
+  if (!isProverbs) {
+    document.getElementById('words-display').textContent = gameState.wordsPerRound;
+    document.getElementById('secs-display').textContent  = gameState.secondsPerWord;
+  }
 
   updateSetupComputed();
   checkResumeBanner();
@@ -981,8 +992,8 @@ function hideQuitModal() {
 
 function confirmQuit() {
   document.getElementById('quit-modal').classList.remove('visible');
-  resetToDefaults();
-  render();
+  clearSavedState();
+  window.location.href = 'index.html';
 }
 
 // ── Theme ──────────────────────────────────────────────
@@ -1025,17 +1036,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();          // apply theme before first paint
   initSupabase();       // initialize Supabase client
   await initializeWords(); // fetch words from Supabase (or fallback)
+
+  // Read mode from URL param (?mode=words | ?mode=proverbs)
+  const urlMode = new URLSearchParams(window.location.search).get('mode');
+  if (urlMode === 'proverbs' || urlMode === 'words') {
+    gameState.mode = urlMode;
+  }
+
   wireEvents();
   listenForSWUpdates();
 
   const saved = loadSavedState();
 
-  if (isResumable(saved)) {
-    // Load saved config but always land on setup so user can see the resume banner
+  // Only resume if saved mode matches current URL mode
+  if (isResumable(saved) && saved.mode === gameState.mode) {
     Object.assign(gameState, saved);
     gameState.phase = 'setup';
   } else {
-    // Clear any stale/corrupt/finished saves immediately
     if (saved) clearSavedState();
   }
 

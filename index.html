@@ -5,426 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f11" />
   <meta name="description" content="Mayim — A Tigrinya word-guessing party game" />
-
-  <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Mayim" />
-
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=13" />
   <title>Mayim — ማይም</title>
 </head>
-<body>
+<body class="home-body">
 
-  <!-- ── Words loading overlay ────────────────────────────────── -->
-  <div id="loading-overlay" class="loading-overlay hidden">
-    <div class="loader"></div>
-    <p>Loading word list...</p>
+  <div class="home-wrap">
+
+    <header class="home-header">
+      <div class="home-title-lock">
+        <div class="home-game-title">MAYIM</div>
+        <div class="home-geez-title">ማይም</div>
+      </div>
+      <p class="home-tagline">TIGRINYA · PARTY · GAME</p>
+    </header>
+
+    <main class="home-cards" role="main">
+
+      <a href="game.html?mode=words" class="home-card home-card--words" aria-label="Play Mayim — Words game">
+        <span class="home-card-icon" aria-hidden="true">📝</span>
+        <div class="home-card-names">
+          <span class="home-card-name">MAYIM</span>
+          <span class="home-card-geez" lang="ti">ቃላት</span>
+        </div>
+        <p class="home-card-desc">Describe the word without saying it</p>
+        <span class="home-card-cta">Play →</span>
+      </a>
+
+      <a href="game.html?mode=proverbs" class="home-card home-card--proverbs" aria-label="Play Misla — Proverbs game">
+        <span class="home-card-icon" aria-hidden="true">📜</span>
+        <div class="home-card-names">
+          <span class="home-card-name">MISLA</span>
+          <span class="home-card-geez" lang="ti">ምስላ</span>
+        </div>
+        <p class="home-card-desc">Complete the Tigrinya proverb</p>
+        <span class="home-card-cta">Play →</span>
+      </a>
+
+    </main>
+
+    <footer class="home-footer">
+      <a href="admin.html" class="home-admin-link" aria-label="Admin panel">⚙</a>
+    </footer>
+
   </div>
-
-  <!-- ── Ready countdown overlay ─────────────────────────────── -->
-  <div id="countdown-overlay" aria-live="assertive" aria-atomic="true">
-    <span id="countdown-number" class="countdown-number"></span>
-  </div>
-
-  <!-- ── Theme toggle ─────────────────────────────────────────── -->
-  <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
-    <span class="theme-icon-dark">☀</span>
-    <span class="theme-icon-light">☾</span>
-  </button>
-
-  <!-- ── Quit confirm modal ───────────────────────────────────── -->
-  <div id="quit-modal" role="dialog" aria-modal="true" aria-labelledby="quit-modal-title">
-    <div class="quit-modal-box">
-      <p class="quit-modal-eyebrow">Quit Game?</p>
-      <p id="quit-modal-title" class="quit-modal-body">All progress will be lost.</p>
-      <div class="quit-modal-btns">
-        <button id="btn-quit-cancel"  class="quit-btn-cancel">Keep Playing</button>
-        <button id="btn-quit-confirm" class="quit-btn-confirm">Quit</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SW update toast ──────────────────────────────────────── -->
-  <div id="update-banner" role="status">
-    <span>NEW VERSION AVAILABLE</span>
-    <button id="btn-update-reload">RELOAD</button>
-  </div>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 1 — Setup
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-setup" class="screen active" role="main">
-
-    <!-- Brand header -->
-    <div class="setup-hero">
-      <div class="game-title">MAYIM</div>
-      <div class="geez-title">ማይም</div>
-      <div class="game-subtitle">Tigrinya · Party · Game</div>
-    </div>
-
-    <!-- Resume banner — only shown when isResumable() is true -->
-    <div id="resume-banner" role="status">
-      <div class="resume-info">
-        <span class="resume-icon">▶</span>
-        <div class="resume-text">
-          <span class="resume-heading">Saved game found</span>
-          <span id="resume-game-info" class="resume-detail"></span>
-        </div>
-      </div>
-      <div class="resume-btns">
-        <button id="btn-resume" class="btn-resume-yes">Resume</button>
-        <button id="btn-new-from-resume" class="btn-resume-no">New Game</button>
-      </div>
-    </div>
-
-    <!-- Config form -->
-    <div class="setup-body">
-
-      <!-- ── TEAMS ─────────────────────────── -->
-      <div class="setup-section-label">Teams</div>
-
-      <div class="setup-spec-row">
-        <span class="spec-label">Team 1</span>
-        <div class="team-dot t1"></div>
-        <input
-          id="team1-name"
-          type="text"
-          value="Team Asmara"
-          placeholder="Team 1 name"
-          maxlength="24"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Team 1 name"
-        />
-      </div>
-
-      <div class="setup-spec-row">
-        <span class="spec-label">Team 2</span>
-        <div class="team-dot t2"></div>
-        <input
-          id="team2-name"
-          type="text"
-          value="Team Massawa"
-          placeholder="Team 2 name"
-          maxlength="24"
-          autocomplete="off"
-          spellcheck="false"
-          aria-label="Team 2 name"
-        />
-      </div>
-
-      <!-- ── GAME MODE ──────────────────────── -->
-      <div class="setup-section-label">Game Mode</div>
-      <div class="mode-toggle" role="group" aria-label="Select game mode">
-        <button id="btn-mode-words" class="mode-btn active" aria-pressed="true">
-          <span class="mode-btn-icon">📝</span>
-          <span class="mode-btn-name">Mayim</span>
-          <span class="mode-btn-lang">ቃላት · Words</span>
-        </button>
-        <button id="btn-mode-proverbs" class="mode-btn" aria-pressed="false">
-          <span class="mode-btn-icon">📜</span>
-          <span class="mode-btn-name">Misla</span>
-          <span class="mode-btn-lang">ምስላ · Proverbs</span>
-        </button>
-      </div>
-
-      <!-- ── GAME CONFIG ────────────────────── -->
-      <div class="setup-section-label">Game Config</div>
-
-      <!-- Rounds -->
-      <div class="config-row">
-        <div class="config-row-label">
-          <span class="spec-label">Rounds</span>
-          <span class="config-hint">Full cycles (both teams)</span>
-        </div>
-        <div class="stepper">
-          <button id="btn-rounds-minus" class="stepper-btn" aria-label="Fewer rounds">−</button>
-          <span id="rounds-display" class="stepper-val">3</span>
-          <button id="btn-rounds-plus"  class="stepper-btn" aria-label="More rounds">+</button>
-        </div>
-      </div>
-
-      <!-- Words per round -->
-      <div class="config-row">
-        <div class="config-row-label">
-          <span class="spec-label">Words / Turn</span>
-          <span class="config-hint">Total cards split evenly per round</span>
-        </div>
-        <div class="stepper">
-          <button id="btn-words-minus" class="stepper-btn" aria-label="Fewer words">−</button>
-          <span id="words-display" class="stepper-val">10</span>
-          <button id="btn-words-plus"  class="stepper-btn" aria-label="More words">+</button>
-        </div>
-      </div>
-
-      <!-- Seconds per word -->
-      <div class="config-row">
-        <div class="config-row-label">
-          <span class="spec-label">Secs / Word</span>
-          <span class="config-hint">Timer per word guessed</span>
-        </div>
-        <div class="stepper">
-          <button id="btn-secs-minus" class="stepper-btn" aria-label="Less time">−</button>
-          <span id="secs-display" class="stepper-val">6</span>
-          <button id="btn-secs-plus"  class="stepper-btn" aria-label="More time">+</button>
-        </div>
-      </div>
-
-      <!-- Computed total time  -->
-      <div class="computed-row">
-        <span class="computed-label">Turn duration</span>
-        <span id="computed-turn-time" class="computed-value">10 words × 6s = 60s per turn</span>
-      </div>
-
-    </div><!-- /.setup-body -->
-
-    <!-- Pinned CTA -->
-    <div class="button-footer">
-      <button id="btn-start-game" class="btn-primary">Start Game</button>
-    </div>
-
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 2 — Round Interstitial
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-interstitial" class="screen" role="main">
-
-    <div class="inter-eyebrow">
-      <button id="btn-back-to-setup" class="btn-back" aria-label="Back to setup">← Setup</button>
-      <p id="interstitial-round-label">ROUND 1 OF 3</p>
-    </div>
-
-    <div class="inter-hero">
-      <span id="interstitial-team-label" class="inter-team-label">Goes First</span>
-      <h2 id="interstitial-team-name">Team Asmara</h2>
-      <div class="pass-to-judge" role="note">
-        <span class="pass-arrow">↓</span>
-        <span class="pass-text">Pass to the Judge</span>
-        <span class="pass-arrow">↓</span>
-      </div>
-      <p id="interstitial-instruction">
-        When your team is ready, the judge presses Start.<br/>
-        Each word gets its own countdown timer.
-      </p>
-    </div>
-
-    <div class="score-spec-bar">
-      <div class="score-spec-item active" id="inter-score-0">
-        <span class="spec-dim-label">Score</span>
-        <span class="spec-dim-val">0</span>
-        <span class="spec-dim-name">Team 1</span>
-      </div>
-      <div class="score-spec-item" id="inter-score-1">
-        <span class="spec-dim-label">Score</span>
-        <span class="spec-dim-val">0</span>
-        <span class="spec-dim-name">Team 2</span>
-      </div>
-    </div>
-
-    <div class="button-footer">
-      <button id="btn-start-timer" class="btn-primary">▶ Start 60s Timer</button>
-    </div>
-
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 3 — Active Gameplay
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-playing" class="screen" role="main">
-
-    <div class="timer-strip">
-      <button class="btn-quit-game" id="btn-quit-playing" aria-label="Quit game">✕ Quit</button>
-      <span id="timer-display" aria-live="polite" aria-label="Seconds remaining">60</span>
-      <div class="timer-progress-wrap">
-        <div id="timer-progress"></div>
-      </div>
-      <span id="playing-team-label"></span>
-    </div>
-
-    <div class="word-stage">
-      <span id="playing-active-team" class="playing-active-team"></span>
-      <span id="current-word-eyebrow" class="label-eyebrow">Guess the word</span>
-      <div id="current-word" lang="ti" aria-live="assertive">—</div>
-      <div id="current-word-hint"></div>
-      <!-- Result badge shown when paused between words -->
-      <div id="word-result-badge" aria-live="polite"></div>
-      <span id="word-counter"></span>
-    </div>
-
-    <!-- Active: Skip / Correct -->
-    <div class="action-buttons" id="action-buttons-live">
-      <button id="btn-skip"    class="btn-skip"    aria-label="Skip word">
-        <span class="btn-icon">✕</span>
-        <span>Skip</span>
-      </button>
-      <button id="btn-correct" class="btn-correct" aria-label="Mark correct">
-        <span class="btn-icon">✓</span>
-        <span>Correct</span>
-      </button>
-    </div>
-
-    <!-- Paused: Next Word -->
-    <div class="action-buttons-paused" id="action-buttons-paused">
-      <button id="btn-next-word" class="btn-next-word" aria-label="Show next word">
-        Next Word →
-      </button>
-    </div>
-
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 4 — Round Summary
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-summary" class="screen" role="main">
-
-    <div class="summary-header">
-      <div class="summary-header-left">
-        <span class="summary-eyebrow" id="summary-round-label">Round 1 of 3</span>
-        <div class="summary-vs-row">
-          <div class="summary-vs-team">
-            <span class="summary-vs-pts" id="summary-pts-0">0</span>
-            <span class="summary-vs-name" id="summary-name-0">Team 1</span>
-            <span class="summary-vs-delta" id="summary-delta-0">+0 this round</span>
-          </div>
-          <span class="summary-vs-sep">VS</span>
-          <div class="summary-vs-team">
-            <span class="summary-vs-pts" id="summary-pts-1">0</span>
-            <span class="summary-vs-name" id="summary-name-1">Team 2</span>
-            <span class="summary-vs-delta" id="summary-delta-1">+0 this round</span>
-          </div>
-        </div>
-      </div>
-      <button class="btn-quit-game" id="btn-quit-summary" aria-label="Quit game">✕ Quit</button>
-    </div>
-
-    <div class="summary-scroll">
-
-      <div class="team-round-block">
-        <div class="team-round-heading" id="summary-t0-heading">Team 1</div>
-        <div class="word-lists">
-          <div class="word-list-card correct"><div id="correct-word-list-0"></div></div>
-          <div class="word-list-card skipped"><div id="skipped-word-list-0"></div></div>
-        </div>
-      </div>
-
-      <div class="summary-team-divider"></div>
-
-      <div class="team-round-block">
-        <div class="team-round-heading" id="summary-t1-heading">Team 2</div>
-        <div class="word-lists">
-          <div class="word-list-card correct"><div id="correct-word-list-1"></div></div>
-          <div class="word-list-card skipped"><div id="skipped-word-list-1"></div></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="button-footer">
-      <button id="btn-next-round" class="btn-primary">Next Round →</button>
-    </div>
-
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 5 — Final Winner
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-winner" class="screen" role="main">
-
-    <div class="winner-eyebrow-bar">
-      <button class="btn-quit-game" id="btn-quit-winner" aria-label="Back to setup">← Setup</button>
-      <span class="label-eyebrow">Game Over</span>
-      <span class="winner-trophy-inline" aria-hidden="true">🏆</span>
-    </div>
-
-    <div class="winner-hero">
-      <span class="winner-label">Winner</span>
-      <h2 id="winner-team-name">Team Asmara Wins</h2>
-    </div>
-
-    <div class="final-scores-bar">
-      <div class="final-score-item" id="final-score-0">
-        <span class="f-label">Points</span>
-        <span class="f-val">0</span>
-        <span class="f-name">Team 1</span>
-      </div>
-      <div class="final-score-item" id="final-score-1">
-        <span class="f-label">Points</span>
-        <span class="f-val">0</span>
-        <span class="f-name">Team 2</span>
-      </div>
-    </div>
-
-    <div class="button-footer">
-      <button id="btn-play-again" class="btn-primary">Play Again</button>
-    </div>
-
-  </section>
-
-
-  <!-- ════════════════════════════════════════════════════════════
-       SCREEN 6 — Proverb Gameplay (ምስላ Mode)
-  ════════════════════════════════════════════════════════════ -->
-  <section id="screen-proverb" class="screen" role="main">
-
-    <div class="proverb-header">
-      <button class="btn-quit-game" id="btn-quit-proverb" aria-label="Quit game">✕ Quit</button>
-      <span class="proverb-mode-badge">ምስላ</span>
-      <span id="proverb-counter" class="proverb-counter">1 / 10</span>
-    </div>
-
-    <div class="proverb-stage">
-      <span id="proverb-active-team" class="playing-active-team"></span>
-      <span class="label-eyebrow">Complete the proverb</span>
-
-      <!-- Masked proverb — shown by default -->
-      <div id="proverb-display" lang="ti" class="proverb-text" aria-live="polite"></div>
-
-      <!-- Full answer — revealed after "Show Answer" -->
-      <div id="proverb-answer" class="proverb-answer hidden" lang="ti" aria-live="polite"></div>
-      <div id="proverb-translation" class="proverb-translation hidden"></div>
-    </div>
-
-    <!-- State A: waiting for reveal -->
-    <div id="proverb-actions-show" class="proverb-actions">
-      <button id="btn-show-answer" class="btn-show-answer">
-        <span>Show Answer</span>
-        <span class="pass-arrow">↓</span>
-      </button>
-    </div>
-
-    <!-- State B: judge decides after reveal -->
-    <div id="proverb-actions-judge" class="proverb-actions hidden">
-      <button id="btn-proverb-wrong" class="btn-proverb-wrong" aria-label="Wrong answer">
-        <span class="btn-icon">✕</span>
-        <span>Wrong</span>
-      </button>
-      <button id="btn-proverb-correct" class="btn-proverb-correct" aria-label="Correct answer">
-        <span class="btn-icon">✓</span>
-        <span>Correct</span>
-      </button>
-    </div>
-
-  </section>
-
-
-  <!-- ── Scripts ──────────────────────────────────────────────── -->
-  <!-- Supabase client library -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Word list fallback + proverbs data -->
-  <script src="words.js?v=12"></script>
-  <script src="proverbs.js?v=12"></script>
-
-  <!-- Main app -->
-  <script src="app.js?v=12"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
