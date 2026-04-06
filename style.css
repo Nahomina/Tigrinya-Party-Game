@@ -389,6 +389,9 @@ button {
   border-bottom: 2px solid var(--text);
   text-align: center;
   background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .setup-hero .game-title {
   font-family: var(--font-display);
@@ -1449,25 +1452,14 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   gap: 0.3rem;
 }
 
-.home-title-lock {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-}
-
 .home-game-title {
-  font-family: var(--font-display);
-  font-size: clamp(4rem, 18vw, 8rem);
-  letter-spacing: 0.06em;
+  font-size: clamp(1.3rem, 4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text);
-  line-height: 0.88;
-}
-
-.home-geez-title {
-  font-family: var(--font-ethiopic);
-  font-size: clamp(1.6rem, 7vw, 3rem);
-  color: var(--text-sub);
-  line-height: 1;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .home-tagline {
@@ -1616,17 +1608,24 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 
 /* ── Back-to-home link in game setup ──────────────────── */
 .btn-home-back {
-  display: inline-block;
-  font-size: 0.65rem;
-  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-muted);
   text-decoration: none;
-  padding: 0.3rem 0;
-  margin-bottom: 0.4rem;
-  transition: color 0.15s;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-mid);
+  border-radius: 5px;
+  margin-bottom: 0.6rem;
+  transition: color 0.15s, border-color 0.15s;
 }
-.btn-home-back:hover { color: var(--text-sub); }
+.btn-home-back:hover {
+  color: var(--text-sub);
+  border-color: var(--border);
+}
 
 /* ── Tablet (768 px +) ────────────────────────────────── */
 @media (min-width: 768px) {
