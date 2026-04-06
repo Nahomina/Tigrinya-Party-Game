@@ -1606,6 +1606,9 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   .home-card-cta { margin-top: 0; }
 }
 
+/* Word-config-rows wrapper — match siblings' full width */
+#word-config-rows { margin: 0; padding: 0; width: 100%; align-self: stretch; }
+
 /* ── Back-to-home link in game setup ──────────────────── */
 .btn-home-back {
   display: inline-flex;

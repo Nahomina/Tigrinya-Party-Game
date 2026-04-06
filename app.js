@@ -671,6 +671,10 @@ function renderSetup() {
     document.getElementById('secs-display').textContent  = gameState.secondsPerWord;
   }
 
+  // Rename secs label for proverb mode
+  const secsLabelEl = document.getElementById('secs-label');
+  if (secsLabelEl) secsLabelEl.textContent = isProverbs ? 'Secs / Proverb' : 'Secs / Word';
+
   updateSetupComputed();
   checkResumeBanner();
 }
