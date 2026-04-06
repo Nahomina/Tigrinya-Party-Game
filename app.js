@@ -121,7 +121,8 @@ function loadTeamNames() {
 // Teams alternate every word; each team has their own word log.
 const _savedNames = loadTeamNames();
 let gameState = {
-  phase:          'setup',
+  phase:           'setup',
+  mode:            'words',        // 'words' | 'proverbs'
   teams: [
     { name: _savedNames[0], score: 0, correctWords: [], skippedWords: [] },
     { name: _savedNames[1], score: 0, correctWords: [], skippedWords: [] },
@@ -131,11 +132,16 @@ let gameState = {
   secondsPerWord: DEFAULTS.secondsPerWord,
   turnDuration:   DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
   currentRound:   1,
-  wordTeamIndex:  0,   // who plays the current word (alternates each word)
+  wordTeamIndex:  0,
   deck:           [],
   usedWords:      [],
   currentWord:    null,
   wordTimeLeft:   DEFAULTS.secondsPerWord,
+  // ── Proverb mode state ──────────────────
+  proverbDeck:     [],
+  usedProverbs:    [],
+  currentProverb:  null,
+  proverbRevealed: false,
 };
 
 // ── setState / render ──────────────────────────────────
@@ -152,6 +158,7 @@ function render() {
     setup:        'screen-setup',
     interstitial: 'screen-interstitial',
     playing:      'screen-playing',
+    proverb:      'screen-proverb',
     roundSummary: 'screen-summary',
     winner:       'screen-winner',
   };
@@ -164,6 +171,7 @@ const renderers = {
   setup:        renderSetup,
   interstitial: renderInterstitial,
   playing:      renderPlaying,
+  proverb:      renderProverb,
   roundSummary: renderSummary,
   winner:       renderWinner,
 };
@@ -212,7 +220,8 @@ function resetToDefaults() {
   // Preserve team names across games
   const names = loadTeamNames();
   Object.assign(gameState, {
-    phase:          'setup',
+    phase:           'setup',
+    mode:            'words',
     teams: [
       { name: names[0], score: 0, correctWords: [], skippedWords: [] },
       { name: names[1], score: 0, correctWords: [], skippedWords: [] },
@@ -223,10 +232,14 @@ function resetToDefaults() {
     turnDuration:   DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
     currentRound:   1,
     wordTeamIndex:  0,
-    deck:           [],
-    usedWords:      [],
-    currentWord:    null,
-    wordTimeLeft:   DEFAULTS.secondsPerWord,
+    deck:            [],
+    usedWords:       [],
+    currentWord:     null,
+    wordTimeLeft:    DEFAULTS.secondsPerWord,
+    proverbDeck:     [],
+    usedProverbs:    [],
+    currentProverb:  null,
+    proverbRevealed: false,
   });
 }
 
@@ -253,6 +266,35 @@ function buildDeck() {
     available = [...gameWords];
   }
 
+  return shuffle(available).slice(0, deckSize);
+}
+
+// ── Proverb deck helpers ───────────────────────────────
+// Masking algorithm — spec:
+//   wordCount == 3 → show first 2, mask last 1
+//   wordCount >  3 → show first 50% (floor), mask rest
+//   wordCount <= 2 → show first 1, mask last 1 (fallback)
+function getMaskedProverb(proverbString) {
+  const words = proverbString.trim().split(/\s+/);
+  const count = words.length;
+  let visibleCount;
+  if      (count <= 2) visibleCount = 1;
+  else if (count === 3) visibleCount = 2;
+  else                  visibleCount = Math.floor(count / 2);
+  return {
+    visible: words.slice(0, visibleCount),
+    hidden:  words.slice(visibleCount),
+  };
+}
+
+function buildProverbDeck() {
+  const deckSize  = Math.floor(gameState.wordsPerRound / 2) * 2;
+  const usedSet   = new Set((gameState.usedProverbs || []).map(p => p.tigrinya));
+  let available   = PROVERBS.filter(p => !usedSet.has(p.tigrinya));
+  if (available.length < deckSize) {
+    gameState.usedProverbs = [];
+    available = [...PROVERBS];
+  }
   return shuffle(available).slice(0, deckSize);
 }
 
@@ -336,17 +378,24 @@ function updateTimerUI() {
 // ── Game flow ──────────────────────────────────────────
 function startGame() {
   const turnDuration = computeTurnDuration();
-  const startTeam    = Math.random() < 0.5 ? 0 : 1;   // random first team
-  setState('interstitial', {
-    currentRound:   1,
-    wordTeamIndex:  startTeam,
+  const startTeam    = Math.random() < 0.5 ? 0 : 1;
+  const basePayload  = {
+    currentRound:    1,
+    wordTeamIndex:   startTeam,
     turnDuration,
-    deck:           buildDeck(),
-    teams: gameState.teams.map(t => ({ ...t, score: 0, correctWords: [], skippedWords: [] })),
-    usedWords:      [],
-    currentWord:    null,
-    wordTimeLeft:   gameState.secondsPerWord,
-  });
+    teams:           gameState.teams.map(t => ({ ...t, score: 0, correctWords: [], skippedWords: [] })),
+    usedWords:       [],
+    usedProverbs:    [],
+    currentWord:     null,
+    currentProverb:  null,
+    proverbRevealed: false,
+    wordTimeLeft:    gameState.secondsPerWord,
+  };
+  if (gameState.mode === 'proverbs') {
+    setState('interstitial', { ...basePayload, proverbDeck: buildProverbDeck() });
+  } else {
+    setState('interstitial', { ...basePayload, deck: buildDeck() });
+  }
 }
 
 function beginPlaying() {
@@ -426,13 +475,142 @@ function flashFeedback(type) {
   setTimeout(() => document.body.classList.remove('flash-' + type), 350);
 }
 
+// ── Proverb mode game flow ─────────────────────────────
+function showNextProverb() {
+  if (gameState.proverbDeck.length === 0) {
+    endRound();
+    return;
+  }
+  const proverb = gameState.proverbDeck.pop();
+  gameState.currentProverb  = proverb;
+  gameState.proverbRevealed = false;
+  saveState();
+
+  const team    = gameState.teams[gameState.wordTeamIndex];
+  const counter = gameState.usedProverbs.length + 1;
+  const total   = gameState.usedProverbs.length + gameState.proverbDeck.length + 1;
+
+  const teamEl = document.getElementById('proverb-active-team');
+  if (teamEl) teamEl.textContent = team.name;
+
+  const counterEl = document.getElementById('proverb-counter');
+  if (counterEl) counterEl.textContent = `${counter} / ${total}`;
+
+  // Masked display
+  _renderMaskedProverb(proverb);
+
+  // State A (Show Answer), hide State B (judge) and answer
+  document.getElementById('proverb-actions-show')?.classList.remove('hidden');
+  document.getElementById('proverb-actions-judge')?.classList.add('hidden');
+  document.getElementById('proverb-answer')?.classList.add('hidden');
+  document.getElementById('proverb-translation')?.classList.add('hidden');
+}
+
+function _renderMaskedProverb(proverb) {
+  const { visible, hidden } = getMaskedProverb(proverb.tigrinya);
+
+  const visibleHtml = visible.map(w => `<span class="proverb-word">${w}</span>`).join(' ');
+  const hiddenHtml  = hidden.map(() => `<span class="proverb-blank">___</span>`).join(' ');
+
+  const displayEl = document.getElementById('proverb-display');
+  if (displayEl) {
+    displayEl.innerHTML = visibleHtml + (hidden.length ? ' ' + hiddenHtml : '');
+  }
+}
+
+function revealProverb() {
+  if (!gameState.currentProverb) return;
+  gameState.proverbRevealed = true;
+  saveState();
+
+  const p = gameState.currentProverb;
+
+  // Full Ge'ez text
+  const displayEl = document.getElementById('proverb-display');
+  if (displayEl) {
+    const words = p.tigrinya.trim().split(/\s+/);
+    displayEl.innerHTML = words.map(w => `<span class="proverb-word">${w}</span>`).join(' ');
+  }
+
+  // Show latin romanization + english meaning
+  const answerEl = document.getElementById('proverb-answer');
+  if (answerEl) {
+    answerEl.textContent = p.latin;
+    answerEl.classList.remove('hidden');
+  }
+  const translationEl = document.getElementById('proverb-translation');
+  if (translationEl) {
+    translationEl.textContent = p.english;
+    translationEl.classList.remove('hidden');
+  }
+
+  // State A → State B
+  document.getElementById('proverb-actions-show')?.classList.add('hidden');
+  document.getElementById('proverb-actions-judge')?.classList.remove('hidden');
+}
+
+function judgeProverb(result) {
+  if (!gameState.currentProverb) return;
+
+  gameState.usedProverbs.push(gameState.currentProverb);
+
+  if (result === 'correct') {
+    vibrate(100);
+    playCorrectSound();
+    gameState.teams[gameState.wordTeamIndex].score++;
+    gameState.teams[gameState.wordTeamIndex].correctWords.push(gameState.currentProverb);
+    flashFeedback('correct');
+  } else {
+    gameState.teams[gameState.wordTeamIndex].skippedWords.push(gameState.currentProverb);
+    flashFeedback('skip');
+  }
+
+  gameState.currentProverb  = null;
+  gameState.proverbRevealed = false;
+  // Alternate teams between proverbs
+  gameState.wordTeamIndex = 1 - gameState.wordTeamIndex;
+
+  saveState();
+
+  if (gameState.proverbDeck.length === 0) {
+    endRound();
+  } else {
+    showNextProverb();
+  }
+}
+
+function renderProverb() {
+  if (!gameState.currentProverb) return;
+  const team = gameState.teams[gameState.wordTeamIndex];
+
+  const teamEl = document.getElementById('proverb-active-team');
+  if (teamEl) teamEl.textContent = team.name;
+
+  const counter = gameState.usedProverbs.length + 1;
+  const total   = gameState.usedProverbs.length + gameState.proverbDeck.length + 1;
+  const counterEl = document.getElementById('proverb-counter');
+  if (counterEl) counterEl.textContent = `${counter} / ${total}`;
+
+  if (gameState.proverbRevealed) {
+    revealProverb();
+  } else {
+    _renderMaskedProverb(gameState.currentProverb);
+    document.getElementById('proverb-actions-show')?.classList.remove('hidden');
+    document.getElementById('proverb-actions-judge')?.classList.add('hidden');
+    document.getElementById('proverb-answer')?.classList.add('hidden');
+    document.getElementById('proverb-translation')?.classList.add('hidden');
+  }
+}
+
 function endRound() {
   stopWordTimer();
   vibrate([200, 100, 200]);
   playBuzzerSound();
-  // Tally scores for both teams from this round's word logs
-  gameState.teams[0].score += gameState.teams[0].correctWords.length;
-  gameState.teams[1].score += gameState.teams[1].correctWords.length;
+  // Word mode: tally scores from correctWords (proverb mode increments scores live)
+  if (gameState.mode !== 'proverbs') {
+    gameState.teams[0].score += gameState.teams[0].correctWords.length;
+    gameState.teams[1].score += gameState.teams[1].correctWords.length;
+  }
   setState('roundSummary', {});
 }
 
@@ -444,16 +622,21 @@ function nextRound() {
   if (nextRoundNum > gameState.totalRounds) {
     setState('winner', {});
   } else {
-    const startTeam = Math.random() < 0.5 ? 0 : 1;
-    setState('interstitial', {
-      currentRound:  nextRoundNum,
-      wordTeamIndex: startTeam,
-      deck:          buildDeck(),
-      // Reset word logs for next round but keep cumulative scores
-      teams: gameState.teams.map(t => ({ ...t, correctWords: [], skippedWords: [] })),
-      currentWord:   null,
-      wordTimeLeft:  gameState.secondsPerWord,
-    });
+    const startTeam   = Math.random() < 0.5 ? 0 : 1;
+    const basePayload = {
+      currentRound:    nextRoundNum,
+      wordTeamIndex:   startTeam,
+      teams:           gameState.teams.map(t => ({ ...t, correctWords: [], skippedWords: [] })),
+      currentWord:     null,
+      currentProverb:  null,
+      proverbRevealed: false,
+      wordTimeLeft:    gameState.secondsPerWord,
+    };
+    if (gameState.mode === 'proverbs') {
+      setState('interstitial', { ...basePayload, proverbDeck: buildProverbDeck() });
+    } else {
+      setState('interstitial', { ...basePayload, deck: buildDeck() });
+    }
   }
 }
 
@@ -469,6 +652,14 @@ function renderSetup() {
   document.getElementById('rounds-display').textContent    = gameState.totalRounds;
   document.getElementById('words-display').textContent     = gameState.wordsPerRound;
   document.getElementById('secs-display').textContent      = gameState.secondsPerWord;
+
+  // Sync mode toggle buttons
+  const isProverbs = gameState.mode === 'proverbs';
+  document.getElementById('btn-mode-words')?.classList.toggle('active', !isProverbs);
+  document.getElementById('btn-mode-proverbs')?.classList.toggle('active', isProverbs);
+  document.getElementById('btn-mode-words')?.setAttribute('aria-pressed', String(!isProverbs));
+  document.getElementById('btn-mode-proverbs')?.setAttribute('aria-pressed', String(isProverbs));
+
   updateSetupComputed();
   checkResumeBanner();
 }
@@ -509,10 +700,17 @@ function renderInterstitial() {
   const teamLabel = document.getElementById('interstitial-team-label');
   if (teamLabel) teamLabel.textContent = 'Goes First — Teams Alternate';
 
-  // CTA button
-  const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
+  // CTA button — mode-specific label
   const btn = document.getElementById('btn-start-timer');
-  if (btn) btn.textContent = `▶ Start · ${deckSize} cards · ${gameState.secondsPerWord}s each`;
+  if (btn) {
+    if (gameState.mode === 'proverbs') {
+      const count = gameState.proverbDeck.length;
+      btn.textContent = `▶ Start · ${count} proverbs`;
+    } else {
+      const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
+      btn.textContent = `▶ Start · ${deckSize} cards · ${gameState.secondsPerWord}s each`;
+    }
+  }
 
   // Score bar — highlight the starting team
   const s0 = document.getElementById('inter-score-0');
@@ -556,7 +754,7 @@ function renderSummary() {
   const renderList = (id, words) => {
     const el = document.getElementById(id);
     el.innerHTML = words.length
-      ? words.map(w => `<div class="word-entry">${w.word}</div>`).join('')
+      ? words.map(w => `<div class="word-entry">${w.tigrinya || w.word}</div>`).join('')
       : '<div class="word-entry empty">—</div>';
   };
   renderList('correct-word-list-0', t0.correctWords);
@@ -677,9 +875,11 @@ function wireEvents() {
     if (!isResumable(saved)) return;
     Object.assign(gameState, saved);
     render();
-    // If resuming mid-word, restart from the beginning of the current word
+    // If resuming mid-word, restart from the beginning of the current word/proverb
     if (gameState.phase === 'playing') {
       showNextWord();
+    } else if (gameState.phase === 'proverb') {
+      showNextProverb();
     }
   });
 
@@ -690,12 +890,32 @@ function wireEvents() {
     render();   // re-renders setup with fresh default form values
   });
 
+  // ── Mode toggle ─────────────────────────────────────
+  document.getElementById('btn-mode-words')?.addEventListener('click', () => {
+    gameState.mode = 'words';
+    renderSetup();
+  });
+  document.getElementById('btn-mode-proverbs')?.addEventListener('click', () => {
+    gameState.mode = 'proverbs';
+    renderSetup();
+  });
+
   // ── Interstitial ────────────────────────────────────
   document.getElementById('btn-back-to-setup').addEventListener('click', () => {
     stopWordTimer();
     setState('setup', {});
   });
-  document.getElementById('btn-start-timer').addEventListener('click', beginPlaying);
+  document.getElementById('btn-start-timer').addEventListener('click', () => {
+    if (gameState.mode === 'proverbs') {
+      // Switch to proverb screen first, then load the first proverb
+      gameState.phase = 'proverb';
+      saveState();
+      render();
+      showNextProverb();
+    } else {
+      beginPlaying();
+    }
+  });
 
   // ── Playing ─────────────────────────────────────────
   document.getElementById('btn-correct').addEventListener('click', markCorrect);
@@ -709,6 +929,12 @@ function wireEvents() {
       showNextWord();
     }
   });
+
+  // ── Proverb screen ──────────────────────────────────
+  document.getElementById('btn-show-answer')?.addEventListener('click', revealProverb);
+  document.getElementById('btn-proverb-correct')?.addEventListener('click', () => judgeProverb('correct'));
+  document.getElementById('btn-proverb-wrong')?.addEventListener('click',   () => judgeProverb('wrong'));
+  document.getElementById('btn-quit-proverb')?.addEventListener('click', showQuitModal);
 
   // ── Summary ─────────────────────────────────────────
   document.getElementById('btn-next-round').addEventListener('click', nextRound);

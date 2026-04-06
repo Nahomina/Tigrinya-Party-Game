@@ -1421,3 +1421,195 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   .word-lists               { grid-template-columns: 1fr 1fr; }
   .btn-skip, .btn-correct   { min-height: 90px; }
 }
+
+/* ═══════════════════════════════════════════════════════
+   Mode Toggle (Setup Screen)
+═══════════════════════════════════════════════════════ */
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+.mode-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.7rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-btn:hover {
+  border-color: var(--border-mid);
+  color: var(--text);
+}
+.mode-btn.active {
+  border-color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, var(--bg-card));
+  color: var(--text);
+}
+.mode-btn-icon { font-size: 1.3rem; line-height: 1; }
+.mode-btn-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.mode-btn-lang {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.mode-btn.active .mode-btn-lang { color: var(--text-sub); }
+
+/* ═══════════════════════════════════════════════════════
+   Proverb Screen (#screen-proverb)
+═══════════════════════════════════════════════════════ */
+#screen-proverb {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Proverb Header ──────────────────────────────────── */
+.proverb-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
+.proverb-mode-badge {
+  font-family: var(--font-ethiopic);
+  font-size: 1rem;
+  color: var(--text-sub);
+  letter-spacing: 0.05em;
+}
+.proverb-counter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Proverb Stage ───────────────────────────────────── */
+.proverb-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.5rem;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+.proverb-text {
+  font-family: var(--font-ethiopic);
+  font-size: clamp(1.6rem, 6vw, 3rem);
+  text-align: center;
+  line-height: 1.5;
+  color: var(--text);
+  word-break: break-word;
+}
+.proverb-word {
+  display: inline;
+}
+.proverb-blank {
+  display: inline-block;
+  min-width: 2.5ch;
+  border-bottom: 2px solid var(--red);
+  color: transparent;
+  vertical-align: bottom;
+  margin: 0 0.15em;
+}
+
+/* Answer reveal */
+.proverb-answer {
+  font-family: var(--font-ethiopic);
+  font-size: clamp(1rem, 3.5vw, 1.6rem);
+  color: var(--text-sub);
+  text-align: center;
+  animation: word-pop 0.3s ease-out;
+}
+.proverb-translation {
+  font-size: clamp(0.75rem, 2.5vw, 1rem);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  animation: word-pop 0.3s ease-out 0.08s both;
+}
+
+/* ── Proverb Actions ─────────────────────────────────── */
+.proverb-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+}
+.proverb-actions.hidden { display: none; }
+
+/* Show Answer button */
+.btn-show-answer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 72px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-show-answer:active { background: var(--bg-card); }
+.pass-arrow { font-size: 1.3rem; color: var(--text-sub); }
+
+/* Judge buttons */
+.btn-proverb-wrong,
+.btn-proverb-correct {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 72px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.12s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-proverb-wrong:active,
+.btn-proverb-correct:active {
+  opacity: 0.8;
+  transform: scale(0.97);
+}
+.btn-proverb-wrong    { background: var(--red);     color: #fff; }
+.btn-proverb-correct  { background: var(--correct); color: #fff; }
+.btn-icon { font-size: 1.6rem; line-height: 1; }

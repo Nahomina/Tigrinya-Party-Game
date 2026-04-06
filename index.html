@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=10" />
+  <link rel="stylesheet" href="style.css?v=12" />
   <title>Mayim — ማይም</title>
 </head>
 <body>
@@ -114,6 +114,21 @@
           spellcheck="false"
           aria-label="Team 2 name"
         />
+      </div>
+
+      <!-- ── GAME MODE ──────────────────────── -->
+      <div class="setup-section-label">Game Mode</div>
+      <div class="mode-toggle" role="group" aria-label="Select game mode">
+        <button id="btn-mode-words" class="mode-btn active" aria-pressed="true">
+          <span class="mode-btn-icon">📝</span>
+          <span class="mode-btn-name">Mayim</span>
+          <span class="mode-btn-lang">ቃላት · Words</span>
+        </button>
+        <button id="btn-mode-proverbs" class="mode-btn" aria-pressed="false">
+          <span class="mode-btn-icon">📜</span>
+          <span class="mode-btn-name">Misla</span>
+          <span class="mode-btn-lang">ምስላ · Proverbs</span>
+        </button>
       </div>
 
       <!-- ── GAME CONFIG ────────────────────── -->
@@ -354,15 +369,62 @@
   </section>
 
 
+  <!-- ════════════════════════════════════════════════════════════
+       SCREEN 6 — Proverb Gameplay (ምስላ Mode)
+  ════════════════════════════════════════════════════════════ -->
+  <section id="screen-proverb" class="screen" role="main">
+
+    <div class="proverb-header">
+      <button class="btn-quit-game" id="btn-quit-proverb" aria-label="Quit game">✕ Quit</button>
+      <span class="proverb-mode-badge">ምስላ</span>
+      <span id="proverb-counter" class="proverb-counter">1 / 10</span>
+    </div>
+
+    <div class="proverb-stage">
+      <span id="proverb-active-team" class="playing-active-team"></span>
+      <span class="label-eyebrow">Complete the proverb</span>
+
+      <!-- Masked proverb — shown by default -->
+      <div id="proverb-display" lang="ti" class="proverb-text" aria-live="polite"></div>
+
+      <!-- Full answer — revealed after "Show Answer" -->
+      <div id="proverb-answer" class="proverb-answer hidden" lang="ti" aria-live="polite"></div>
+      <div id="proverb-translation" class="proverb-translation hidden"></div>
+    </div>
+
+    <!-- State A: waiting for reveal -->
+    <div id="proverb-actions-show" class="proverb-actions">
+      <button id="btn-show-answer" class="btn-show-answer">
+        <span>Show Answer</span>
+        <span class="pass-arrow">↓</span>
+      </button>
+    </div>
+
+    <!-- State B: judge decides after reveal -->
+    <div id="proverb-actions-judge" class="proverb-actions hidden">
+      <button id="btn-proverb-wrong" class="btn-proverb-wrong" aria-label="Wrong answer">
+        <span class="btn-icon">✕</span>
+        <span>Wrong</span>
+      </button>
+      <button id="btn-proverb-correct" class="btn-proverb-correct" aria-label="Correct answer">
+        <span class="btn-icon">✓</span>
+        <span>Correct</span>
+      </button>
+    </div>
+
+  </section>
+
+
   <!-- ── Scripts ──────────────────────────────────────────────── -->
   <!-- Supabase client library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Fallback word list (used if Supabase unavailable) -->
-  <script src="words.js?v=10"></script>
+  <!-- Word list fallback + proverbs data -->
+  <script src="words.js?v=12"></script>
+  <script src="proverbs.js?v=12"></script>
 
   <!-- Main app -->
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=12"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

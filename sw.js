@@ -2,7 +2,7 @@
 // index.html: network-first (always fresh)
 // Assets/fonts: cache-first (fast)
 // Supabase API: network-first with cache fallback
-const CACHE_VERSION = 'mayim-v3';
+const CACHE_VERSION = 'mayim-v4';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 const PRECACHE_ASSETS = [
