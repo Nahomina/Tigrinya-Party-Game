@@ -28,71 +28,108 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Tigrinya Games" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link rel="stylesheet" href="style.css?v=18" />
+
+  <!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID -->
+  <!-- Apply at https://adsense.google.com — paste your approved snippet here  -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 </head>
 <body class="home-body">
 
   <div class="home-wrap">
 
-    <header class="home-header">
-      <h1 class="home-game-title">Tigrinya Traditional Games</h1>
-      <p class="home-tagline">TIGRINYA · PARTY · GAME</p>
-    </header>
+    <!-- ── Above-fold hero — fills full viewport ── -->
+    <div class="home-hero">
 
-    <main class="home-cards" role="main">
+      <header class="home-header">
+        <h1 class="home-game-title">Tigrinya Traditional Games</h1>
+        <p class="home-tagline">TIGRINYA · PARTY · GAME</p>
+      </header>
 
-      <a href="game.html?mode=words" class="home-card home-card--words" aria-label="Play Mayim — Words game">
-        <span class="home-card-icon" aria-hidden="true">📝</span>
-        <div class="home-card-names">
-          <span class="home-card-name">MAYIM</span>
-          <span class="home-card-geez" lang="ti">ማይም</span>
-        </div>
-        <p class="home-card-desc">Describe the word without saying it</p>
-        <span class="home-card-cta">Play →</span>
-      </a>
+      <main class="home-cards" role="main">
 
-      <a href="game.html?mode=proverbs" class="home-card home-card--proverbs" aria-label="Play Misla — Proverbs game">
-        <span class="home-card-icon" aria-hidden="true">📜</span>
-        <div class="home-card-names">
-          <span class="home-card-name">MISLA</span>
-          <span class="home-card-geez" lang="ti">ምስላ</span>
-        </div>
-        <p class="home-card-desc">Complete the Tigrinya proverb</p>
-        <span class="home-card-cta">Play →</span>
-      </a>
+        <a href="game.html?mode=words"
+           class="home-card home-card--words"
+           data-geez-mark="ማ"
+           aria-label="Play Mayim — Words game">
+          <div class="home-card-names">
+            <span class="home-card-name">MAYIM</span>
+            <span class="home-card-geez" lang="ti">ማይም</span>
+          </div>
+          <p class="home-card-desc">Describe the word without saying it</p>
+          <span class="home-card-cta">Play →</span>
+        </a>
 
-    </main>
+        <a href="game.html?mode=proverbs"
+           class="home-card home-card--proverbs"
+           data-geez-mark="ም"
+           aria-label="Play Misla — Proverbs game">
+          <div class="home-card-names">
+            <span class="home-card-name">MISLA</span>
+            <span class="home-card-geez" lang="ti">ምስላ</span>
+          </div>
+          <p class="home-card-desc">Complete the Tigrinya proverb</p>
+          <span class="home-card-cta">Play →</span>
+        </a>
 
-    <!-- FAQ -->
-    <section class="home-faq" aria-label="Frequently asked questions">
-      <h2 class="home-faq-title">How to Play</h2>
+      </main>
 
-      <div class="faq-item">
-        <h3 class="faq-q">What is Mayim?</h3>
+      <button class="how-to-play-btn"
+              id="how-to-play-btn"
+              aria-expanded="false"
+              aria-controls="faq-section">
+        How to Play <span class="how-to-play-arrow" aria-hidden="true">↓</span>
+      </button>
+
+    </div><!-- /.home-hero -->
+
+    <!-- ── AdSense unit — shown between hero and FAQ ── -->
+    <!-- Replace data-ad-client and data-ad-slot with your approved values   -->
+    <!-- Remove the 'hidden' attribute once your AdSense account is approved -->
+    <div class="home-ad-unit" hidden aria-hidden="true">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+           data-ad-slot="XXXXXXXXXX"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+    <!-- ── FAQ — hidden until toggled ── -->
+    <section class="home-faq" id="faq-section" aria-label="Frequently asked questions" hidden>
+
+      <details class="faq-item" open>
+        <summary class="faq-q">What is Mayim?</summary>
         <p class="faq-a">Mayim (ማይም) is a word-guessing game. One team describes a Tigrinya word — without saying it — while the other team guesses. Each correct guess scores a point. The judge controls the timer.</p>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <h3 class="faq-q">What is Misla?</h3>
+      <details class="faq-item">
+        <summary class="faq-q">What is Misla?</summary>
         <p class="faq-a">Misla (ምስላ) is a proverb completion game. A Tigrinya proverb is shown with some words hidden. Teams take turns trying to complete it. The judge reveals the answer and awards points.</p>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <h3 class="faq-q">How many players?</h3>
+      <details class="faq-item">
+        <summary class="faq-q">How many players?</summary>
         <p class="faq-a">Best with 4 or more players split into two teams. One phone or tablet shared between all players is all you need.</p>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <h3 class="faq-q">Does it work offline?</h3>
+      <details class="faq-item">
+        <summary class="faq-q">Does it work offline?</summary>
         <p class="faq-a">Yes. After your first visit the game is fully cached and works without internet. Add it to your home screen for the best experience.</p>
-      </div>
+      </details>
+
     </section>
 
     <footer class="home-footer">
-      <p class="home-copyright">© 2025 Tigrinya Traditional Games. All rights reserved.</p>
+      <p class="home-copyright">© 2026 Tigrinya Party Games. All rights reserved.</p>
+      <nav class="home-footer-links" aria-label="Footer navigation">
+        <a href="terms.html" class="footer-link">Terms of Service</a>
+        <a href="privacy.html" class="footer-link">Privacy Policy</a>
+      </nav>
     </footer>
 
-  </div>
+  </div><!-- /.home-wrap -->
 
   <script>
     if ('serviceWorker' in navigator) {
@@ -101,6 +138,23 @@
           .catch(err => console.warn('SW registration failed:', err));
       });
     }
+
+    const btn = document.getElementById('how-to-play-btn');
+    const faq = document.getElementById('faq-section');
+    btn.addEventListener('click', () => {
+      const opening = faq.hasAttribute('hidden');
+      if (opening) {
+        faq.removeAttribute('hidden');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.querySelector('.how-to-play-arrow').textContent = '↑';
+        requestAnimationFrame(() => faq.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      } else {
+        faq.setAttribute('hidden', '');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.querySelector('.how-to-play-arrow').textContent = '↓';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
   </script>
 
 </body>

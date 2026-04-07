@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link rel="stylesheet" href="style.css?v=18" />
   <title>Mayim — ማይም</title>
 </head>
 <body>
@@ -137,6 +137,19 @@
         </div>
       </div>
 
+      <!-- Seconds per word/proverb — always visible, label changes by mode -->
+      <div class="config-row">
+        <div class="config-row-label">
+          <span id="secs-label" class="spec-label">Secs / Word</span>
+          <span class="config-hint">Timer per round</span>
+        </div>
+        <div class="stepper">
+          <button id="btn-secs-minus" class="stepper-btn" aria-label="Less time">−</button>
+          <span id="secs-display" class="stepper-val">6</span>
+          <button id="btn-secs-plus"  class="stepper-btn" aria-label="More time">+</button>
+        </div>
+      </div>
+
       <!-- Word-mode-only config rows (hidden in proverb mode) -->
       <div id="word-config-rows">
 
@@ -153,19 +166,6 @@
           </div>
         </div>
 
-        <!-- Seconds per word -->
-        <div class="config-row">
-          <div class="config-row-label">
-            <span id="secs-label" class="spec-label">Secs / Word</span>
-            <span class="config-hint">Timer per word guessed</span>
-          </div>
-          <div class="stepper">
-            <button id="btn-secs-minus" class="stepper-btn" aria-label="Less time">−</button>
-            <span id="secs-display" class="stepper-val">6</span>
-            <button id="btn-secs-plus"  class="stepper-btn" aria-label="More time">+</button>
-          </div>
-        </div>
-
         <!-- Computed total time  -->
         <div class="computed-row">
           <span class="computed-label">Turn duration</span>
@@ -174,12 +174,43 @@
 
       </div><!-- /#word-config-rows -->
 
+      <!-- Proverb-mode-only config rows (hidden in word mode) -->
+      <div id="proverb-config-rows">
+        <div class="config-row">
+          <div class="config-row-label">
+            <span class="spec-label">Proverbs / Round</span>
+            <span class="config-hint">Total proverbs per round</span>
+          </div>
+          <div class="stepper">
+            <button id="btn-proverbs-minus" class="stepper-btn" aria-label="Fewer proverbs">−</button>
+            <span id="proverbs-display" class="stepper-val">10</span>
+            <button id="btn-proverbs-plus" class="stepper-btn" aria-label="More proverbs">+</button>
+          </div>
+        </div>
+
+        <!-- Computed turn duration -->
+        <div class="computed-row">
+          <span class="computed-label">Turn duration</span>
+          <span id="computed-proverb-time" class="computed-value">10 proverbs · 5 per team · 6s each</span>
+        </div>
+
+      </div><!-- /#proverb-config-rows -->
+
     </div><!-- /.setup-body -->
 
     <!-- Pinned CTA -->
     <div class="button-footer">
       <button id="btn-start-game" class="btn-primary">Start Game</button>
     </div>
+
+    <!-- Legal footer -->
+    <footer class="game-legal-footer">
+      <span>© 2026 Tigrinya Party Games</span>
+      <span class="game-footer-sep">·</span>
+      <a href="terms.html" class="footer-link">Terms</a>
+      <span class="game-footer-sep">·</span>
+      <a href="privacy.html" class="footer-link">Privacy</a>
+    </footer>
 
   </section>
 
@@ -336,10 +367,10 @@
     <div class="winner-eyebrow-bar">
       <button class="btn-quit-game" id="btn-quit-winner" aria-label="Back to setup">← Setup</button>
       <span class="label-eyebrow">Game Over</span>
-      <span class="winner-trophy-inline" aria-hidden="true">🏆</span>
     </div>
 
     <div class="winner-hero">
+      <span class="winner-trophy" aria-hidden="true">🏆</span>
       <span class="winner-label">Winner</span>
       <h2 id="winner-team-name">Team Asmara Wins</h2>
     </div>
@@ -372,7 +403,13 @@
     <div class="proverb-header">
       <button class="btn-quit-game" id="btn-quit-proverb" aria-label="Quit game">✕ Quit</button>
       <span class="proverb-mode-badge">ምስላ</span>
+      <span id="proverb-timer-display" class="proverb-timer-num" aria-live="polite" aria-label="Seconds remaining">—</span>
       <span id="proverb-counter" class="proverb-counter">1 / 10</span>
+    </div>
+
+    <!-- Timer progress bar -->
+    <div class="proverb-timer-bar">
+      <div id="proverb-timer-progress" class="proverb-timer-fill"></div>
     </div>
 
     <div class="proverb-stage">
@@ -387,8 +424,11 @@
       <div id="proverb-translation" class="proverb-translation hidden"></div>
     </div>
 
-    <!-- State A: waiting for reveal -->
-    <div id="proverb-actions-show" class="proverb-actions">
+    <!-- State A: start timer + reveal -->
+    <div id="proverb-actions-show" class="proverb-actions proverb-actions-start">
+      <button id="btn-proverb-start-timer" class="btn-proverb-start">
+        ▶ Start Timer
+      </button>
       <button id="btn-show-answer" class="btn-show-answer">
         <span>Show Answer</span>
         <span class="pass-arrow">↓</span>
@@ -414,7 +454,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="words.js?v=13"></script>
   <script src="proverbs.js?v=13"></script>
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=17"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

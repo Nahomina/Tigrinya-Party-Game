@@ -2,7 +2,27 @@
   "permissions": {
     "allow": [
       "Bash(curl -s \"https://fonts.googleapis.com/css2?family=Noto+Sans+Ethiopic:wght@700&display=swap\" -H \"User-Agent: Mozilla/5.0\")",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:tigrinya-party-game.vercel.app)",
+      "Bash(powershell -Command \"\\(Get-Content admin.js\\) -replace ''await supabase\\\\b'', ''await _supabase'' | Set-Content admin.js\")",
+      "Bash(xargs kill:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 8032 /F)",
+      "Bash(taskkill /pid 8032 /f)",
+      "Bash(powershell -Command \"Stop-Process -Id 8032 -Force\")",
+      "Bash(gh repo:*)",
+      "Bash(where gh:*)",
+      "Bash(winget install:*)",
+      "WebFetch(domain:paste-queue.vercel.app)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(echo \"EXIT:$?\")",
+      "mcp__830cde94-d913-480f-b80f-728995fd169f__deploy_to_vercel",
+      "mcp__830cde94-d913-480f-b80f-728995fd169f__list_teams",
+      "mcp__830cde94-d913-480f-b80f-728995fd169f__list_projects",
+      "mcp__830cde94-d913-480f-b80f-728995fd169f__list_deployments",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/index.html)",
+      "Bash(curl -s \"http://localhost:8000/style.css?v=17\")"
     ]
   }
 }

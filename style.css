@@ -140,6 +140,9 @@ html {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* ── Utility ──────────────────────────────────────────── */
+.hidden { display: none !important; }
+
 /* ── Reset ────────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -1280,7 +1283,6 @@ button {
   align-items: center;
   justify-content: space-between;
 }
-.winner-trophy-inline { font-size: 1.5rem; }
 .winner-hero {
   flex: 1;
   display: flex;
@@ -1296,6 +1298,13 @@ button {
   letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+.winner-trophy {
+  font-size: 3.5rem;
+  line-height: 1;
+  display: block;
+  text-align: center;
+  margin-bottom: 0.25rem;
 }
 #winner-team-name {
   font-family: var(--font-display);
@@ -1427,8 +1436,8 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   background: var(--bg);
   min-height: 100dvh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   padding: 0;
   margin: 0;
 }
@@ -1436,13 +1445,22 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 .home-wrap {
   width: 100%;
   max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Full-viewport hero — header + cards + CTA ── */
+.home-hero {
   min-height: 100dvh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1.25rem 1.5rem;
   gap: 2rem;
+  padding: 2.5rem 1.25rem 2rem;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -1451,7 +1469,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.35rem;
 }
 
 .home-game-title {
@@ -1480,13 +1498,14 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   width: 100%;
 }
 
+/* ── Cards — tactile with Ge'ez watermark ── */
 .home-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: 0.5rem;
-  padding: 2.2rem 1rem 1.5rem;
+  padding: 2.6rem 1rem 2rem;
   border-radius: 12px;
   border: 1px solid var(--border-mid);
   background: var(--bg-card);
@@ -1495,23 +1514,40 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  transition: transform 0.18s ease, border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  transition: transform 0.15s ease, border-color 0.18s, background 0.18s, box-shadow 0.18s;
   position: relative;
   overflow: hidden;
 }
 
+/* Top accent stripe */
 .home-card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.2s;
-  border-radius: inherit;
+  top: 0; left: 0; right: 0;
+  height: 3px;
 }
+.home-card--words::before   { background: var(--red); }
+.home-card--proverbs::before { background: var(--correct); }
+
+/* Ge'ez watermark via data attribute */
+.home-card::after {
+  content: attr(data-geez-mark);
+  font-family: var(--font-geez);
+  font-size: 7rem;
+  line-height: 1;
+  position: absolute;
+  right: -0.3rem;
+  bottom: -1.2rem;
+  opacity: 0.06;
+  pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+  transition: opacity 0.2s;
+}
+.home-card:hover::after { opacity: 0.12; }
 
 .home-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.38);
 }
 
 .home-card:active {
@@ -1520,7 +1556,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 }
 
 .home-card--words {
-  border-color: color-mix(in srgb, var(--red) 35%, var(--border-mid));
+  border-color: color-mix(in srgb, var(--red) 30%, var(--border-mid));
 }
 .home-card--words:hover {
   border-color: var(--red);
@@ -1528,38 +1564,36 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 }
 
 .home-card--proverbs {
-  border-color: color-mix(in srgb, var(--correct) 35%, var(--border-mid));
+  border-color: color-mix(in srgb, var(--correct) 30%, var(--border-mid));
 }
 .home-card--proverbs:hover {
   border-color: var(--correct);
   background: color-mix(in srgb, var(--correct) 7%, var(--bg-card));
 }
 
-.home-card-icon {
-  font-size: 2.4rem;
-  line-height: 1;
-  display: block;
-}
-
 .home-card-names {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
+  position: relative;
+  z-index: 1;
 }
 
 .home-card-name {
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 7vw, 2.8rem);
+  font-size: clamp(2rem, 8vw, 3.2rem);
   letter-spacing: 0.1em;
   line-height: 0.9;
   color: var(--text);
 }
 
 .home-card-geez {
-  font-family: var(--font-ethiopic);
-  font-size: clamp(0.9rem, 4vw, 1.4rem);
+  font-family: var(--font-geez);
+  font-size: clamp(1rem, 4.5vw, 1.6rem);
   color: var(--text-sub);
-  line-height: 1.2;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .home-card-desc {
@@ -1567,64 +1601,119 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin: 0.2rem 0 0;
+  margin: 0.25rem 0 0;
   line-height: 1.5;
+  position: relative;
+  z-index: 1;
 }
 
 .home-card-cta {
-  margin-top: 0.6rem;
+  margin-top: 0.8rem;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.05rem;
   letter-spacing: 0.12em;
   color: var(--text-muted);
   transition: color 0.15s;
+  position: relative;
+  z-index: 1;
 }
-.home-card--words:hover .home-card-cta  { color: var(--red); }
+.home-card--words:hover .home-card-cta    { color: var(--red); }
 .home-card--proverbs:hover .home-card-cta { color: var(--correct); }
 
-/* FAQ */
+/* ── "How to Play" toggle button ── */
+.how-to-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--border-mid);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.how-to-play-btn:hover {
+  border-color: var(--border-focus);
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+.how-to-play-arrow {
+  display: inline-block;
+  transition: transform 0.22s ease;
+}
+.how-to-play-btn[aria-expanded="true"] .how-to-play-arrow {
+  transform: rotate(180deg);
+}
+
+/* ── FAQ accordion ── */
 .home-faq {
   width: 100%;
   border-top: 1px solid var(--border);
-  padding-top: 1.5rem;
-}
-
-.home-faq-title {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-sub);
-  margin: 0 0 1rem;
+  padding: 0.5rem 1.25rem 0;
 }
 
 .faq-item {
-  padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
 }
 .faq-item:last-child { border-bottom: none; }
 
 .faq-q {
-  font-size: 0.8rem;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.95rem 0;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  color: var(--text-sub);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.faq-q::-webkit-details-marker { display: none; }
+.faq-q::marker                  { display: none; }
+.faq-q::after {
+  content: '+';
+  font-size: 1.2rem;
+  font-weight: 300;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s ease, color 0.15s;
+  line-height: 1;
+}
+details[open] > .faq-q {
   color: var(--text);
-  margin: 0 0 0.3rem;
+}
+details[open] > .faq-q::after {
+  transform: rotate(45deg);
+  color: var(--text);
 }
 
 .faq-a {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--text-sub);
-  line-height: 1.6;
-  margin: 0;
+  line-height: 1.7;
+  margin: 0 0 1rem;
+  padding-right: 1.75rem;
 }
 
 /* Footer */
 .home-footer {
   width: 100%;
-  padding: 1rem 0 0.5rem;
+  padding: 1.25rem 1.25rem 1rem;
   text-align: center;
+  border-top: 1px solid var(--border);
 }
 
 .home-copyright {
@@ -1632,21 +1721,62 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin: 0;
+  margin: 0 0 0.5rem;
 }
 
-/* Portrait mobile: stack cards */
+.home-footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-link:hover { color: var(--accent); }
+
+/* Compact legal footer inside game setup screen */
+.game-legal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem 1rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.game-footer-sep { opacity: 0.4; }
+
+/* ── Portrait mobile: stack cards ── */
 @media (max-width: 480px) {
-  .home-cards { grid-template-columns: 1fr; }
-  .home-card  { flex-direction: row; text-align: left; padding: 1.4rem 1.2rem; gap: 1rem; }
-  .home-card-icon { font-size: 2rem; }
+  .home-hero  { gap: 1.5rem; padding: 2rem 1rem 1.5rem; }
+  .home-cards { grid-template-columns: 1fr; gap: 0.75rem; }
+  .home-card  {
+    flex-direction: row;
+    text-align: left;
+    padding: 1.4rem 1.2rem;
+    gap: 1rem;
+    align-items: center;
+  }
   .home-card-names { flex: 1; }
-  .home-card-desc { display: none; }
-  .home-card-cta { margin-top: 0; }
+  .home-card-desc  { display: none; }
+  .home-card-cta   { margin-top: 0; }
+  .home-card::after { font-size: 4rem; right: 0.4rem; bottom: -0.5rem; }
 }
 
-/* Word-config-rows wrapper — match siblings' full width */
-#word-config-rows { margin: 0; padding: 0; width: 100%; align-self: stretch; }
+/* Config-rows wrappers — match siblings' full width */
+#word-config-rows,
+#proverb-config-rows { margin: 0; padding: 0; width: 100%; align-self: stretch; }
 
 /* ── Back-to-home link in game setup ──────────────────── */
 .btn-home-back {
@@ -1750,6 +1880,34 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   color: var(--text-sub);
   letter-spacing: 0.05em;
 }
+
+/* Timer progress bar */
+.proverb-timer-bar {
+  flex-shrink: 0;
+  height: 4px;
+  background: var(--border);
+  width: 100%;
+}
+.proverb-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--correct);
+  transition: width 0.85s linear, background 0.25s;
+}
+.proverb-timer-fill.danger { background: var(--danger); }
+
+/* Timer number in proverb header */
+.proverb-timer-num {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  letter-spacing: 0.04em;
+  color: var(--text-sub);
+  min-width: 2ch;
+  text-align: center;
+  transition: color 0.2s;
+}
+.proverb-timer-num.danger { color: var(--danger); }
+
 .proverb-counter {
   font-size: 0.72rem;
   font-weight: 600;
@@ -1814,6 +1972,34 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   border-top: 1px solid var(--border);
 }
 .proverb-actions.hidden { display: none; }
+
+/* State-A layout: Start Timer (full-width) + Show Answer (full-width) stacked */
+.proverb-actions-start {
+  flex-direction: column;
+}
+
+/* Start Timer button */
+.btn-proverb-start {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  background: var(--correct);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: filter 0.15s;
+}
+.btn-proverb-start:active { filter: brightness(0.88); }
+.btn-proverb-start.hidden { display: none; }
 
 /* Show Answer button */
 .btn-show-answer {

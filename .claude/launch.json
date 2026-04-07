@@ -4,8 +4,14 @@
     {
       "name": "mayim",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5173"],
-      "port": 5173
+      "runtimeArgs": ["-m", "http.server"],
+      "port": 8000
+    },
+    {
+      "name": "pastequeue",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Users/Bruger1/Documents/pastequeue", "run", "dev"],
+      "port": 3000
     }
   ]
 }

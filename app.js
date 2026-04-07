@@ -23,7 +23,8 @@ const WORDS_CACHE_TTL = 86400000; // 24 hours in ms
 
 const DEFAULTS = {
   totalRounds:    3,
-  wordsPerRound: 10,
+  wordsPerRound:    10,
+  proverbsPerRound: 10,
   secondsPerWord: 6,
   teamNames:     ['Team Asmara', 'Team Massawa'],
 };
@@ -128,9 +129,10 @@ let gameState = {
     { name: _savedNames[1], score: 0, correctWords: [], skippedWords: [] },
   ],
   totalRounds:    DEFAULTS.totalRounds,
-  wordsPerRound:  DEFAULTS.wordsPerRound,
+  wordsPerRound:    DEFAULTS.wordsPerRound,
+  proverbsPerRound: DEFAULTS.proverbsPerRound,
   secondsPerWord: DEFAULTS.secondsPerWord,
-  turnDuration:   DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
+  turnDuration:     DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
   currentRound:   1,
   wordTeamIndex:  0,
   deck:           [],
@@ -142,11 +144,13 @@ let gameState = {
   usedProverbs:    [],
   currentProverb:  null,
   proverbRevealed: false,
+  proverbTimeLeft: 0,
 };
 
 // ── setState / render ──────────────────────────────────
 function setState(newPhase, payload = {}) {
   if (newPhase !== 'playing') stopWordTimer();
+  if (newPhase !== 'proverb') stopProverbTimer();
   Object.assign(gameState, { phase: newPhase }, payload);
   saveState();
   render();
@@ -227,9 +231,10 @@ function resetToDefaults() {
       { name: names[1], score: 0, correctWords: [], skippedWords: [] },
     ],
     totalRounds:    DEFAULTS.totalRounds,
-    wordsPerRound:  DEFAULTS.wordsPerRound,
+    wordsPerRound:    DEFAULTS.wordsPerRound,
+    proverbsPerRound: DEFAULTS.proverbsPerRound,
     secondsPerWord: DEFAULTS.secondsPerWord,
-    turnDuration:   DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
+    turnDuration:     DEFAULTS.wordsPerRound * DEFAULTS.secondsPerWord,
     currentRound:   1,
     wordTeamIndex:  0,
     deck:            [],
@@ -288,7 +293,7 @@ function getMaskedProverb(proverbString) {
 }
 
 function buildProverbDeck() {
-  const deckSize  = Math.floor(gameState.wordsPerRound / 2) * 2;
+  const deckSize  = Math.floor(gameState.proverbsPerRound / 2) * 2;
   const usedSet   = new Set((gameState.usedProverbs || []).map(p => p.tigrinya));
   let available   = PROVERBS.filter(p => !usedSet.has(p.tigrinya));
   if (available.length < deckSize) {
@@ -373,6 +378,45 @@ function updateTimerUI() {
   const danger = t <= 3;
   el.classList.toggle('danger', danger);
   prog.classList.toggle('danger', danger);
+}
+
+// ── Per-proverb Timer ──────────────────────────────────
+let _proverbTimer = null;
+
+function stopProverbTimer() {
+  if (_proverbTimer) { clearInterval(_proverbTimer); _proverbTimer = null; }
+}
+
+function startProverbTimer() {
+  stopProverbTimer();
+  gameState.proverbTimeLeft = gameState.secondsPerWord;
+  updateProverbTimerUI();
+  // Hide start button once running
+  document.getElementById('btn-proverb-start-timer')?.classList.add('hidden');
+  _proverbTimer = setInterval(() => {
+    gameState.proverbTimeLeft -= 1;
+    updateProverbTimerUI();
+    if (gameState.proverbTimeLeft <= 3 && gameState.proverbTimeLeft > 0) playTickSound();
+    if (gameState.proverbTimeLeft <= 0) {
+      stopProverbTimer();
+      playBuzzerSound();
+      vibrate([200, 100, 200]);
+    }
+  }, 1000);
+}
+
+function updateProverbTimerUI() {
+  const el   = document.getElementById('proverb-timer-display');
+  const fill = document.getElementById('proverb-timer-progress');
+  if (!el) return;
+  const t   = Math.max(0, gameState.proverbTimeLeft);
+  const dur = gameState.secondsPerWord;
+  el.textContent = t;
+  el.classList.toggle('danger', t <= 3);
+  if (fill) {
+    fill.style.width = ((t / dur) * 100) + '%';
+    fill.classList.toggle('danger', t <= 3);
+  }
 }
 
 // ── Game flow ──────────────────────────────────────────
@@ -499,7 +543,19 @@ function showNextProverb() {
   // Masked display
   _renderMaskedProverb(proverb);
 
-  // State A (Show Answer), hide State B (judge) and answer
+  // Reset timer to idle (show configured seconds, not running)
+  stopProverbTimer();
+  gameState.proverbTimeLeft = gameState.secondsPerWord;
+  const timerEl = document.getElementById('proverb-timer-display');
+  if (timerEl) {
+    timerEl.textContent = gameState.secondsPerWord;
+    timerEl.classList.remove('danger');
+  }
+  const fillEl = document.getElementById('proverb-timer-progress');
+  if (fillEl) { fillEl.style.width = '100%'; fillEl.classList.remove('danger'); }
+  document.getElementById('btn-proverb-start-timer')?.classList.remove('hidden');
+
+  // State A (Start Timer + Show Answer), hide State B (judge) and answer
   document.getElementById('proverb-actions-show')?.classList.remove('hidden');
   document.getElementById('proverb-actions-judge')?.classList.add('hidden');
   document.getElementById('proverb-answer')?.classList.add('hidden');
@@ -520,6 +576,7 @@ function _renderMaskedProverb(proverb) {
 
 function revealProverb() {
   if (!gameState.currentProverb) return;
+  stopProverbTimer();
   gameState.proverbRevealed = true;
   saveState();
 
@@ -665,10 +722,16 @@ function renderSetup() {
   const wordConfigRows = document.getElementById('word-config-rows');
   if (wordConfigRows) wordConfigRows.classList.toggle('hidden', isProverbs);
 
-  // Word-mode steppers (only update when visible)
+  // Show proverb-mode-only config rows in proverb mode
+  const proverbConfigRows = document.getElementById('proverb-config-rows');
+  if (proverbConfigRows) proverbConfigRows.classList.toggle('hidden', !isProverbs);
+
+  // Update stepper displays
+  document.getElementById('secs-display').textContent = gameState.secondsPerWord;
   if (!isProverbs) {
-    document.getElementById('words-display').textContent = gameState.wordsPerRound;
-    document.getElementById('secs-display').textContent  = gameState.secondsPerWord;
+    document.getElementById('words-display').textContent    = gameState.wordsPerRound;
+  } else {
+    document.getElementById('proverbs-display').textContent = gameState.proverbsPerRound;
   }
 
   // Rename secs label for proverb mode
@@ -676,6 +739,7 @@ function renderSetup() {
   if (secsLabelEl) secsLabelEl.textContent = isProverbs ? 'Secs / Proverb' : 'Secs / Word';
 
   updateSetupComputed();
+  updateProverbSetupComputed();
   checkResumeBanner();
 }
 
@@ -684,6 +748,13 @@ function updateSetupComputed() {
   const perTeam  = deckSize / 2;
   const el = document.getElementById('computed-turn-time');
   if (el) el.textContent = `${deckSize} cards · ${perTeam} per team · ${gameState.secondsPerWord}s each`;
+}
+
+function updateProverbSetupComputed() {
+  const total  = Math.floor(gameState.proverbsPerRound / 2) * 2;
+  const perTeam = total / 2;
+  const el = document.getElementById('computed-proverb-time');
+  if (el) el.textContent = `${total} proverbs · ${perTeam} per team · ${gameState.secondsPerWord}s each`;
 }
 
 function checkResumeBanner() {
@@ -871,7 +942,10 @@ function wireEvents() {
               'words-display',  'wordsPerRound', 3, 20, updateSetupComputed);
 
   makeStepper('btn-secs-minus',   'btn-secs-plus',
-              'secs-display',   'secondsPerWord', 3, 30, updateSetupComputed);
+              'secs-display',   'secondsPerWord',    3, 30, () => { updateSetupComputed(); updateProverbSetupComputed(); });
+
+  makeStepper('btn-proverbs-minus', 'btn-proverbs-plus',
+              'proverbs-display', 'proverbsPerRound', 2, 25, updateProverbSetupComputed);
 
   // ── Start game ──────────────────────────────────────
   document.getElementById('btn-start-game').addEventListener('click', () => {
@@ -946,6 +1020,7 @@ function wireEvents() {
   });
 
   // ── Proverb screen ──────────────────────────────────
+  document.getElementById('btn-proverb-start-timer')?.addEventListener('click', startProverbTimer);
   document.getElementById('btn-show-answer')?.addEventListener('click', revealProverb);
   document.getElementById('btn-proverb-correct')?.addEventListener('click', () => judgeProverb('correct'));
   document.getElementById('btn-proverb-wrong')?.addEventListener('click',   () => judgeProverb('wrong'));
