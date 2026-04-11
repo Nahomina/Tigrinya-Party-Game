@@ -2501,6 +2501,22 @@ details[open] > .faq-q::after {
   word-break: break-word;
 }
 
+.auth-profile-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+.auth-profile-link:hover {
+  color: var(--red);
+  text-decoration: underline;
+}
+
 .logout-btn {
   background: var(--red);
   color: white;

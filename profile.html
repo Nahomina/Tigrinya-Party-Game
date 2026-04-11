@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f11" />
+  <title>My Profile — Tigrinya Games</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css?v=21" />
+  <style>
+    .profile-page {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px 48px;
+    }
+
+    /* ── Top nav ── */
+    .profile-nav {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 12px;
+    }
+    .profile-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font: 500 14px var(--font-ui);
+      cursor: pointer;
+      padding: 8px 0;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .profile-back-btn:hover { color: var(--text); }
+    .profile-back-btn svg { flex-shrink: 0; }
+
+    /* ── Avatar card ── */
+    .profile-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font: 700 32px var(--font-display);
+      color: #fff;
+      letter-spacing: 0;
+      user-select: none;
+    }
+    .profile-email {
+      font: 500 15px var(--font-ui);
+      color: var(--text);
+      word-break: break-all;
+      text-align: center;
+    }
+    .profile-joined {
+      font: 400 12px var(--font-ui);
+      color: var(--text-muted);
+    }
+    .profile-badge {
+      display: inline-block;
+      background: var(--red-subtle);
+      color: var(--red);
+      border: 1px solid rgba(229,57,53,.25);
+      border-radius: 6px;
+      font: 600 11px var(--font-ui);
+      padding: 3px 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    /* ── Section ── */
+    .profile-section {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 24px;
+    }
+    .profile-section-title {
+      font: 700 11px var(--font-ui);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin: 0 0 10px;
+    }
+    .profile-pack-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .profile-pack-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .profile-pack-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--correct-bg);
+      border: 1px solid rgba(67,160,71,.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .profile-pack-name {
+      font: 600 14px var(--font-ui);
+      color: var(--text);
+    }
+    .profile-pack-type {
+      font: 400 12px var(--font-ui);
+      color: var(--text-muted);
+    }
+    .profile-no-packs {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font: 400 14px var(--font-ui);
+      line-height: 1.5;
+    }
+    .profile-no-packs a {
+      color: var(--red);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ── Actions ── */
+    .profile-actions {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn-logout {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font: 600 15px var(--font-ui);
+      cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s;
+    }
+    .btn-logout:hover {
+      border-color: var(--red);
+      color: var(--red);
+      background: var(--red-subtle);
+    }
+
+    /* ── Loading / Error states ── */
+    .profile-loading {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      color: var(--text-muted);
+      font: 400 15px var(--font-ui);
+    }
+    .spinner-ring {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body style="margin:0; background: #0f0f11;">
+
+  <!-- Loading state (shown until JS runs) -->
+  <div id="loading-state" class="profile-loading">
+    <div style="text-align:center">
+      <div class="spinner-ring"></div>
+      <p>Loading…</p>
+    </div>
+  </div>
+
+  <!-- Profile content (hidden until authenticated) -->
+  <div id="profile-content" class="profile-page" style="display:none">
+
+    <nav class="profile-nav">
+      <a href="index.html" class="profile-back-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Back to Games
+      </a>
+      <span style="font: 600 13px var(--font-ui); color: var(--text-muted); text-transform:uppercase; letter-spacing:.08em;">
+        My Profile
+      </span>
+    </nav>
+
+    <!-- Avatar + email -->
+    <div class="profile-card">
+      <div class="profile-avatar" id="profile-avatar">?</div>
+      <p class="profile-email" id="profile-email"></p>
+      <p class="profile-joined" id="profile-joined"></p>
+      <span class="profile-badge">Member</span>
+    </div>
+
+    <!-- Unlocked packs -->
+    <div class="profile-section">
+      <p class="profile-section-title">Unlocked Packs</p>
+      <div id="profile-packs-wrap"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="profile-actions">
+      <button class="btn-logout" id="btn-logout">Log Out</button>
+    </div>
+
+  </div>
+
+  <script src="supabase.min.js"></script>
+  <script src="packs.js?v=2"></script>
+  <script>
+    const SUPABASE_URL      = 'https://rzcrdngpybrsjlbenqep.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
+    const UNLOCK_KEY        = 'mayim_unlocked_packs';
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function getUnlockedSlugs() {
+      try { return JSON.parse(localStorage.getItem(UNLOCK_KEY) || '[]'); }
+      catch { return []; }
+    }
+
+    function renderPacks(unlockedSlugs) {
+      const wrap = document.getElementById('profile-packs-wrap');
+      const packs = (typeof PACK_CATALOGUE !== 'undefined' ? PACK_CATALOGUE : [])
+        .filter(p => unlockedSlugs.includes(p.slug));
+
+      if (packs.length === 0) {
+        wrap.innerHTML = `
+          <div class="profile-no-packs">
+            No packs unlocked yet.<br>
+            <a href="index.html">Browse packs →</a>
+          </div>`;
+        return;
+      }
+
+      const list = document.createElement('ul');
+      list.className = 'profile-pack-list';
+      packs.forEach(pack => {
+        const li = document.createElement('li');
+        li.className = 'profile-pack-item';
+        li.innerHTML = `
+          <div class="profile-pack-icon">✓</div>
+          <div>
+            <div class="profile-pack-name">${pack.name}</div>
+            <div class="profile-pack-type">${pack.mode === 'words' ? 'Mayim — Word Pack' : 'Misla — Proverb Pack'}</div>
+          </div>`;
+        list.appendChild(li);
+      });
+      wrap.appendChild(list);
+    }
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+
+      if (!session) {
+        // Not logged in — send back to home
+        window.location.replace('index.html');
+        return;
+      }
+
+      const user = session.user;
+
+      // Fill in profile info
+      const initial = (user.email || '?')[0].toUpperCase();
+      document.getElementById('profile-avatar').textContent = initial;
+      document.getElementById('profile-email').textContent = user.email;
+
+      const joined = new Date(user.created_at);
+      const formatted = joined.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+      document.getElementById('profile-joined').textContent = 'Joined ' + formatted;
+
+      // Render unlocked packs
+      renderPacks(getUnlockedSlugs());
+
+      // Show content
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('profile-content').style.display = 'flex';
+
+      // Logout handler
+      document.getElementById('btn-logout').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-logout');
+        btn.textContent = 'Logging out…';
+        btn.disabled = true;
+        try {
+          await sb.auth.signOut();
+        } catch(e) { /* ignore */ }
+        window.location.replace('index.html');
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1880,7 +1880,8 @@ async function handleLogin(email, password) {
     if (error) throw error;
 
     closeAuthModal();
-    updateAuthUI(true);
+    // Redirect to profile page after successful login
+    window.location.href = 'profile.html';
   } catch (err) {
     reportError(err, { action: 'login' });
     const friendlyMessage = mapAuthErrorToMessage(err);
@@ -1972,13 +1973,20 @@ function updateAuthUI(isLoggedIn) {
   if (!indicator) return;
 
   if (isLoggedIn && _currentUser) {
+    // Show email as profile link + logout button
+    const profileLink = document.createElement('a');
+    profileLink.href = 'profile.html';
+    profileLink.className = 'auth-profile-link';
+    profileLink.textContent = _currentUser.email;
+
     const logoutBtn = document.createElement('button');
     logoutBtn.className = 'logout-btn';
     logoutBtn.textContent = 'Log Out';
     logoutBtn.addEventListener('click', handleLogout);
 
     indicator.textContent = '';
-    indicator.appendChild(document.createTextNode(`${_currentUser.email} `));
+    indicator.appendChild(profileLink);
+    indicator.appendChild(document.createTextNode(' · '));
     indicator.appendChild(logoutBtn);
   } else {
     indicator.textContent = 'Log in to unlock packs';
