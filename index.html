@@ -28,7 +28,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Tigrinya Games" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=18" />
+  <link rel="stylesheet" href="style.css?v=20" />
 
   <!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID -->
   <!-- Apply at https://adsense.google.com — paste your approved snippet here  -->
@@ -74,14 +74,43 @@
 
       </main>
 
-      <button class="how-to-play-btn"
-              id="how-to-play-btn"
-              aria-expanded="false"
-              aria-controls="faq-section">
-        How to Play <span class="how-to-play-arrow" aria-hidden="true">↓</span>
-      </button>
+      <!-- Hero CTA buttons -->
+      <div class="home-btn-group">
+
+        <button class="how-to-play-btn"
+                id="how-to-play-btn"
+                aria-expanded="false"
+                aria-controls="faq-section">
+          How to Play <span class="how-to-play-arrow" aria-hidden="true">↓</span>
+        </button>
+
+        <button class="packs-btn"
+                id="packs-btn"
+                aria-expanded="false"
+                aria-controls="pack-showcase">
+          <svg class="packs-btn-icon" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Word Packs
+          <span class="packs-btn-arrow" aria-hidden="true">↓</span>
+        </button>
+
+      </div>
 
     </div><!-- /.home-hero -->
+
+    <!-- ── Pack showcase — hidden until toggled ──────── -->
+    <section class="pack-showcase" id="pack-showcase"
+             aria-label="Word & Proverb Packs" hidden>
+      <p class="pack-showcase-label">Word Packs</p>
+      <div class="pack-cards" id="pack-cards">
+        <!-- Rendered by renderPackCards() in app.js -->
+      </div>
+    </section>
 
     <!-- ── AdSense unit — shown between hero and FAQ ── -->
     <!-- Replace data-ad-client and data-ad-slot with your approved values   -->
@@ -131,6 +160,28 @@
 
   </div><!-- /.home-wrap -->
 
+  <!-- ── Unlock modal ──────────────────────────────────────── -->
+  <div id="unlock-modal" class="unlock-modal hidden" role="dialog" aria-modal="true" aria-labelledby="unlock-pack-name">
+    <div class="unlock-modal-box">
+      <button class="unlock-modal-close" id="btn-unlock-close" aria-label="Close">✕</button>
+      <p class="unlock-modal-eyebrow">Unlock Pack</p>
+      <p class="unlock-modal-pack-name" id="unlock-pack-name">ሓዳር</p>
+      <p class="unlock-modal-hint">Enter your code from Gumroad</p>
+      <input type="text" id="unlock-code-input" class="unlock-code-input"
+             placeholder="XXXXXXXXXXXXXXXXXXXXXXXX" maxlength="40"
+             autocomplete="off" autocapitalize="characters" spellcheck="false" />
+      <button id="btn-unlock-submit" class="btn-primary unlock-submit-btn">Unlock</button>
+      <p id="unlock-error"   class="unlock-error   hidden"></p>
+      <p id="unlock-success" class="unlock-success hidden">✓ Pack unlocked! Enjoy.</p>
+      <a class="unlock-buy-link" id="unlock-buy-link"
+         href="https://tigrinyapartygames.gumroad.com" target="_blank" rel="noopener noreferrer">
+        Buy a code on Gumroad →
+      </a>
+    </div>
+  </div>
+
+  <script src="packs.js?v=1"></script>
+  <script src="app.js?v=18"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -155,6 +206,41 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     });
+
+    // ── Word Packs toggle ──
+    const packsBtn     = document.getElementById('packs-btn');
+    const packsSection = document.getElementById('pack-showcase');
+    packsBtn.addEventListener('click', () => {
+      const opening = packsSection.hasAttribute('hidden');
+      if (opening) {
+        packsSection.removeAttribute('hidden');
+        packsBtn.setAttribute('aria-expanded', 'true');
+        packsBtn.querySelector('.packs-btn-arrow').textContent = '↑';
+        requestAnimationFrame(() => packsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      } else {
+        packsSection.setAttribute('hidden', '');
+        packsBtn.setAttribute('aria-expanded', 'false');
+        packsBtn.querySelector('.packs-btn-arrow').textContent = '↓';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    // Render pack cards and wire unlock modal on this page
+    renderPackCards();
+    wireUnlockModal();
+
+    // ── Smooth page transition: fade out before navigating to game ──
+    document.querySelectorAll('.home-card').forEach(card => {
+      card.addEventListener('click', e => {
+        e.preventDefault();
+        const href = card.getAttribute('href');
+        document.querySelector('.home-wrap').classList.add('page-exit');
+        setTimeout(() => { window.location.href = href; }, 200);
+      });
+    });
+
+    // ── Fade in on landing (in case user came back from game) ──
+    document.querySelector('.home-wrap').style.animation = 'pageFadeIn 0.3s ease forwards';
   </script>
 
 </body>

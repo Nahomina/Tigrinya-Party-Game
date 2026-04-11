@@ -262,13 +262,14 @@ function buildDeck() {
   // Always use an even count so both teams get equal cards
   const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
 
+  const pool    = getMergedWords();
   const usedSet = new Set(gameState.usedWords.map(w => w.word));
-  let available = gameWords.filter(w => !usedSet.has(w.word));
+  let available = pool.filter(w => !usedSet.has(w.word));
 
   // Recycle pool when too few words remain
   if (available.length < deckSize) {
     gameState.usedWords = [];
-    available = [...gameWords];
+    available = [...pool];
   }
 
   return shuffle(available).slice(0, deckSize);
@@ -294,11 +295,12 @@ function getMaskedProverb(proverbString) {
 
 function buildProverbDeck() {
   const deckSize  = Math.floor(gameState.proverbsPerRound / 2) * 2;
+  const pool      = getMergedProverbs();
   const usedSet   = new Set((gameState.usedProverbs || []).map(p => p.tigrinya));
-  let available   = PROVERBS.filter(p => !usedSet.has(p.tigrinya));
+  let available   = pool.filter(p => !usedSet.has(p.tigrinya));
   if (available.length < deckSize) {
     gameState.usedProverbs = [];
-    available = [...PROVERBS];
+    available = [...pool];
   }
   return shuffle(available).slice(0, deckSize);
 }
@@ -854,6 +856,8 @@ function renderSummary() {
 }
 
 function renderWinner() {
+  validateScores();
+
   const [t0, t1] = gameState.teams;
   let winner = null;
   if      (t0.score > t1.score) winner = t0;
@@ -875,6 +879,9 @@ function renderWinner() {
     f0.classList.toggle('winner', t0.score > t1.score);
     f1.classList.toggle('winner', t1.score > t0.score);
   }
+
+  // Show upsell for the first locked pack
+  renderWinnerUpsell();
 
   clearSavedState();
 }
@@ -1035,7 +1042,7 @@ function wireEvents() {
   // ── Quit modal ──────────────────────────────────────
   document.getElementById('btn-quit-playing').addEventListener('click', showQuitModal);
   document.getElementById('btn-quit-summary').addEventListener('click', showQuitModal);
-  document.getElementById('btn-quit-winner').addEventListener('click', showQuitModal);
+  // btn-quit-winner replaced by ← Home anchor in winner screen
   document.getElementById('btn-quit-cancel').addEventListener('click', hideQuitModal);
   document.getElementById('btn-quit-confirm').addEventListener('click', confirmQuit);
   // Tap backdrop to cancel
@@ -1137,3 +1144,220 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   render();
 });
+
+// ══════════════════════════════════════════════════════════
+// PACK SYSTEM
+// ══════════════════════════════════════════════════════════
+
+// ── Storage helpers ────────────────────────────────────────
+const PACK_STORE_KEY = 'mayim_unlocked_packs';
+
+function getUnlockedPacks() {
+  try { return JSON.parse(localStorage.getItem(PACK_STORE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function storePack(slug, words, proverbs) {
+  const all = getUnlockedPacks();
+  all[slug] = { words, proverbs, unlockedAt: Date.now() };
+  localStorage.setItem(PACK_STORE_KEY, JSON.stringify(all));
+}
+
+function isPackUnlocked(slug) {
+  if (slug === 'classic') return true;
+  return !!getUnlockedPacks()[slug];
+}
+
+// ── Merged deck pools ──────────────────────────────────────
+function getMergedWords() {
+  const unlocked = getUnlockedPacks();
+  let all = [...gameWords];
+  for (const [slug, data] of Object.entries(unlocked)) {
+    if (slug !== 'classic' && Array.isArray(data.words)) all = all.concat(data.words);
+  }
+  return all;
+}
+
+function getMergedProverbs() {
+  const unlocked = getUnlockedPacks();
+  let all = [...PROVERBS];
+  for (const [slug, data] of Object.entries(unlocked)) {
+    if (slug !== 'classic' && Array.isArray(data.proverbs)) all = all.concat(data.proverbs);
+  }
+  return all;
+}
+
+// ── Score validation (anti-tamper) ────────────────────────
+function validateScores() {
+  const maxPossible = gameState.totalRounds * gameState.wordsPerRound;
+  for (const team of gameState.teams) {
+    if (typeof team.score !== 'number' || team.score < 0 || team.score > maxPossible) {
+      console.warn('[security] Score anomaly detected — clamping');
+      team.score = Math.max(0, Math.min(Number(team.score) || 0, maxPossible));
+    }
+  }
+}
+
+// ── Edge Function code validation ─────────────────────────
+const EDGE_FN_URL = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/validate-code';
+
+async function validateAndUnlockCode(code, packSlug) {
+  const res = await fetch(EDGE_FN_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ code: code.trim().toUpperCase(), pack_slug: packSlug }),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json.error || 'Invalid code');
+  storePack(packSlug, json.words, json.proverbs);
+  return json;
+}
+
+// ── Unlock modal ───────────────────────────────────────────
+let _unlockTargetSlug = null;
+
+function openUnlockModal(slug) {
+  _unlockTargetSlug = slug;
+  const catalogue   = (typeof PACK_CATALOGUE !== 'undefined') ? PACK_CATALOGUE : [];
+  const pack        = catalogue.find(p => p.slug === slug);
+  const modal       = document.getElementById('unlock-modal');
+  const nameEl      = document.getElementById('unlock-pack-name');
+  const input       = document.getElementById('unlock-code-input');
+  const errEl       = document.getElementById('unlock-error');
+  const successEl   = document.getElementById('unlock-success');
+  const buyLink     = document.getElementById('unlock-buy-link');
+  if (!modal) return;
+  if (nameEl)    nameEl.textContent  = pack ? `${pack.nameGeez} — ${pack.nameEn}` : slug;
+  if (input)     input.value         = '';
+  if (errEl)     errEl.classList.add('hidden');
+  if (successEl) successEl.classList.add('hidden');
+  // Point "Buy on Gumroad" link to the specific pack product
+  if (buyLink && pack?.gumroadUrl) buyLink.href = pack.gumroadUrl;
+  modal.classList.remove('hidden');
+  input?.focus();
+}
+
+function closeUnlockModal() {
+  document.getElementById('unlock-modal')?.classList.add('hidden');
+  _unlockTargetSlug = null;
+}
+
+function wireUnlockModal() {
+  document.getElementById('btn-unlock-close')?.addEventListener('click', closeUnlockModal);
+  document.getElementById('unlock-modal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeUnlockModal();
+  });
+
+  document.getElementById('btn-unlock-submit')?.addEventListener('click', async () => {
+    const code      = document.getElementById('unlock-code-input')?.value?.trim();
+    const errEl     = document.getElementById('unlock-error');
+    const successEl = document.getElementById('unlock-success');
+    const btn       = document.getElementById('btn-unlock-submit');
+
+    if (!code) { showUnlockError('Please enter your unlock code.'); return; }
+    if (!_unlockTargetSlug) return;
+
+    btn.disabled     = true;
+    btn.textContent  = 'Checking…';
+    errEl?.classList.add('hidden');
+
+    try {
+      await validateAndUnlockCode(code, _unlockTargetSlug);
+      successEl?.classList.remove('hidden');
+      btn.textContent = 'Unlocked ✓';
+      // Refresh pack cards on landing page if present
+      if (typeof renderPackCards === 'function') renderPackCards();
+      // Refresh setup pack toggles if on game page
+      if (typeof renderSetup === 'function') renderSetup();
+      setTimeout(closeUnlockModal, 1800);
+    } catch (err) {
+      btn.disabled    = false;
+      btn.textContent = 'Unlock';
+      showUnlockError(err.message || 'Code not valid. Please try again.');
+    }
+  });
+
+  // Allow Enter key in code input
+  document.getElementById('unlock-code-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-unlock-submit')?.click();
+  });
+}
+
+function showUnlockError(msg) {
+  const el = document.getElementById('unlock-error');
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
+// ── Pack cards on landing page ─────────────────────────────
+function renderPackCards() {
+  const container = document.getElementById('pack-cards');
+  if (!container || typeof PACK_CATALOGUE === 'undefined') return;
+
+  container.innerHTML = PACK_CATALOGUE.map(pack => {
+    const unlocked = isPackUnlocked(pack.slug);
+    const badge = pack.isFree
+      ? `<span class="pack-badge-free">FREE</span>`
+      : unlocked
+        ? `<span class="pack-badge-unlocked">✓ Unlocked</span>`
+        : `<button class="pack-unlock-btn" data-slug="${pack.slug}">£${pack.priceGbp.toFixed(2)} — Unlock</button>`;
+
+    return `
+      <div class="pack-card" style="--pack-accent:${pack.accentColor}">
+        <span class="pack-card-geez" lang="ti">${pack.nameGeez}</span>
+        <div class="pack-card-info">
+          <p class="pack-card-name">${pack.nameEn}</p>
+          <p class="pack-card-desc">${pack.description}</p>
+          <p class="pack-card-meta">${pack.wordCount} words · ${pack.proverbCount} proverbs</p>
+        </div>
+        <div class="pack-card-action">${badge}</div>
+      </div>`;
+  }).join('');
+
+  // Wire unlock buttons
+  container.querySelectorAll('.pack-unlock-btn').forEach(btn => {
+    btn.addEventListener('click', () => openUnlockModal(btn.dataset.slug));
+  });
+}
+
+// ── Pack toggles in game setup ────────────────────────────
+function renderPackToggles() {
+  const container = document.getElementById('pack-checkboxes');
+  const label     = document.getElementById('pack-selector-label');
+  if (!container || typeof PACK_CATALOGUE === 'undefined') return;
+
+  const unlocked = PACK_CATALOGUE.filter(p => isPackUnlocked(p.slug));
+
+  // Only show section if there's more than the classic pack unlocked
+  if (unlocked.length <= 1) {
+    container.innerHTML = '';
+    if (label) label.classList.add('hidden');
+    return;
+  }
+  if (label) label.classList.remove('hidden');
+
+  container.innerHTML = unlocked.map(pack => `
+    <div class="pack-toggle-row">
+      <div>
+        <p class="pack-toggle-name">${pack.nameGeez} — ${pack.nameEn}</p>
+        <p class="pack-toggle-meta">${pack.wordCount} words · ${pack.proverbCount} proverbs</p>
+      </div>
+      <input type="checkbox" class="pack-toggle-input" id="pack-toggle-${pack.slug}"
+             data-slug="${pack.slug}" ${pack.isFree ? 'checked disabled' : 'checked'} />
+    </div>`).join('');
+}
+
+// ── Winner screen upsell ───────────────────────────────────
+function renderWinnerUpsell() {
+  const upsell  = document.getElementById('winner-upsell');
+  const nameEl  = document.getElementById('upsell-pack-name');
+  const btn     = document.getElementById('btn-winner-unlock');
+  if (!upsell || typeof PACK_CATALOGUE === 'undefined') return;
+
+  const nextLocked = PACK_CATALOGUE.find(p => !p.isFree && !isPackUnlocked(p.slug));
+  if (!nextLocked) { upsell.classList.add('hidden'); return; }
+
+  if (nameEl) nameEl.textContent = `${nextLocked.nameGeez} — ${nextLocked.nameEn}`;
+  upsell.classList.remove('hidden');
+
+  btn?.addEventListener('click', () => openUnlockModal(nextLocked.slug), { once: true });
+}

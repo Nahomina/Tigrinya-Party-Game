@@ -149,22 +149,31 @@ html {
   margin: 0;
   padding: 0;
 }
+
+/* Default html/body — scrollable (home, terms, privacy pages) */
 html {
-  height: 100%;
-  overflow: hidden;
+  scroll-behavior: smooth;
 }
 body {
-  height: 100%;
-  overflow: hidden;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
-  /* Only non-interactive surfaces prevent selection;
-     inputs get an explicit override below */
+  overscroll-behavior-y: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Game page only — lock viewport so screens handle their own scroll */
+html:has(.game-body) {
+  height: 100%;
+  overflow: hidden;
+}
+.game-body {
+  height: 100%;
+  overflow: hidden;
+  /* Fade in when the game page first loads */
+  animation: pageFadeIn 0.25s ease forwards;
 }
 
 /* Allow text selection inside inputs — removes highlight artifacts */
@@ -316,9 +325,30 @@ button {
   height: 100dvh;
   overflow: hidden;
 }
-.screen.active { display: flex; }
+.screen.active {
+  display: flex;
+  animation: screenFadeIn 0.22s ease forwards;
+}
 /* Bulletproof: never let two screens show at once */
 .screen:not(.active) { display: none !important; }
+
+/* ── Transition keyframes ────────────────────────────── */
+@keyframes screenFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pageFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pageFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.page-exit {
+  animation: pageFadeOut 0.2s ease forwards;
+  pointer-events: none;
+}
 
 /* ── Tablet & Desktop — centred card ─────────────────── */
 @media (min-width: 768px) {
@@ -1448,6 +1478,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: pageFadeIn 0.3s ease forwards;
 }
 
 /* ── Full-viewport hero — header + cards + CTA ── */
@@ -1620,6 +1651,16 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 .home-card--words:hover .home-card-cta    { color: var(--red); }
 .home-card--proverbs:hover .home-card-cta { color: var(--correct); }
 
+/* ── Hero button group (How to Play + Word Packs) ── */
+.home-btn-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
 /* ── "How to Play" toggle button ── */
 .how-to-play-btn {
   display: inline-flex;
@@ -1649,6 +1690,41 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   transition: transform 0.22s ease;
 }
 .how-to-play-btn[aria-expanded="true"] .how-to-play-arrow {
+  transform: rotate(180deg);
+}
+
+/* ── "Word Packs" toggle button ── */
+.packs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 0.65rem 1.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.packs-btn:hover {
+  background: rgba(230, 57, 70, 0.08);
+}
+.packs-btn-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.packs-btn-arrow {
+  display: inline-block;
+  transition: transform 0.22s ease;
+}
+.packs-btn[aria-expanded="true"] .packs-btn-arrow {
   transform: rotate(180deg);
 }
 
@@ -1798,6 +1874,8 @@ details[open] > .faq-q::after {
   color: var(--text-sub);
   border-color: var(--border);
 }
+/* Winner screen — ← Home sits inside eyebrow bar, not setup hero */
+.winner-home-back { margin-bottom: 0; align-self: center; }
 
 /* ── Tablet (768 px +) ────────────────────────────────── */
 @media (min-width: 768px) {
@@ -2053,3 +2131,170 @@ details[open] > .faq-q::after {
 .btn-proverb-wrong    { background: var(--red);     color: #fff; }
 .btn-proverb-correct  { background: var(--correct); color: #fff; }
 .btn-icon { font-size: 1.6rem; line-height: 1; }
+
+/* ══════════════════════════════════════════════════════════
+   PACK SYSTEM
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Pack showcase (landing page) ──────────────────────── */
+.pack-showcase {
+  width: 100%;
+  padding: 0 1.25rem 1.5rem;
+}
+.pack-showcase-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+.pack-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.pack-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  position: relative;
+  overflow: hidden;
+}
+.pack-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--pack-accent, #e63946);
+}
+.pack-card-geez {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--text);
+  min-width: 2.5rem;
+  text-align: center;
+}
+.pack-card-info { flex: 1; min-width: 0; }
+.pack-card-name  { font-size: 0.8rem; font-weight: 700; color: var(--text); margin: 0 0 0.1rem; }
+.pack-card-desc  { font-size: 0.68rem; color: var(--text-muted); margin: 0 0 0.25rem; }
+.pack-card-meta  { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.06em; margin: 0; }
+.pack-card-action { flex-shrink: 0; }
+
+.pack-badge-free {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--correct); background: rgba(42,157,143,0.12);
+  padding: 0.2rem 0.6rem; border-radius: 20px;
+}
+.pack-badge-unlocked { color: var(--correct); font-size: 0.75rem; font-weight: 700; }
+
+.pack-unlock-btn {
+  font-size: 0.7rem; font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.pack-unlock-btn:hover { background: rgba(230,57,70,0.08); }
+
+/* ── Unlock modal ────────────────────────────────────────── */
+.unlock-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500; padding: 1rem;
+}
+.unlock-modal.hidden { display: none !important; }
+
+.unlock-modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem 1.5rem;
+  width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 0.75rem;
+  position: relative;
+}
+.unlock-modal-close {
+  position: absolute; top: 0.75rem; right: 0.75rem;
+  background: none; border: none;
+  color: var(--text-muted); font-size: 1rem;
+  cursor: pointer; padding: 0.25rem;
+  line-height: 1;
+}
+.unlock-modal-close:hover { color: var(--text); }
+.unlock-modal-eyebrow {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); margin: 0;
+}
+.unlock-modal-pack-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem; line-height: 1;
+  color: var(--text); margin: 0;
+}
+.unlock-modal-hint { font-size: 0.78rem; color: var(--text-muted); margin: 0; }
+
+.unlock-code-input {
+  width: 100%; padding: 0.75rem 1rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: 0.9rem;
+  font-family: 'Consolas', monospace;
+  letter-spacing: 0.1em; text-align: center;
+  box-sizing: border-box;
+}
+.unlock-code-input:focus { outline: none; border-color: var(--accent); }
+.unlock-submit-btn { width: 100%; }
+.unlock-error   { font-size: 0.78rem; color: var(--danger); text-align: center; margin: 0; }
+.unlock-success { font-size: 0.82rem; color: var(--correct); font-weight: 700; text-align: center; margin: 0; }
+.unlock-buy-link {
+  font-size: 0.72rem; color: var(--text-muted);
+  text-align: center; text-decoration: none;
+}
+.unlock-buy-link:hover { color: var(--accent); }
+
+/* ── Pack toggles in game setup ─────────────────────────── */
+.pack-checkboxes {
+  display: flex; flex-direction: column; gap: 0;
+  width: 100%; align-self: stretch; margin-bottom: 0.5rem;
+}
+.pack-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+}
+.pack-toggle-name { font-size: 0.8rem; font-weight: 600; color: var(--text); margin: 0 0 0.1rem; }
+.pack-toggle-meta { font-size: 0.65rem; color: var(--text-muted); margin: 0; }
+.pack-toggle-input {
+  width: 1.1rem; height: 1.1rem;
+  accent-color: var(--accent);
+  cursor: pointer; flex-shrink: 0;
+}
+
+/* ── Winner upsell ───────────────────────────────────────── */
+.winner-upsell {
+  margin: 1rem 1.25rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.winner-upsell-label {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); margin: 0;
+}
+.winner-upsell-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; line-height: 1;
+  color: var(--text); margin: 0;
+}
+.winner-upsell-btn { font-size: 0.78rem; align-self: center; }
