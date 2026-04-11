@@ -227,16 +227,28 @@
       });
     }
 
+    // ── How to Play & Word Packs Accordion (mutually exclusive) ──
     const btn = document.getElementById('how-to-play-btn');
     const faq = document.getElementById('faq-section');
+    const packsBtn     = document.getElementById('packs-btn');
+    const packsSection = document.getElementById('pack-showcase');
+
     btn.addEventListener('click', () => {
       const opening = faq.hasAttribute('hidden');
       if (opening) {
+        // Open FAQ, close packs
         faq.removeAttribute('hidden');
         btn.setAttribute('aria-expanded', 'true');
         btn.querySelector('.how-to-play-arrow').textContent = '↑';
+
+        // Close packs section if open
+        packsSection.setAttribute('hidden', '');
+        packsBtn.setAttribute('aria-expanded', 'false');
+        packsBtn.querySelector('.packs-btn-arrow').textContent = '↓';
+
         requestAnimationFrame(() => faq.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       } else {
+        // Close FAQ
         faq.setAttribute('hidden', '');
         btn.setAttribute('aria-expanded', 'false');
         btn.querySelector('.how-to-play-arrow').textContent = '↓';
@@ -244,17 +256,22 @@
       }
     });
 
-    // ── Word Packs toggle ──
-    const packsBtn     = document.getElementById('packs-btn');
-    const packsSection = document.getElementById('pack-showcase');
     packsBtn.addEventListener('click', () => {
       const opening = packsSection.hasAttribute('hidden');
       if (opening) {
+        // Open packs, close FAQ
         packsSection.removeAttribute('hidden');
         packsBtn.setAttribute('aria-expanded', 'true');
         packsBtn.querySelector('.packs-btn-arrow').textContent = '↑';
+
+        // Close FAQ section if open
+        faq.setAttribute('hidden', '');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.querySelector('.how-to-play-arrow').textContent = '↓';
+
         requestAnimationFrame(() => packsSection.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       } else {
+        // Close packs
         packsSection.setAttribute('hidden', '');
         packsBtn.setAttribute('aria-expanded', 'false');
         packsBtn.querySelector('.packs-btn-arrow').textContent = '↓';

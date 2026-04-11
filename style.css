@@ -1678,12 +1678,17 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 .how-to-play-btn:hover {
-  border-color: var(--border-focus);
+  border-color: var(--text-sub);
   color: var(--text);
   background: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+.how-to-play-btn:active {
+  transform: translateY(0);
 }
 .how-to-play-arrow {
   display: inline-block;
@@ -1710,10 +1715,17 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 .packs-btn:hover {
-  background: rgba(230, 57, 70, 0.08);
+  background: rgba(230, 57, 70, 0.12);
+  border-color: var(--red-hover);
+  color: var(--red-hover);
+  box-shadow: 0 2px 8px rgba(230, 57, 70, 0.15);
+  transform: translateY(-2px);
+}
+.packs-btn:active {
+  transform: translateY(0);
 }
 .packs-btn-icon {
   width: 1rem;
