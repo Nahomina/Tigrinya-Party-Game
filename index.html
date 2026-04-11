@@ -28,7 +28,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="Tigrinya Games" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=21" />
 
   <!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX with your Publisher ID -->
   <!-- Apply at https://adsense.google.com — paste your approved snippet here  -->
@@ -160,6 +160,43 @@
 
   </div><!-- /.home-wrap -->
 
+  <!-- ── Auth Indicator (top-right) ──────────────────────── -->
+  <div id="auth-indicator" class="auth-indicator">Log in to unlock packs</div>
+
+  <!-- ── Auth Modal ──────────────────────────────────────────── -->
+  <div id="auth-modal" class="auth-modal hidden" role="dialog" aria-modal="true">
+    <div class="auth-modal-box">
+      <button class="auth-modal-close" id="btn-auth-close" aria-label="Close">✕</button>
+
+      <!-- Login Form -->
+      <form id="auth-login-form" class="auth-form">
+        <h2 class="auth-title">Log In</h2>
+        <input type="email" id="auth-email-login" class="auth-input" placeholder="Email" required />
+        <input type="password" id="auth-password-login" class="auth-input" placeholder="Password" required />
+        <button type="submit" id="btn-auth-login" class="btn-primary auth-btn">Log In</button>
+        <p class="auth-switch">Don't have an account? <button type="button" id="btn-switch-signup" class="auth-link-btn">Sign up</button></p>
+        <p id="auth-error" class="auth-error hidden"></p>
+      </form>
+
+      <!-- Signup Form -->
+      <form id="auth-signup-form" class="auth-form hidden">
+        <h2 class="auth-title">Create Account</h2>
+        <input type="email" id="auth-email-signup" class="auth-input" placeholder="Email" required />
+        <input type="password" id="auth-password-signup" class="auth-input" placeholder="Password (6+ chars)" required />
+        <input type="password" id="auth-password-confirm" class="auth-input" placeholder="Confirm password" required />
+        <label class="auth-checkbox">
+          <input type="checkbox" id="auth-terms" required />
+          I agree to the Terms of Service
+        </label>
+        <button type="submit" id="btn-auth-signup" class="btn-primary auth-btn">Create Account</button>
+        <p class="auth-switch">Already have an account? <button type="button" id="btn-switch-login" class="auth-link-btn">Log in</button></p>
+        <p id="auth-error-signup" class="auth-error hidden"></p>
+      </form>
+
+      <p id="auth-success" class="auth-success hidden" style="margin-top:0.5rem;"></p>
+    </div>
+  </div>
+
   <!-- ── Unlock modal ──────────────────────────────────────── -->
   <div id="unlock-modal" class="unlock-modal hidden" role="dialog" aria-modal="true" aria-labelledby="unlock-pack-name">
     <div class="unlock-modal-box">
@@ -181,7 +218,7 @@
   </div>
 
   <script src="packs.js?v=1"></script>
-  <script src="app.js?v=18"></script>
+  <script src="app.js?v=19"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -241,6 +278,43 @@
 
     // ── Fade in on landing (in case user came back from game) ──
     document.querySelector('.home-wrap').style.animation = 'pageFadeIn 0.3s ease forwards';
+
+    // ── Initialize Authentication
+    initAuth();
+
+    // ── Wire Auth Modal Buttons ──
+    document.getElementById('btn-auth-close').addEventListener('click', closeAuthModal);
+
+    document.getElementById('btn-switch-signup').addEventListener('click', (e) => {
+      e.preventDefault();
+      openAuthModal('signup');
+    });
+
+    document.getElementById('btn-switch-login').addEventListener('click', (e) => {
+      e.preventDefault();
+      openAuthModal('login');
+    });
+
+    // ── Wire Auth Forms ──
+    document.getElementById('auth-login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email-login').value;
+      const password = document.getElementById('auth-password-login').value;
+      handleLogin(email, password);
+    });
+
+    document.getElementById('auth-signup-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email-signup').value;
+      const password = document.getElementById('auth-password-signup').value;
+      const confirm = document.getElementById('auth-password-confirm').value;
+      handleSignup(email, password, confirm);
+    });
+
+    // Close auth modal when clicking outside
+    document.getElementById('auth-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeAuthModal();
+    });
   </script>
 
 </body>

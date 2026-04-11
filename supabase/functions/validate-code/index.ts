@@ -1,14 +1,16 @@
 // validate-code — Supabase Edge Function
-// Verifies a Gumroad license key, then returns the pack's proverbs from Supabase.
-// Gumroad license keys are UUIDs auto-generated per sale (Insert → License key widget).
-// Gumroad API endpoint: POST https://api.gumroad.com/v2/licenses/verify
+// 1. Extracts user_id from JWT Authorization header
+// 2. Verifies Gumroad license key (increments use count to prevent sharing)
+// 3. Binds code to user account in user_pack_unlocks table
+// 4. Returns pack content from Supabase
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { jwtDecode } from 'https://esm.sh/jwt-decode@4.0.0';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  'https://tigrinya-party-game.vercel.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 // Map pack slug → Gumroad product permalink
@@ -23,6 +25,21 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
   if (req.method !== 'POST') return jsonError('Method not allowed', 405);
 
+  // ── Extract user_id from Authorization header ────────────────────────
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return jsonError('Unauthorized: Missing authorization header', 401);
+  }
+
+  let userId: string;
+  try {
+    const token = authHeader.slice(7); // Remove 'Bearer '
+    const decoded = jwtDecode<{ sub: string }>(token);
+    userId = decoded.sub;
+  } catch {
+    return jsonError('Unauthorized: Invalid token', 401);
+  }
+
   let body: { code?: string; pack_slug?: string };
   try { body = await req.json(); }
   catch { return jsonError('Invalid JSON body', 400); }
@@ -34,14 +51,21 @@ Deno.serve(async (req: Request) => {
   const permalink = PACK_PERMALINKS[pack_slug];
   if (!permalink) return jsonError('Pack not available yet', 404);
 
-  // ── Verify with Gumroad API ────────────────────────────────────────
+  // ── Hash the submitted code (SHA-256) ────────────────────────────────
+  const encoded = new TextEncoder().encode(code.trim().toUpperCase());
+  const buf = await crypto.subtle.digest('SHA-256', encoded);
+  const codeHash = Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
+  // ── Verify with Gumroad API (increment_uses_count: true prevents sharing) ─
   const gumroadRes = await fetch('https://api.gumroad.com/v2/licenses/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       product_permalink: permalink,
       license_key: code.trim(),
-      increment_uses_count: 'false',
+      increment_uses_count: 'true',  // ← Changed from 'false': mark code as used globally
     }),
   });
 
@@ -62,6 +86,33 @@ Deno.serve(async (req: Request) => {
   const { data: packRow } = await sb.from('packs').select('id').eq('slug', pack_slug).single();
   if (!packRow) return jsonError('Pack config error', 500);
 
+  // ── Bind code to user account ────────────────────────────────────────
+  // Check if user already unlocked this code
+  const { data: existingUnlock } = await sb
+    .from('user_pack_unlocks')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('code_hash', codeHash)
+    .eq('pack_id', packRow.id)
+    .single();
+
+  // If this is a new unlock, insert into user_pack_unlocks
+  if (!existingUnlock) {
+    const { error: insertError } = await sb
+      .from('user_pack_unlocks')
+      .insert({
+        user_id: userId,
+        pack_id: packRow.id,
+        code_hash: codeHash,
+      });
+
+    if (insertError) {
+      console.error('Failed to insert unlock:', insertError);
+      return jsonError('Failed to record unlock', 500);
+    }
+  }
+
+  // ── Fetch pack content ──────────────────────────────────────────────
   const { data: proverbs, error: proverbsErr } = await sb
     .from('proverbs')
     .select('tigrinya, latin, english, difficulty')

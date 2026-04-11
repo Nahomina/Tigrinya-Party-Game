@@ -1202,9 +1202,16 @@ function validateScores() {
 const EDGE_FN_URL = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/validate-code';
 
 async function validateAndUnlockCode(code, packSlug) {
+  // Get the current session to include auth token
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error('Not authenticated');
+
   const res = await fetch(EDGE_FN_URL, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
     body:    JSON.stringify({ code: code.trim().toUpperCase(), pack_slug: packSlug }),
   });
   const json = await res.json();
@@ -1217,6 +1224,13 @@ async function validateAndUnlockCode(code, packSlug) {
 let _unlockTargetSlug = null;
 
 function openUnlockModal(slug) {
+  // Check if user is authenticated before showing code input modal
+  if (!_currentUser) {
+    _pendingUnlockPackSlug = slug;
+    openAuthModal('login');
+    return;
+  }
+
   _unlockTargetSlug = slug;
   const catalogue   = (typeof PACK_CATALOGUE !== 'undefined') ? PACK_CATALOGUE : [];
   const pack        = catalogue.find(p => p.slug === slug);
@@ -1361,3 +1375,185 @@ function renderWinnerUpsell() {
 
   btn?.addEventListener('click', () => openUnlockModal(nextLocked.slug), { once: true });
 }
+
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+// ── AUTHENTICATION SYSTEM ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+let _currentUser = null;
+let _pendingUnlockPackSlug = null;
+
+// ── Initialize Supabase Auth ───────────────────────────────────────────
+async function initAuth() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (session) {
+      _currentUser = session.user;
+      updateAuthUI(true);
+    } else {
+      updateAuthUI(false);
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        _currentUser = session.user;
+        updateAuthUI(true);
+
+        // If there's a pending pack unlock after login, open the unlock modal
+        if (_pendingUnlockPackSlug) {
+          setTimeout(() => {
+            openUnlockModal(_pendingUnlockPackSlug);
+            _pendingUnlockPackSlug = null;
+          }, 300);
+        }
+      } else {
+        _currentUser = null;
+        updateAuthUI(false);
+      }
+    });
+  } catch (err) {
+    console.warn('Auth initialization error:', err);
+  }
+}
+
+// ── Auth Modal Management ──────────────────────────────────────────────
+function openAuthModal(mode = 'login') {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+
+  modal.classList.remove('hidden');
+
+  if (mode === 'signup') {
+    document.getElementById('auth-login-form')?.classList.add('hidden');
+    document.getElementById('auth-signup-form')?.classList.remove('hidden');
+  } else {
+    document.getElementById('auth-login-form')?.classList.remove('hidden');
+    document.getElementById('auth-signup-form')?.classList.add('hidden');
+  }
+}
+
+function closeAuthModal() {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+
+  modal.classList.add('hidden');
+  document.getElementById('auth-login-form')?.reset();
+  document.getElementById('auth-signup-form')?.reset();
+  document.getElementById('auth-error')?.classList.add('hidden');
+  document.getElementById('auth-error-signup')?.classList.add('hidden');
+}
+
+// ── Handle Login ───────────────────────────────────────────────────────
+async function handleLogin(email, password) {
+  const btn = document.getElementById('btn-auth-login');
+  if (!btn) return;
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Logging in...';
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) throw error;
+
+    closeAuthModal();
+    updateAuthUI(true);
+  } catch (err) {
+    showAuthError(err.message, 'auth-error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ── Handle Signup ──────────────────────────────────────────────────────
+async function handleSignup(email, password, confirmPassword) {
+  const btn = document.getElementById('btn-auth-signup');
+  if (!btn) return;
+
+  if (password !== confirmPassword) {
+    showAuthError('Passwords do not match', 'auth-error-signup');
+    return;
+  }
+
+  if (password.length < 6) {
+    showAuthError('Password must be at least 6 characters', 'auth-error-signup');
+    return;
+  }
+
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Creating account...';
+
+  try {
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    if (error) throw error;
+
+    closeAuthModal();
+    showAuthSuccess('Account created! You can now unlock packs.');
+  } catch (err) {
+    showAuthError(err.message, 'auth-error-signup');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+// ── Handle Logout ──────────────────────────────────────────────────────
+async function handleLogout() {
+  try {
+    await supabase.auth.signOut();
+    _currentUser = null;
+    updateAuthUI(false);
+  } catch (err) {
+    console.error('Logout error:', err);
+  }
+}
+
+// ── Update Auth UI ─────────────────────────────────────────────────────
+function updateAuthUI(isLoggedIn) {
+  const indicator = document.getElementById('auth-indicator');
+  if (!indicator) return;
+
+  if (isLoggedIn && _currentUser) {
+    const logoutBtn = document.createElement('button');
+    logoutBtn.className = 'logout-btn';
+    logoutBtn.textContent = 'Log Out';
+    logoutBtn.addEventListener('click', handleLogout);
+
+    indicator.innerHTML = '';
+    indicator.appendChild(document.createTextNode(`${_currentUser.email} `));
+    indicator.appendChild(logoutBtn);
+  } else {
+    indicator.textContent = 'Log in to unlock packs';
+  }
+}
+
+// ── Show Auth Error ────────────────────────────────────────────────────
+function showAuthError(msg, elementId = 'auth-error') {
+  const errorEl = document.getElementById(elementId);
+  if (!errorEl) return;
+
+  errorEl.textContent = msg;
+  errorEl.classList.remove('hidden');
+}
+
+// ── Show Auth Success Message ──────────────────────────────────────────
+function showAuthSuccess(msg) {
+  const successEl = document.getElementById('auth-success');
+  if (!successEl) return;
+
+  successEl.textContent = msg;
+  successEl.classList.remove('hidden');
+  setTimeout(() => successEl.classList.add('hidden'), 3000);
+}
+
+// ── Updated openUnlockModal with Auth Check ────────────────────────────
+// (This function modifies the existing openUnlockModal, see below)
+
+// ── Updated validateAndUnlockCode with Auth Token ─────────────────────
+// (This function modifies the existing validateAndUnlockCode, see below)

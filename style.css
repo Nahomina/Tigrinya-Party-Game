@@ -2298,3 +2298,257 @@ details[open] > .faq-q::after {
   color: var(--text); margin: 0;
 }
 .winner-upsell-btn { font-size: 0.78rem; align-self: center; }
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   ── AUTHENTICATION UI ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Auth Modal ─────────────────────────────────────────────────────────── */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  padding: 1rem;
+  animation: modalSlideUp 0.15s ease forwards;
+}
+
+.auth-modal.hidden { display: none !important; }
+
+.auth-modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  width: 100%;
+  max-width: 360px;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.15s;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-modal-close:hover {
+  color: var(--text);
+  transform: scale(1.1);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+  line-height: 1;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-family: var(--font-ui);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.auth-input:focus {
+  border-color: var(--border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 102, 170, 0.1);
+}
+
+.auth-input::placeholder {
+  color: var(--text-muted);
+}
+
+.auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.auth-checkbox:hover {
+  color: var(--text-sub);
+}
+
+.auth-checkbox input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+  accent-color: var(--red);
+}
+
+.auth-btn {
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.auth-switch {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0;
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  padding: 0;
+  font-size: inherit;
+  transition: color 0.2s;
+}
+
+.auth-link-btn:hover {
+  color: var(--red-hover);
+}
+
+.auth-link-btn:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.auth-error {
+  color: var(--text);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin: 0;
+  animation: slideDown 0.2s ease;
+}
+
+.auth-error.hidden { display: none; }
+
+.auth-success {
+  color: var(--correct);
+  background: var(--correct-bg);
+  border: 1px solid var(--correct);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin: 0;
+  animation: slideDown 0.2s ease;
+}
+
+.auth-success.hidden { display: none; }
+
+.auth-indicator {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  z-index: 400;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 300px;
+  word-break: break-word;
+}
+
+.logout-btn {
+  background: var(--red);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.logout-btn:hover {
+  background: var(--red-hover);
+  transform: scale(1.05);
+}
+
+.logout-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Enhanced Button Transitions ───────────────────────────────────────── */
+.btn-primary {
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
