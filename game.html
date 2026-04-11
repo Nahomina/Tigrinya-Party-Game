@@ -18,6 +18,25 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css?v=20" />
   <title>Mayim — ማይም</title>
+
+  <!-- Sentry Error Tracking (Production) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.80.0/bundle.min.js"
+    integrity="sha384-lPMZV8K6RIrDXv8A0j0TQ9/Zq/lqGv3Lr7HnHj7nDYfU0xFVbJ8gkVvU7aUMNvWx"
+    crossorigin="anonymous"></script>
+  <script>
+    // Initialize Sentry in production (replace YOUR_DSN with actual DSN)
+    if (window.location.hostname !== 'localhost' && typeof Sentry !== 'undefined') {
+      Sentry.init({
+        dsn: 'https://YOUR_DSN@sentry.io/YOUR_PROJECT_ID',
+        environment: 'production',
+        tracesSampleRate: 0.1,
+        allowUrls: [
+          /https?:\/\/(tigrinya-party-game\.vercel\.app|localhost)/,
+        ],
+      });
+    }
+  </script>
 </head>
 <body class="game-body">
 

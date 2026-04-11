@@ -15,6 +15,12 @@ function vibrate(pattern) {
   if ('vibrate' in navigator) navigator.vibrate(pattern);
 }
 
+// ── Debug Mode ────────────────────────────────────────
+const DEBUG = new URLSearchParams(window.location.search).has('debug');
+function debugLog(...args) {
+  if (DEBUG) console.log('[DEBUG]', ...args);
+}
+
 // ── Defaults ───────────────────────────────────────────
 const STORAGE_KEY  = 'mayim_state';
 const NAMES_KEY    = 'mayim_team_names';
@@ -55,7 +61,7 @@ async function fetchWordsFromSupabase() {
     const cacheTime = localStorage.getItem(WORDS_CACHE_KEY + '_time');
 
     if (cached && cacheTime && Date.now() - parseInt(cacheTime) < WORDS_CACHE_TTL) {
-      console.log('✓ Using cached words (24h TTL)');
+      debugLog('✓ Using cached words (24h TTL)');
       return JSON.parse(cached);
     }
 
@@ -74,7 +80,7 @@ async function fetchWordsFromSupabase() {
     localStorage.setItem(WORDS_CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(WORDS_CACHE_KEY + '_time', Date.now().toString());
 
-    console.log(`✓ Fetched ${data.length} words from Supabase`);
+    debugLog(`✓ Fetched ${data.length} words from Supabase`);
     return data;
   } catch (err) {
     console.warn('⚠ Failed to fetch from Supabase:', err);
@@ -82,12 +88,12 @@ async function fetchWordsFromSupabase() {
     // Fallback: use cached words if available
     const cached = localStorage.getItem(WORDS_CACHE_KEY);
     if (cached) {
-      console.log('✓ Using offline cached words');
+      debugLog('✓ Using offline cached words');
       return JSON.parse(cached);
     }
 
     // Last resort: use hardcoded WORDS array from words.js
-    console.log('✓ Using fallback words.js array');
+    debugLog('✓ Using fallback words.js array');
     return WORDS;
   }
 }
@@ -277,7 +283,7 @@ function initNetworkMonitoring() {
 
   // Detect when user comes back online
   window.addEventListener('online', () => {
-    console.log('✓ Network connection restored');
+    debugLog('✓ Network connection restored');
     showNotification('You are back online!', 'success');
   });
 }
@@ -286,7 +292,7 @@ function showNotification(message, type = 'info') {
   // Log to console for debugging
   if (type === 'warning') console.warn(message);
   if (type === 'error') console.error(message);
-  if (type === 'success') console.log(message);
+  if (type === 'success') debugLog(message);
 
   // Could be extended to show toast notification UI
   // For now, just log to console
@@ -495,7 +501,24 @@ function updateProverbTimerUI() {
 }
 
 // ── Game flow ──────────────────────────────────────────
+function validateGameStart() {
+  const words = getMergedWords();
+  const proverbs = getMergedProverbs();
+
+  if (words.length === 0) {
+    showNotification('No words available. Please unlock a pack first.', 'error');
+    return false;
+  }
+  if (gameState.mode === 'proverbs' && proverbs.length === 0) {
+    showNotification('No proverbs available. Please unlock a pack first.', 'error');
+    return false;
+  }
+  return true;
+}
+
 function startGame() {
+  if (!validateGameStart()) return;
+
   const turnDuration = computeTurnDuration();
   const startTeam    = Math.random() < 0.5 ? 0 : 1;
   const basePayload  = {
@@ -1378,6 +1401,9 @@ async function validateAndUnlockCode(code, packSlug) {
   } catch (err) {
     clearTimeout(timeoutId);
 
+    // Report to Sentry
+    reportError(err, { action: 'unlock_code', pack: packSlug });
+
     // Handle timeout error
     if (err.name === 'AbortError') {
       throw new Error('Request timed out. Please check your internet connection and try again.');
@@ -1699,12 +1725,43 @@ async function initAuth() {
   }
 }
 
+// ── Modal Focus Trapping ──────────────────────────────────────────────
+// Trap focus within a modal using Tab key for better accessibility
+function trapFocus(modal) {
+  const focusableElements = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+
+  function handleKeyDown(e) {
+    if (e.key !== 'Tab') return;
+
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }
+
+  modal.addEventListener('keydown', handleKeyDown);
+  if (firstElement) firstElement.focus();
+  return () => modal.removeEventListener('keydown', handleKeyDown);
+}
+
 // ── Auth Modal Management ──────────────────────────────────────────────
 function openAuthModal(mode = 'login') {
   const modal = document.getElementById('auth-modal');
   if (!modal) return;
 
   modal.classList.remove('hidden');
+  trapFocus(modal);
 
   // Update active tab
   document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -1787,6 +1844,7 @@ async function handleLogin(email, password) {
     closeAuthModal();
     updateAuthUI(true);
   } catch (err) {
+    reportError(err, { action: 'login' });
     const friendlyMessage = mapAuthErrorToMessage(err);
     showAuthError(friendlyMessage, 'auth-error');
   } finally {
@@ -1827,12 +1885,21 @@ async function handleSignup(email, password, confirmPassword) {
     closeAuthModal();
     showAuthSuccess('Account created! You can now unlock packs.');
   } catch (err) {
+    reportError(err, { action: 'signup' });
     const friendlyMessage = mapAuthErrorToMessage(err);
     showAuthError(friendlyMessage, 'auth-error-signup');
   } finally {
     btn.disabled = false;
     if (textEl) textEl.textContent = originalText;
     if (spinnerEl) spinnerEl.classList.add('hidden');
+  }
+}
+
+// ── Sentry Error Reporting ────────────────────────────────────────────
+function reportError(err, context = {}) {
+  console.error('[Error]', err);
+  if (typeof Sentry !== 'undefined' && Sentry.captureException) {
+    Sentry.captureException(err, { contexts: { ...context } });
   }
 }
 
@@ -1843,7 +1910,7 @@ async function handleLogout() {
     _currentUser = null;
     updateAuthUI(false);
   } catch (err) {
-    console.error('Logout error:', err);
+    reportError(err, { action: 'logout' });
   }
 }
 

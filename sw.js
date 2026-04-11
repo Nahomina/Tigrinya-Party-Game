@@ -20,26 +20,50 @@ const PRECACHE_ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_VERSION)
-      .then(cache => cache.addAll(PRECACHE_ASSETS))
+      .then(cache => {
+        // Add all assets, but continue even if some fail
+        return Promise.allSettled(
+          PRECACHE_ASSETS.map(url => cache.add(url))
+        ).then(results => {
+          const failed = results.filter(r => r.status === 'rejected');
+          if (failed.length > 0) {
+            console.warn(`[SW] Failed to cache ${failed.length} asset(s)`);
+          }
+          return cache;
+        });
+      })
       .then(() => self.skipWaiting())  // activate immediately
+      .catch(err => {
+        console.error('[SW] Cache install failed:', err);
+        // Continue even if cache fails
+        return self.skipWaiting();
+      })
   );
 });
 
 // ── Activate: wipe all old caches immediately ─────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_VERSION && key !== SUPABASE_API_CACHE)
-          .map(key => caches.delete(key))
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE_VERSION && key !== SUPABASE_API_CACHE)
+            .map(key => caches.delete(key).catch(err => console.warn(`[SW] Failed to delete cache ${key}:`, err)))
+        )
       )
-    ).then(() => {
-      self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
-      });
-      return self.clients.claim();  // take control of all open tabs immediately
-    })
+      .then(() => {
+        self.clients.matchAll({ type: 'window' })
+          .then(clients => {
+            clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+          })
+          .catch(err => console.warn('[SW] Failed to notify clients:', err));
+        return self.clients.claim();  // take control of all open tabs immediately
+      })
+      .catch(err => {
+        console.error('[SW] Activation failed:', err);
+        return self.clients.claim();
+      })
   );
 });
 
@@ -60,18 +84,29 @@ self.addEventListener('fetch', event => {
           if (response && response.status === 200) {
             const clone = response.clone();
             const key = isSbApi ? SUPABASE_API_CACHE : CACHE_VERSION;
-            caches.open(key).then(c => c.put(event.request, clone));
+            caches.open(key)
+              .then(c => c.put(event.request, clone))
+              .catch(err => console.warn('[SW] Cache write failed:', err));
           }
           return response;
         })
-        .catch(() => caches.match(event.request))
+        .catch(err => {
+          console.warn('[SW] Fetch failed, falling back to cache:', event.request.url, err);
+          return caches.match(event.request);
+        })
     );
     return;
   }
 
   // ── CDN scripts: network-first (don't cache — they version themselves) ─
   if (isCdnJs) {
-    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+    event.respondWith(
+      fetch(event.request)
+        .catch(err => {
+          console.warn('[SW] CDN fetch failed, falling back to cache:', event.request.url);
+          return caches.match(event.request);
+        })
+    );
     return;
   }
 
@@ -79,14 +114,21 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Only cache same-origin basic responses (not opaque/cors — can't clone those safely)
-        if (response && response.status === 200 && response.type === 'basic') {
-          const toCache = response.clone();
-          caches.open(CACHE_VERSION).then(c => c.put(event.request, toCache));
-        }
-        return response;
-      }).catch(() => caches.match(event.request));
+      return fetch(event.request)
+        .then(response => {
+          // Only cache same-origin basic responses (not opaque/cors — can't clone those safely)
+          if (response && response.status === 200 && response.type === 'basic') {
+            const toCache = response.clone();
+            caches.open(CACHE_VERSION)
+              .then(c => c.put(event.request, toCache))
+              .catch(err => console.warn('[SW] Cache write failed:', err));
+          }
+          return response;
+        })
+        .catch(err => {
+          console.warn('[SW] Fetch failed, returning cached:', event.request.url);
+          return caches.match(event.request);
+        });
     })
   );
 });
