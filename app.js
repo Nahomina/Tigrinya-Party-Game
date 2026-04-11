@@ -182,7 +182,13 @@ function setState(newPhase, payload = {}) {
   render();
 }
 
+// True when we're on game.html (all game screens exist)
+const IS_GAME_PAGE = !!document.getElementById('screen-setup');
+
 function render() {
+  // Nothing to render on index.html — all screens live in game.html
+  if (!IS_GAME_PAGE) return;
+
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const screenMap = {
     setup:        'screen-setup',
@@ -193,7 +199,7 @@ function render() {
     winner:       'screen-winner',
   };
   const id = screenMap[gameState.phase];
-  if (id) document.getElementById(id).classList.add('active');
+  if (id) document.getElementById(id)?.classList.add('active');
   renderers[gameState.phase]?.();
 }
 
@@ -1037,14 +1043,18 @@ function renderWinner() {
 // ── Stepper factory ────────────────────────────────────
 // DRY helper that wires +/− buttons to a gameState key.
 function makeStepper(minusId, plusId, displayId, key, min, max, onChange) {
-  document.getElementById(minusId).addEventListener('click', () => {
+  const minusEl = document.getElementById(minusId);
+  const plusEl  = document.getElementById(plusId);
+  // Elements only exist on game.html — silently skip on other pages
+  if (!minusEl || !plusEl) return;
+  minusEl.addEventListener('click', () => {
     if (gameState[key] > min) {
       gameState[key]--;
       document.getElementById(displayId).textContent = gameState[key];
       onChange?.();
     }
   });
-  document.getElementById(plusId).addEventListener('click', () => {
+  plusEl.addEventListener('click', () => {
     if (gameState[key] < max) {
       gameState[key]++;
       document.getElementById(displayId).textContent = gameState[key];
@@ -1089,6 +1099,9 @@ function showCountdown(callback) {
 
 // ── Event wiring ───────────────────────────────────────
 function wireEvents() {
+  // Only wire game events when on game.html (elements don't exist on index.html)
+  if (!document.getElementById('btn-start-game')) return;
+
   // ── Setup steppers ──────────────────────────────────
   makeStepper('btn-rounds-minus', 'btn-rounds-plus',
               'rounds-display', 'totalRounds', 1, 10, null);

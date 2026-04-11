@@ -310,11 +310,6 @@
 
   <!-- Supabase Auth Client (must load before app.js) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
-  <script>
-    // Debug: Check what supabase library exports
-    console.log('[DEBUG] window.supabase:', typeof window.supabase);
-    console.log('[DEBUG] window object keys with supabase:', Object.keys(window).filter(k => k.toLowerCase().includes('supabase')));
-  </script>
 
   <!-- Game data (load before app.js) -->
   <script src="words.js?v=14"></script>
@@ -322,7 +317,7 @@
   <script src="packs.js?v=2"></script>
 
   <!-- Main app -->
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=27"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -400,8 +395,8 @@
     // ── Fade in on landing (in case user came back from game) ──
     document.querySelector('.home-wrap').style.animation = 'pageFadeIn 0.3s ease forwards';
 
-    // ── Initialize Authentication
-    initAuth();
+    // NOTE: Auth is initialized by app.js DOMContentLoaded (initSupabase → initAuth)
+    // Do NOT call initAuth() here — inline scripts run before DOMContentLoaded handlers
 
     // ── Wire Auth Modal Buttons ──
     document.getElementById('btn-auth-close').addEventListener('click', closeAuthModal);
