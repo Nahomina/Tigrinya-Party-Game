@@ -104,8 +104,14 @@ async function initializeWords() {
 
 // ── Team name persistence ──────────────────────────────
 function saveTeamNames(n0, n1) {
-  try { localStorage.setItem(NAMES_KEY, JSON.stringify([n0, n1])); } catch (_) {}
+  try {
+    localStorage.setItem(NAMES_KEY, JSON.stringify([n0, n1]));
+  } catch (err) {
+    console.warn('⚠️ localStorage unavailable (private browsing?). Team names won\'t persist.', err.message);
+    // Data still works in-session but won't persist across page reloads
+  }
 }
+
 function loadTeamNames() {
   try {
     const raw = localStorage.getItem(NAMES_KEY);
@@ -114,7 +120,10 @@ function loadTeamNames() {
         typeof arr[0] === 'string' && typeof arr[1] === 'string') {
       return arr;
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn('⚠️ localStorage unavailable. Using default team names.', err.message);
+    // Fall through to defaults
+  }
   return DEFAULTS.teamNames;
 }
 
@@ -185,14 +194,24 @@ function saveState() {
   try {
     const serialisable = { ...gameState };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(serialisable));
-  } catch (_) {}
+  } catch (err) {
+    // Silently handle: private browsing, storage quota exceeded, etc.
+    if (err.name === 'QuotaExceededError') {
+      console.warn('⚠️ Storage quota exceeded. Game won\'t be saved.');
+    } else {
+      console.warn('⚠️ localStorage unavailable. Game state won\'t persist.', err.message);
+    }
+  }
 }
 
 function loadSavedState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch (_) { return null; }
+  } catch (err) {
+    console.warn('⚠️ Failed to load saved game state.', err.message);
+    return null;
+  }
 }
 
 function clearSavedState() {
@@ -246,6 +265,31 @@ function resetToDefaults() {
     currentProverb:  null,
     proverbRevealed: false,
   });
+}
+
+// ── Network Status Detection ───────────────────────────
+function initNetworkMonitoring() {
+  // Detect when user goes offline
+  window.addEventListener('offline', () => {
+    console.warn('⚠️ Network connection lost');
+    showNotification('You are offline. Some features may be limited.', 'warning');
+  });
+
+  // Detect when user comes back online
+  window.addEventListener('online', () => {
+    console.log('✓ Network connection restored');
+    showNotification('You are back online!', 'success');
+  });
+}
+
+function showNotification(message, type = 'info') {
+  // Log to console for debugging
+  if (type === 'warning') console.warn(message);
+  if (type === 'error') console.error(message);
+  if (type === 'success') console.log(message);
+
+  // Could be extended to show toast notification UI
+  // For now, just log to console
 }
 
 // ── Input Validation & Sanitization ────────────────────
@@ -1189,9 +1233,11 @@ function listenForSWUpdates() {
 
 // ── Boot ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
-  initTheme();          // apply theme before first paint
-  initSupabase();       // initialize Supabase client
+  initTheme();             // apply theme before first paint
+  initNetworkMonitoring(); // set up offline/online detection
+  initSupabase();          // initialize Supabase client
   await initializeWords(); // fetch words from Supabase (or fallback)
+  initAuth();              // initialize authentication
 
   // Read mode from URL param (?mode=words | ?mode=proverbs)
   const urlMode = new URLSearchParams(window.location.search).get('mode');
@@ -1308,18 +1354,68 @@ async function validateAndUnlockCode(code, packSlug) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
 
-  const res = await fetch(EDGE_FN_URL, {
-    method:  'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body:    JSON.stringify({ code: trimmedCode.toUpperCase(), pack_slug: packSlug }),
-  });
-  const json = await res.json();
-  if (!res.ok || !json.success) throw new Error(json.error || 'Invalid code');
-  storePack(packSlug, json.words, json.proverbs);
-  return json;
+  // Set up request timeout (10 seconds)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(EDGE_FN_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body:    JSON.stringify({ code: trimmedCode.toUpperCase(), pack_slug: packSlug }),
+      signal:  controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || 'Invalid code');
+    storePack(packSlug, json.words, json.proverbs);
+    return json;
+  } catch (err) {
+    clearTimeout(timeoutId);
+
+    // Handle timeout error
+    if (err.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your internet connection and try again.');
+    }
+
+    // Handle network errors
+    if (err instanceof TypeError && err.message.includes('fetch')) {
+      throw new Error('Network error. Please check your internet connection.');
+    }
+
+    // Re-throw other errors
+    throw err;
+  }
+}
+
+// ── Auth Error Messages ────────────────────────────────────
+function mapAuthErrorToMessage(err) {
+  // Map Supabase auth errors to user-friendly messages
+  const message = err.message?.toLowerCase() || '';
+
+  if (message.includes('invalid login credentials')) {
+    return 'Invalid email or password. Please try again.';
+  }
+  if (message.includes('email not confirmed')) {
+    return 'Please check your email to verify your account.';
+  }
+  if (message.includes('user already registered')) {
+    return 'This email is already registered. Try logging in instead.';
+  }
+  if (message.includes('password should be at least')) {
+    return 'Password must be at least 8 characters long.';
+  }
+  if (message.includes('network')) {
+    return 'Network error. Please check your internet connection.';
+  }
+
+  // Return original message if not matched
+  return err.message || 'An error occurred. Please try again.';
 }
 
 // ── Unlock modal ───────────────────────────────────────────
@@ -1691,7 +1787,8 @@ async function handleLogin(email, password) {
     closeAuthModal();
     updateAuthUI(true);
   } catch (err) {
-    showAuthError(err.message, 'auth-error');
+    const friendlyMessage = mapAuthErrorToMessage(err);
+    showAuthError(friendlyMessage, 'auth-error');
   } finally {
     btn.disabled = false;
     if (textEl) textEl.textContent = originalText;
@@ -1730,7 +1827,8 @@ async function handleSignup(email, password, confirmPassword) {
     closeAuthModal();
     showAuthSuccess('Account created! You can now unlock packs.');
   } catch (err) {
-    showAuthError(err.message, 'auth-error-signup');
+    const friendlyMessage = mapAuthErrorToMessage(err);
+    showAuthError(friendlyMessage, 'auth-error-signup');
   } finally {
     btn.disabled = false;
     if (textEl) textEl.textContent = originalText;
