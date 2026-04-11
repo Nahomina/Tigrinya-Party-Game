@@ -310,6 +310,11 @@
 
   <!-- Supabase Auth Client (must load before app.js) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+  <script>
+    // Debug: Check what supabase library exports
+    console.log('[DEBUG] window.supabase:', typeof window.supabase);
+    console.log('[DEBUG] window object keys with supabase:', Object.keys(window).filter(k => k.toLowerCase().includes('supabase')));
+  </script>
 
   <!-- Game data (load before app.js) -->
   <script src="words.js?v=14"></script>
@@ -317,7 +322,7 @@
   <script src="packs.js?v=2"></script>
 
   <!-- Main app -->
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=22"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

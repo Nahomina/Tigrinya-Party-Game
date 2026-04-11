@@ -46,17 +46,19 @@ let _supabase = null;
 
 // Initialize Supabase client (after window.supabase is loaded via CDN)
 function initSupabase() {
-  // Try the UMD export first (window.supabase.createClient)
-  if (window.supabase && window.supabase.createClient) {
-    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  // If that doesn't work, check if supabase is a global function/factory
-  else if (typeof supabase !== 'undefined' && supabase.createClient) {
-    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  // Make _supabase available globally for auth functions
-  if (_supabase) {
-    window.supabaseClient = _supabase;
+  debugLog('initSupabase called, window.supabase:', window.supabase);
+
+  try {
+    // The UMD build of @supabase/supabase-js exports createClient directly on the supabase object
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      debugLog('Creating Supabase client with createClient method');
+      _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      debugLog('Supabase client created:', !!_supabase);
+    } else {
+      console.warn('supabase.createClient not found. Available methods:', Object.getOwnPropertyNames(window.supabase || {}));
+    }
+  } catch (err) {
+    console.error('Failed to initialize Supabase:', err);
   }
 }
 
