@@ -1169,20 +1169,41 @@ function isPackUnlocked(slug) {
 }
 
 // ── Merged deck pools ──────────────────────────────────────
+function getSelectedPacks() {
+  // Get packs selected in the current setup screen
+  const checkboxes = document.querySelectorAll('.pack-toggle-input:checked');
+  const selected = new Set();
+  checkboxes.forEach(cb => {
+    const slug = cb.dataset.slug;
+    if (slug) selected.add(slug);
+  });
+  return selected;
+}
+
 function getMergedWords() {
   const unlocked = getUnlockedPacks();
-  let all = [...gameWords];
+  const selected = getSelectedPacks();
+  let all = [...gameWords]; // Always include classic
+
+  // Add words from selected unlocked packs
   for (const [slug, data] of Object.entries(unlocked)) {
-    if (slug !== 'classic' && Array.isArray(data.words)) all = all.concat(data.words);
+    if (selected.has(slug) && slug !== 'classic' && Array.isArray(data.words)) {
+      all = all.concat(data.words);
+    }
   }
   return all;
 }
 
 function getMergedProverbs() {
   const unlocked = getUnlockedPacks();
-  let all = [...PROVERBS];
+  const selected = getSelectedPacks();
+  let all = [...PROVERBS]; // Always include classic
+
+  // Add proverbs from selected unlocked packs
   for (const [slug, data] of Object.entries(unlocked)) {
-    if (slug !== 'classic' && Array.isArray(data.proverbs)) all = all.concat(data.proverbs);
+    if (selected.has(slug) && slug !== 'classic' && Array.isArray(data.proverbs)) {
+      all = all.concat(data.proverbs);
+    }
   }
   return all;
 }
@@ -1283,7 +1304,16 @@ function wireUnlockModal() {
       if (typeof renderPackCards === 'function') renderPackCards();
       // Refresh setup pack toggles if on game page
       if (typeof renderSetup === 'function') renderSetup();
-      setTimeout(closeUnlockModal, 1800);
+
+      // After success, close modal and scroll to pack showcase
+      setTimeout(() => {
+        closeUnlockModal();
+        const packShowcase = document.getElementById('pack-showcase');
+        if (packShowcase) {
+          packShowcase.removeAttribute('hidden');
+          packShowcase.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 1500);
     } catch (err) {
       btn.disabled    = false;
       btn.textContent = 'Unlock';
@@ -1358,6 +1388,22 @@ function renderPackToggles() {
       <input type="checkbox" class="pack-toggle-input" id="pack-toggle-${pack.slug}"
              data-slug="${pack.slug}" ${pack.isFree ? 'checked disabled' : 'checked'} />
     </div>`).join('');
+
+  // Wire up pack selection change listeners
+  // When pack selection changes, rebuild the deck (same packs apply to both Mayim & Misla)
+  container.querySelectorAll('.pack-toggle-input').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      // Rebuild deck with newly selected packs (applies to both modes)
+      if (gameState.mode === 'words') {
+        gameState.wordDeck = buildDeck();
+      } else {
+        gameState.proverbDeck = buildProverbDeck();
+      }
+      // Update the computed display (cards per team, etc)
+      updateSetupComputed();
+      updateProverbSetupComputed();
+    });
+  });
 }
 
 // ── Winner screen upsell ───────────────────────────────────
