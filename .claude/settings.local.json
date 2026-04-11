@@ -33,7 +33,12 @@
       "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__list_projects",
       "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__execute_sql",
       "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__deploy_edge_function",
-      "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__apply_migration"
+      "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__apply_migration",
+      "Bash(python3 -c \"import socket; s = socket.socket\\(\\); s.bind\\(\\('', 8000\\)\\)\")",
+      "Bash(findstr \":8000\")",
+      "Bash(taskkill /PID 44788 /F)",
+      "Bash(cmd /c \"taskkill /PID 44788 /F\")",
+      "Bash(powershell -Command \"Stop-Process -Id 44788 -Force\")"
     ]
   }
 }

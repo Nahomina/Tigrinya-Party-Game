@@ -248,6 +248,35 @@ function resetToDefaults() {
   });
 }
 
+// ── Input Validation & Sanitization ────────────────────
+function validateEmail(email) {
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
+function validateTeamName(name) {
+  // Allow letters, numbers, spaces, and Tigrinya characters
+  // No special HTML/script characters
+  const nameRegex = /^[a-zA-Z0-9\s\u1200-\u137F]{1,24}$/;
+  return nameRegex.test(name);
+}
+
+function validateUnlockCode(code) {
+  // Alphanumeric and hyphens only, 20-40 chars
+  const codeRegex = /^[A-Za-z0-9\-]{20,40}$/;
+  return codeRegex.test(code.trim());
+}
+
+function sanitizeTeamName(name) {
+  // Remove any potentially dangerous characters
+  // Keep only safe characters
+  return name
+    .replace(/[^a-zA-Z0-9\s\u1200-\u137F]/g, '')
+    .slice(0, 24)
+    .trim();
+}
+
 // ── Word deck helpers ──────────────────────────────────
 function shuffle(arr) {
   const a = [...arr];
@@ -567,12 +596,29 @@ function showNextProverb() {
 function _renderMaskedProverb(proverb) {
   const { visible, hidden } = getMaskedProverb(proverb.tigrinya);
 
-  const visibleHtml = visible.map(w => `<span class="proverb-word">${w}</span>`).join(' ');
-  const hiddenHtml  = hidden.map(() => `<span class="proverb-blank">___</span>`).join(' ');
-
   const displayEl = document.getElementById('proverb-display');
   if (displayEl) {
-    displayEl.innerHTML = visibleHtml + (hidden.length ? ' ' + hiddenHtml : '');
+    displayEl.textContent = ''; // Clear safely
+
+    // Render visible words
+    visible.forEach((word, idx) => {
+      if (idx > 0) {
+        displayEl.appendChild(document.createTextNode(' '));
+      }
+      const span = document.createElement('span');
+      span.className = 'proverb-word';
+      span.textContent = word;
+      displayEl.appendChild(span);
+    });
+
+    // Render hidden blanks
+    hidden.forEach(() => {
+      displayEl.appendChild(document.createTextNode(' '));
+      const span = document.createElement('span');
+      span.className = 'proverb-blank';
+      span.textContent = '___';
+      displayEl.appendChild(span);
+    });
   }
 }
 
@@ -588,7 +634,17 @@ function revealProverb() {
   const displayEl = document.getElementById('proverb-display');
   if (displayEl) {
     const words = p.tigrinya.trim().split(/\s+/);
-    displayEl.innerHTML = words.map(w => `<span class="proverb-word">${w}</span>`).join(' ');
+    displayEl.textContent = ''; // Clear safely
+
+    words.forEach((word, idx) => {
+      if (idx > 0) {
+        displayEl.appendChild(document.createTextNode(' '));
+      }
+      const span = document.createElement('span');
+      span.className = 'proverb-word';
+      span.textContent = word;
+      displayEl.appendChild(span);
+    });
   }
 
   // Show latin romanization + english meaning
@@ -841,9 +897,23 @@ function renderSummary() {
 
   const renderList = (id, words) => {
     const el = document.getElementById(id);
-    el.innerHTML = words.length
-      ? words.map(w => `<div class="word-entry">${w.tigrinya || w.word}</div>`).join('')
-      : '<div class="word-entry empty">—</div>';
+    if (!el) return;
+
+    el.textContent = ''; // Clear safely
+
+    if (words.length === 0) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'word-entry empty';
+      emptyDiv.textContent = '—';
+      el.appendChild(emptyDiv);
+    } else {
+      words.forEach(w => {
+        const div = document.createElement('div');
+        div.className = 'word-entry';
+        div.textContent = w.tigrinya || w.word;
+        el.appendChild(div);
+      });
+    }
   };
   renderList('correct-word-list-0', t0.correctWords);
   renderList('skipped-word-list-0', t0.skippedWords);
@@ -1223,6 +1293,17 @@ function validateScores() {
 const EDGE_FN_URL = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/validate-code';
 
 async function validateAndUnlockCode(code, packSlug) {
+  // Input validation
+  const trimmedCode = code.trim();
+
+  if (!trimmedCode) {
+    throw new Error('Please enter a code');
+  }
+
+  if (!validateUnlockCode(trimmedCode)) {
+    throw new Error('Invalid code format. Codes should be 20-40 characters.');
+  }
+
   // Get the current session to include auth token
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
@@ -1233,7 +1314,7 @@ async function validateAndUnlockCode(code, packSlug) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`,
     },
-    body:    JSON.stringify({ code: code.trim().toUpperCase(), pack_slug: packSlug }),
+    body:    JSON.stringify({ code: trimmedCode.toUpperCase(), pack_slug: packSlug }),
   });
   const json = await res.json();
   if (!res.ok || !json.success) throw new Error(json.error || 'Invalid code');
@@ -1337,29 +1418,69 @@ function renderPackCards() {
   const container = document.getElementById('pack-cards');
   if (!container || typeof PACK_CATALOGUE === 'undefined') return;
 
-  container.innerHTML = PACK_CATALOGUE.map(pack => {
+  container.textContent = ''; // Clear safely
+
+  PACK_CATALOGUE.forEach(pack => {
     const unlocked = isPackUnlocked(pack.slug);
-    const badge = pack.isFree
-      ? `<span class="pack-badge-free">FREE</span>`
-      : unlocked
-        ? `<span class="pack-badge-unlocked">✓ Unlocked</span>`
-        : `<button class="pack-unlock-btn" data-slug="${pack.slug}">£${pack.priceGbp.toFixed(2)} — Unlock</button>`;
 
-    return `
-      <div class="pack-card" style="--pack-accent:${pack.accentColor}">
-        <span class="pack-card-geez" lang="ti">${pack.nameGeez}</span>
-        <div class="pack-card-info">
-          <p class="pack-card-name">${pack.nameEn}</p>
-          <p class="pack-card-desc">${pack.description}</p>
-          <p class="pack-card-meta">${pack.wordCount} words · ${pack.proverbCount} proverbs</p>
-        </div>
-        <div class="pack-card-action">${badge}</div>
-      </div>`;
-  }).join('');
+    // Create card element
+    const card = document.createElement('div');
+    card.className = 'pack-card';
+    card.style.setProperty('--pack-accent', pack.accentColor);
 
-  // Wire unlock buttons
-  container.querySelectorAll('.pack-unlock-btn').forEach(btn => {
-    btn.addEventListener('click', () => openUnlockModal(btn.dataset.slug));
+    // Ge'ez name
+    const geezSpan = document.createElement('span');
+    geezSpan.className = 'pack-card-geez';
+    geezSpan.lang = 'ti';
+    geezSpan.textContent = pack.nameGeez;
+    card.appendChild(geezSpan);
+
+    // Info section
+    const info = document.createElement('div');
+    info.className = 'pack-card-info';
+
+    const nameP = document.createElement('p');
+    nameP.className = 'pack-card-name';
+    nameP.textContent = pack.nameEn;
+    info.appendChild(nameP);
+
+    const descP = document.createElement('p');
+    descP.className = 'pack-card-desc';
+    descP.textContent = pack.description;
+    info.appendChild(descP);
+
+    const metaP = document.createElement('p');
+    metaP.className = 'pack-card-meta';
+    metaP.textContent = `${pack.wordCount} words · ${pack.proverbCount} proverbs`;
+    info.appendChild(metaP);
+
+    card.appendChild(info);
+
+    // Action section
+    const action = document.createElement('div');
+    action.className = 'pack-card-action';
+
+    if (pack.isFree) {
+      const badge = document.createElement('span');
+      badge.className = 'pack-badge-free';
+      badge.textContent = 'FREE';
+      action.appendChild(badge);
+    } else if (unlocked) {
+      const badge = document.createElement('span');
+      badge.className = 'pack-badge-unlocked';
+      badge.textContent = '✓ Unlocked';
+      action.appendChild(badge);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'pack-unlock-btn';
+      btn.dataset.slug = pack.slug;
+      btn.textContent = `£${pack.priceGbp.toFixed(2)} — Unlock`;
+      btn.addEventListener('click', () => openUnlockModal(pack.slug));
+      action.appendChild(btn);
+    }
+
+    card.appendChild(action);
+    container.appendChild(card);
   });
 }
 
@@ -1373,25 +1494,40 @@ function renderPackToggles() {
 
   // Only show section if there's more than the classic pack unlocked
   if (unlocked.length <= 1) {
-    container.innerHTML = '';
+    container.textContent = ''; // Clear safely
     if (label) label.classList.add('hidden');
     return;
   }
   if (label) label.classList.remove('hidden');
 
-  container.innerHTML = unlocked.map(pack => `
-    <div class="pack-toggle-row">
-      <div>
-        <p class="pack-toggle-name">${pack.nameGeez} — ${pack.nameEn}</p>
-        <p class="pack-toggle-meta">${pack.wordCount} words · ${pack.proverbCount} proverbs</p>
-      </div>
-      <input type="checkbox" class="pack-toggle-input" id="pack-toggle-${pack.slug}"
-             data-slug="${pack.slug}" ${pack.isFree ? 'checked disabled' : 'checked'} />
-    </div>`).join('');
+  container.textContent = ''; // Clear safely
 
-  // Wire up pack selection change listeners
-  // When pack selection changes, rebuild the deck (same packs apply to both Mayim & Misla)
-  container.querySelectorAll('.pack-toggle-input').forEach(checkbox => {
+  unlocked.forEach(pack => {
+    const row = document.createElement('div');
+    row.className = 'pack-toggle-row';
+
+    const info = document.createElement('div');
+
+    const nameP = document.createElement('p');
+    nameP.className = 'pack-toggle-name';
+    nameP.textContent = `${pack.nameGeez} — ${pack.nameEn}`;
+    info.appendChild(nameP);
+
+    const metaP = document.createElement('p');
+    metaP.className = 'pack-toggle-meta';
+    metaP.textContent = `${pack.wordCount} words · ${pack.proverbCount} proverbs`;
+    info.appendChild(metaP);
+
+    row.appendChild(info);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'pack-toggle-input';
+    checkbox.id = `pack-toggle-${pack.slug}`;
+    checkbox.dataset.slug = pack.slug;
+    checkbox.checked = true;
+    if (pack.isFree) checkbox.disabled = true;
+
     checkbox.addEventListener('change', () => {
       // Rebuild deck with newly selected packs (applies to both modes)
       if (gameState.mode === 'words') {
@@ -1403,6 +1539,9 @@ function renderPackToggles() {
       updateSetupComputed();
       updateProverbSetupComputed();
     });
+
+    row.appendChild(checkbox);
+    container.appendChild(row);
   });
 }
 
@@ -1621,7 +1760,7 @@ function updateAuthUI(isLoggedIn) {
     logoutBtn.textContent = 'Log Out';
     logoutBtn.addEventListener('click', handleLogout);
 
-    indicator.innerHTML = '';
+    indicator.textContent = '';
     indicator.appendChild(document.createTextNode(`${_currentUser.email} `));
     indicator.appendChild(logoutBtn);
   } else {
