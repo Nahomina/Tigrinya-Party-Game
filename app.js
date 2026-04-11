@@ -1873,7 +1873,8 @@ async function handleLogin(email, password) {
   if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
-    if (!_supabase) throw new Error('Supabase not initialized');
+    if (!_supabase) initSupabase();  // retry init in case DOMContentLoaded raced
+    if (!_supabase) throw new Error('Could not connect to auth service. Please refresh the page.');
     const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
     if (error) throw error;
@@ -1915,13 +1916,24 @@ async function handleSignup(email, password, confirmPassword) {
   if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
-    if (!_supabase) throw new Error('Supabase not initialized');
+    if (!_supabase) initSupabase();  // retry init in case DOMContentLoaded raced
+    if (!_supabase) throw new Error('Could not connect to auth service. Please refresh the page.');
     const { data, error } = await _supabase.auth.signUp({ email, password });
 
     if (error) throw error;
 
-    closeAuthModal();
-    showAuthSuccess('Account created! You can now unlock packs.');
+    // Hide the form fields, show success message inside the still-open modal
+    document.getElementById('auth-signup-form')?.classList.add('hidden');
+
+    const emailConfirmRequired = !data.session;
+    if (emailConfirmRequired) {
+      showAuthSuccess('Account created! Check your email to confirm, then log in.');
+    } else {
+      showAuthSuccess('Account created! You are now logged in.');
+      updateAuthUI(true);
+      // Close modal after a short delay so user sees the success message
+      setTimeout(() => closeAuthModal(), 2000);
+    }
   } catch (err) {
     reportError(err, { action: 'signup' });
     const friendlyMessage = mapAuthErrorToMessage(err);
@@ -1989,7 +2001,7 @@ function showAuthSuccess(msg) {
 
   successEl.textContent = msg;
   successEl.classList.remove('hidden');
-  setTimeout(() => successEl.classList.add('hidden'), 3000);
+  setTimeout(() => successEl.classList.add('hidden'), 6000);
 }
 
 // ── Updated openUnlockModal with Auth Check ────────────────────────────

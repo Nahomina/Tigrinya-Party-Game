@@ -19,23 +19,25 @@
   <link rel="stylesheet" href="style.css?v=20" />
   <title>Mayim — ማይም</title>
 
-  <!-- Sentry Error Tracking (Production) -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.80.0/bundle.min.js"
-    integrity="sha384-lPMZV8K6RIrDXv8A0j0TQ9/Zq/lqGv3Lr7HnHj7nDYfU0xFVbJ8gkVvU7aUMNvWx"
-    crossorigin="anonymous"></script>
-  <script>
-    // Initialize Sentry in production (replace YOUR_DSN with actual DSN)
-    if (window.location.hostname !== 'localhost' && typeof Sentry !== 'undefined') {
-      Sentry.init({
-        dsn: 'https://YOUR_DSN@sentry.io/YOUR_PROJECT_ID',
-        environment: 'production',
-        tracesSampleRate: 0.1,
-        allowUrls: [
-          /https?:\/\/(tigrinya-party-game\.vercel\.app|localhost)/,
-        ],
-      });
-    }
+  <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
+  <!-- Replace YOUR_DSN with real DSN from https://sentry.io to activate -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.80.0/bundle.min.js"></script>
+  <script defer>
+    window.addEventListener('load', function() {
+      try {
+        var dsn = 'https://YOUR_DSN@sentry.io/YOUR_PROJECT_ID';
+        if (window.location.hostname !== 'localhost' &&
+            typeof Sentry !== 'undefined' &&
+            dsn.indexOf('YOUR_DSN') === -1) {
+          Sentry.init({
+            dsn: dsn,
+            environment: 'production',
+            tracesSampleRate: 0.1,
+            allowUrls: [/https?:\/\/(tigrinya-party-game\.vercel\.app|localhost)/],
+          });
+        }
+      } catch(e) { /* Sentry init failure must never break the app */ }
+    });
   </script>
 </head>
 <body class="game-body">
@@ -507,7 +509,7 @@
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
   <script src="packs.js?v=2"></script>
-  <script src="app.js?v=27"></script>
+  <script src="app.js?v=28"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
