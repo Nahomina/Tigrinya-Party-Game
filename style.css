@@ -2564,3 +2564,423 @@ details[open] > .faq-q::after {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PHASE 6: MOBILE APP-LIKE AUTH UI ENHANCEMENTS
+   Gradient header, tab navigation, icon inputs, password strength, responsive
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Auth Modal Header with Gradient ─────────────────────────────────────── */
+.auth-modal-header {
+  background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+  color: white;
+  padding: 2rem 1.5rem 1.5rem;
+  border-radius: 12px 12px 0 0;
+  position: relative;
+  margin: -2rem -1.5rem 1.5rem;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.auth-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.auth-modal-branding {
+  text-align: center;
+}
+
+.auth-app-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  line-height: 1;
+  letter-spacing: 0.05em;
+}
+
+.auth-app-subtitle {
+  font-size: 0.75rem;
+  opacity: 0.95;
+  margin: 0;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ── Tab Navigation ──────────────────────────────────────────────────────── */
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin: 0 -1.5rem 1.5rem;
+  padding: 0 1.5rem;
+  gap: 0;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -1px;
+  text-transform: uppercase;
+}
+
+.auth-tab:hover {
+  color: var(--text-sub);
+}
+
+.auth-tab.active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+}
+
+/* ── Form Groups with Animations ─────────────────────────────────────────── */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  animation: slideUp 0.3s ease forwards;
+}
+
+.form-group:nth-child(1) { animation-delay: 0ms; }
+.form-group:nth-child(2) { animation-delay: 50ms; }
+.form-group:nth-child(3) { animation-delay: 100ms; }
+.form-group:nth-child(4) { animation-delay: 150ms; }
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Input with Icon ─────────────────────────────────────────────────────── */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.input-with-icon:focus-within {
+  border-color: var(--border-focus);
+  background: var(--bg-elevated);
+  box-shadow: 0 0 0 3px rgba(102, 102, 170, 0.1);
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.9rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.input-with-icon:focus-within .input-icon {
+  opacity: 0.7;
+}
+
+.auth-input {
+  flex: 1;
+  padding: 0.85rem 0.9rem 0.85rem 2.6rem;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.auth-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.auth-input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+}
+
+/* ── Show/Hide Password Button ────────────────────────────────────────────── */
+.toggle-password-btn {
+  position: absolute;
+  right: 0.9rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.35rem 0.45rem;
+  transition: opacity 0.2s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.toggle-password-btn:hover {
+  opacity: 0.7;
+  transform: scale(1.1);
+}
+
+.toggle-password-btn:active {
+  transform: scale(0.95);
+}
+
+/* ── Password Strength Meter ─────────────────────────────────────────────── */
+.password-strength-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 0%;
+  background-color: #ff1744;
+  transition: width 0.2s, background-color 0.2s;
+  border-radius: 2px;
+}
+
+.strength-bar.weak::after {
+  width: 20%;
+  background-color: #ff1744;
+}
+
+.strength-bar.fair::after {
+  width: 40%;
+  background-color: #ffa726;
+}
+
+.strength-bar.good::after {
+  width: 60%;
+  background-color: #ffca28;
+}
+
+.strength-bar.strong::after {
+  width: 80%;
+  background-color: #66bb6a;
+}
+
+.strength-bar.very-strong::after {
+  width: 100%;
+  background-color: #26a69a;
+}
+
+.strength-text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  min-width: 50px;
+}
+
+/* ── Auth Checkbox ────────────────────────────────────────────────────────── */
+.auth-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem 0;
+}
+
+.auth-checkbox input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  cursor: pointer;
+  accent-color: var(--red);
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.auth-checkbox span {
+  line-height: 1.3;
+}
+
+/* ── Auth Form Buttons ────────────────────────────────────────────────────── */
+.btn-login,
+.btn-signup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Forgot Password Link ─────────────────────────────────────────────────── */
+.forgot-password-link {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  text-align: center;
+  transition: color 0.2s;
+  margin-top: 0.25rem;
+}
+
+.forgot-password-link:hover {
+  color: var(--red);
+  text-decoration: underline;
+}
+
+/* ── Auth Form State Management ──────────────────────────────────────────── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-form.hidden {
+  display: none !important;
+}
+
+.auth-form-active {
+  animation: formFadeIn 0.2s ease forwards;
+}
+
+@keyframes formFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Mobile Responsive Auth Modal ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .auth-modal {
+    padding: 0;
+  }
+
+  .auth-modal-box {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .auth-modal-header {
+    margin: 0;
+    padding: 1.5rem 1.25rem 1rem;
+    border-radius: 0;
+    flex-shrink: 0;
+  }
+
+  .auth-app-title {
+    font-size: 1.8rem;
+  }
+
+  .auth-tabs {
+    margin: 0;
+    padding: 0 1.25rem;
+  }
+
+  .auth-form {
+    padding: 1.25rem;
+    flex: 1;
+  }
+
+  .auth-input {
+    padding: 0.85rem 0.8rem 0.85rem 2.4rem;
+    font-size: 1rem;
+  }
+
+  .btn-primary {
+    min-height: 48px;
+    font-size: 0.95rem;
+  }
+
+  .form-group label {
+    font-size: 0.7rem;
+  }
+
+  .toggle-password-btn {
+    right: 0.75rem;
+    font-size: 1rem;
+  }
+
+  .input-icon {
+    left: 0.8rem;
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+/* ── Safe Area Support for Notched Phones ────────────────────────────────── */
+@supports (padding: max(0px)) {
+  @media (max-width: 480px) {
+    .auth-modal-box {
+      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    }
+
+    .auth-form {
+      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+    }
+  }
+}

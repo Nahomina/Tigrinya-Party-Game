@@ -163,37 +163,108 @@
   <!-- ── Auth Indicator (top-right) ──────────────────────── -->
   <div id="auth-indicator" class="auth-indicator">Log in to unlock packs</div>
 
-  <!-- ── Auth Modal ──────────────────────────────────────────── -->
+  <!-- ── Auth Modal (Mobile App Style) ──────────────────────── -->
   <div id="auth-modal" class="auth-modal hidden" role="dialog" aria-modal="true">
     <div class="auth-modal-box">
-      <button class="auth-modal-close" id="btn-auth-close" aria-label="Close">✕</button>
+      <!-- Header with gradient -->
+      <div class="auth-modal-header">
+        <button class="auth-modal-close" id="btn-auth-close" aria-label="Close">✕</button>
+        <div class="auth-modal-branding">
+          <h1 class="auth-app-title">Tigrinya Games</h1>
+          <p class="auth-app-subtitle">Play • Learn • Compete</p>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" type="button" data-tab="login" aria-selected="true">Log In</button>
+        <button class="auth-tab" type="button" data-tab="signup" aria-selected="false">Sign Up</button>
+      </div>
 
       <!-- Login Form -->
-      <form id="auth-login-form" class="auth-form">
-        <h2 class="auth-title">Log In</h2>
-        <input type="email" id="auth-email-login" class="auth-input" placeholder="Email" required />
-        <input type="password" id="auth-password-login" class="auth-input" placeholder="Password" required />
-        <button type="submit" id="btn-auth-login" class="btn-primary auth-btn">Log In</button>
-        <p class="auth-switch">Don't have an account? <button type="button" id="btn-switch-signup" class="auth-link-btn">Sign up</button></p>
+      <form id="auth-login-form" class="auth-form auth-form-active">
+        <div class="form-group">
+          <label for="auth-email-login">Email Address</label>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input type="email" id="auth-email-login" class="auth-input" placeholder="your@email.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password-login">Password</label>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="auth-password-login" class="auth-input" placeholder="Enter password" required />
+            <button type="button" class="toggle-password-btn" aria-label="Show/hide password" data-target="auth-password-login">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-auth-login" class="btn-primary btn-login">
+          <span class="btn-text">Log In</span>
+          <span class="btn-spinner hidden">⟳</span>
+        </button>
+
+        <a href="#" class="forgot-password-link">Forgot password?</a>
         <p id="auth-error" class="auth-error hidden"></p>
       </form>
 
       <!-- Signup Form -->
       <form id="auth-signup-form" class="auth-form hidden">
-        <h2 class="auth-title">Create Account</h2>
-        <input type="email" id="auth-email-signup" class="auth-input" placeholder="Email" required />
-        <input type="password" id="auth-password-signup" class="auth-input" placeholder="Password (6+ chars)" required />
-        <input type="password" id="auth-password-confirm" class="auth-input" placeholder="Confirm password" required />
+        <div class="form-group">
+          <label for="auth-email-signup">Email Address</label>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input type="email" id="auth-email-signup" class="auth-input" placeholder="your@email.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password-signup">Password</label>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="auth-password-signup" class="auth-input" placeholder="6+ characters" required />
+            <button type="button" class="toggle-password-btn" aria-label="Show/hide password" data-target="auth-password-signup">👁️</button>
+          </div>
+          <div class="password-strength-meter">
+            <div class="strength-bar" id="strength-bar"></div>
+            <p class="strength-text" id="strength-text">Weak</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password-confirm">Confirm Password</label>
+          <div class="input-with-icon">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="auth-password-confirm" class="auth-input" placeholder="Re-enter password" required />
+          </div>
+        </div>
+
         <label class="auth-checkbox">
           <input type="checkbox" id="auth-terms" required />
-          I agree to the Terms of Service
+          <span>I agree to the Terms of Service</span>
         </label>
-        <button type="submit" id="btn-auth-signup" class="btn-primary auth-btn">Create Account</button>
-        <p class="auth-switch">Already have an account? <button type="button" id="btn-switch-login" class="auth-link-btn">Log in</button></p>
+
+        <button type="submit" id="btn-auth-signup" class="btn-primary btn-signup">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-spinner hidden">⟳</span>
+        </button>
+
         <p id="auth-error-signup" class="auth-error hidden"></p>
       </form>
 
-      <p id="auth-success" class="auth-success hidden" style="margin-top:0.5rem;"></p>
+      <!-- Success Message -->
+      <p id="auth-success" class="auth-success hidden"></p>
     </div>
   </div>
 
@@ -302,15 +373,79 @@
     // ── Wire Auth Modal Buttons ──
     document.getElementById('btn-auth-close').addEventListener('click', closeAuthModal);
 
-    document.getElementById('btn-switch-signup').addEventListener('click', (e) => {
-      e.preventDefault();
-      openAuthModal('signup');
+    // ── Tab Navigation ──
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabName = tab.dataset.tab;
+
+        // Update active tab
+        document.querySelectorAll('.auth-tab').forEach(t => {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+
+        // Show/hide forms
+        const loginForm = document.getElementById('auth-login-form');
+        const signupForm = document.getElementById('auth-signup-form');
+
+        if (tabName === 'login') {
+          loginForm.classList.add('auth-form-active');
+          loginForm.classList.remove('hidden');
+          signupForm.classList.add('hidden');
+          signupForm.classList.remove('auth-form-active');
+        } else {
+          signupForm.classList.add('auth-form-active');
+          signupForm.classList.remove('hidden');
+          loginForm.classList.add('hidden');
+          loginForm.classList.remove('auth-form-active');
+        }
+      });
     });
 
-    document.getElementById('btn-switch-login').addEventListener('click', (e) => {
-      e.preventDefault();
-      openAuthModal('login');
+    // ── Show/Hide Password Toggle ──
+    document.querySelectorAll('.toggle-password-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = btn.dataset.target;
+        const input = document.getElementById(targetId);
+
+        if (input.type === 'password') {
+          input.type = 'text';
+          btn.textContent = '🙈';
+        } else {
+          input.type = 'password';
+          btn.textContent = '👁️';
+        }
+      });
     });
+
+    // ── Real-time Password Strength ──
+    document.getElementById('auth-password-signup')?.addEventListener('input', (e) => {
+      const password = e.target.value;
+      const strength = getPasswordStrength(password);
+      const strengthBar = document.getElementById('strength-bar');
+      const strengthText = document.getElementById('strength-text');
+
+      const levels = ['', 'weak', 'fair', 'good', 'strong', 'very-strong'];
+      const texts = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+
+      strengthBar.className = 'strength-bar ' + levels[strength];
+      strengthBar.style.width = (strength * 20) + '%';
+      strengthText.textContent = texts[strength];
+    });
+
+    function getPasswordStrength(password) {
+      let strength = 0;
+      if (password.length >= 8) strength++;
+      if (/[a-z]/.test(password)) strength++;
+      if (/[A-Z]/.test(password)) strength++;
+      if (/[0-9]/.test(password)) strength++;
+      if (/[!@#$%^&*_\-+=]/.test(password)) strength++;
+      return Math.min(5, strength);
+    }
 
     // ── Wire Auth Forms ──
     document.getElementById('auth-login-form').addEventListener('submit', (e) => {
@@ -326,6 +461,20 @@
       const password = document.getElementById('auth-password-signup').value;
       const confirm = document.getElementById('auth-password-confirm').value;
       handleSignup(email, password, confirm);
+    });
+
+    // ── Forgot Password Link ──
+    document.querySelectorAll('.forgot-password-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('auth-email-login').value;
+        if (!email) {
+          showAuthError('Please enter your email address first');
+          return;
+        }
+        // Placeholder for password reset flow
+        showAuthSuccess('Password reset link would be sent to: ' + email);
+      });
     });
 
     // Close auth modal when clicking outside

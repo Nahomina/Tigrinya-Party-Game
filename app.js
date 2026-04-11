@@ -1471,12 +1471,28 @@ function openAuthModal(mode = 'login') {
 
   modal.classList.remove('hidden');
 
+  // Update active tab
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    if (tab.dataset.tab === mode) {
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+    } else {
+      tab.classList.remove('active');
+      tab.setAttribute('aria-selected', 'false');
+    }
+  });
+
+  // Show/hide forms
   if (mode === 'signup') {
     document.getElementById('auth-login-form')?.classList.add('hidden');
+    document.getElementById('auth-login-form')?.classList.remove('auth-form-active');
     document.getElementById('auth-signup-form')?.classList.remove('hidden');
+    document.getElementById('auth-signup-form')?.classList.add('auth-form-active');
   } else {
     document.getElementById('auth-login-form')?.classList.remove('hidden');
+    document.getElementById('auth-login-form')?.classList.add('auth-form-active');
     document.getElementById('auth-signup-form')?.classList.add('hidden');
+    document.getElementById('auth-signup-form')?.classList.remove('auth-form-active');
   }
 }
 
@@ -1485,10 +1501,34 @@ function closeAuthModal() {
   if (!modal) return;
 
   modal.classList.add('hidden');
+
+  // Reset forms
   document.getElementById('auth-login-form')?.reset();
   document.getElementById('auth-signup-form')?.reset();
+
+  // Hide error messages
   document.getElementById('auth-error')?.classList.add('hidden');
   document.getElementById('auth-error-signup')?.classList.add('hidden');
+  document.getElementById('auth-success')?.classList.add('hidden');
+
+  // Reset password input types to password (hide text)
+  document.querySelectorAll('input[type="text"][data-original-type="password"]').forEach(input => {
+    input.type = 'password';
+  });
+
+  // Reset toggle button states
+  document.querySelectorAll('.toggle-password-btn').forEach(btn => {
+    btn.textContent = '👁️';
+  });
+
+  // Reset strength meter
+  const strengthBar = document.getElementById('strength-bar');
+  const strengthText = document.getElementById('strength-text');
+  if (strengthBar) {
+    strengthBar.className = 'strength-bar';
+    strengthBar.style.width = '0%';
+  }
+  if (strengthText) strengthText.textContent = 'Weak';
 }
 
 // ── Handle Login ───────────────────────────────────────────────────────
@@ -1497,8 +1537,12 @@ async function handleLogin(email, password) {
   if (!btn) return;
 
   btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = 'Logging in...';
+  const textEl = btn.querySelector('.btn-text');
+  const spinnerEl = btn.querySelector('.btn-spinner');
+  const originalText = textEl?.textContent || 'Log In';
+
+  if (textEl) textEl.textContent = 'Logging in...';
+  if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -1511,7 +1555,8 @@ async function handleLogin(email, password) {
     showAuthError(err.message, 'auth-error');
   } finally {
     btn.disabled = false;
-    btn.textContent = originalText;
+    if (textEl) textEl.textContent = originalText;
+    if (spinnerEl) spinnerEl.classList.add('hidden');
   }
 }
 
@@ -1531,8 +1576,12 @@ async function handleSignup(email, password, confirmPassword) {
   }
 
   btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = 'Creating account...';
+  const textEl = btn.querySelector('.btn-text');
+  const spinnerEl = btn.querySelector('.btn-spinner');
+  const originalText = textEl?.textContent || 'Create Account';
+
+  if (textEl) textEl.textContent = 'Creating account...';
+  if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -1545,7 +1594,8 @@ async function handleSignup(email, password, confirmPassword) {
     showAuthError(err.message, 'auth-error-signup');
   } finally {
     btn.disabled = false;
-    btn.textContent = originalText;
+    if (textEl) textEl.textContent = originalText;
+    if (spinnerEl) spinnerEl.classList.add('hidden');
   }
 }
 
