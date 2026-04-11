@@ -1,12 +1,13 @@
-// Mayim Service Worker — v8
+// Mayim Service Worker — v9
 // HTML pages: network-first (always fresh)
 // Assets/fonts: cache-first (fast)
 // Supabase API: network-first with cache fallback
-const CACHE_VERSION = 'mayim-v8';
+const CACHE_VERSION = 'mayim-v9';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 const PRECACHE_ASSETS = [
   './style.css',
+  './supabase.min.js',
   './words.js',
   './proverbs.js',
   './packs.js',
