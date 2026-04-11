@@ -46,8 +46,17 @@ let _supabase = null;
 
 // Initialize Supabase client (after window.supabase is loaded via CDN)
 function initSupabase() {
-  if (window.supabase) {
+  // Try the UMD export first (window.supabase.createClient)
+  if (window.supabase && window.supabase.createClient) {
     _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  // If that doesn't work, check if supabase is a global function/factory
+  else if (typeof supabase !== 'undefined' && supabase.createClient) {
+    _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  // Make _supabase available globally for auth functions
+  if (_supabase) {
+    window.supabaseClient = _supabase;
   }
 }
 
@@ -1374,7 +1383,8 @@ async function validateAndUnlockCode(code, packSlug) {
   }
 
   // Get the current session to include auth token
-  const { data: { session } } = await supabase.auth.getSession();
+  if (!_supabase) throw new Error('Supabase not initialized');
+  const { data: { session } } = await _supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
 
   // Set up request timeout (10 seconds)
@@ -1693,7 +1703,12 @@ let _pendingUnlockPackSlug = null;
 // ── Initialize Supabase Auth ───────────────────────────────────────────
 async function initAuth() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    if (!_supabase) {
+      console.warn('Supabase client not initialized');
+      return;
+    }
+
+    const { data: { session } } = await _supabase.auth.getSession();
 
     if (session) {
       _currentUser = session.user;
@@ -1703,7 +1718,7 @@ async function initAuth() {
     }
 
     // Listen for auth state changes
-    supabase.auth.onAuthStateChange((event, session) => {
+    _supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         _currentUser = session.user;
         updateAuthUI(true);
@@ -1837,7 +1852,8 @@ async function handleLogin(email, password) {
   if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!_supabase) throw new Error('Supabase not initialized');
+    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
 
     if (error) throw error;
 
@@ -1878,7 +1894,8 @@ async function handleSignup(email, password, confirmPassword) {
   if (spinnerEl) spinnerEl.classList.remove('hidden');
 
   try {
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (!_supabase) throw new Error('Supabase not initialized');
+    const { data, error } = await _supabase.auth.signUp({ email, password });
 
     if (error) throw error;
 
@@ -1906,7 +1923,9 @@ function reportError(err, context = {}) {
 // ── Handle Logout ──────────────────────────────────────────────────────
 async function handleLogout() {
   try {
-    await supabase.auth.signOut();
+    if (_supabase) {
+      await _supabase.auth.signOut();
+    }
     _currentUser = null;
     updateAuthUI(false);
   } catch (err) {

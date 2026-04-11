@@ -308,8 +308,16 @@
     </div>
   </div>
 
-  <script src="packs.js?v=1"></script>
-  <script src="app.js?v=19"></script>
+  <!-- Supabase Auth Client (must load before app.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+
+  <!-- Game data (load before app.js) -->
+  <script src="words.js?v=14"></script>
+  <script src="proverbs.js?v=14"></script>
+  <script src="packs.js?v=2"></script>
+
+  <!-- Main app -->
+  <script src="app.js?v=21"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
