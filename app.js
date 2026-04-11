@@ -1464,6 +1464,12 @@ function mapAuthErrorToMessage(err) {
   if (message.includes('network')) {
     return 'Network error. Please check your internet connection.';
   }
+  if (message.includes('rate limit') || message.includes('email rate limit') || message.includes('too many')) {
+    return 'Too many attempts. Please wait a few minutes before trying again.';
+  }
+  if (message.includes('signup disabled') || message.includes('signups not allowed')) {
+    return 'Account registration is temporarily disabled. Please try again later.';
+  }
 
   // Return original message if not matched
   return err.message || 'An error occurred. Please try again.';
