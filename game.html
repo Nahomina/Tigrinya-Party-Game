@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=22" />
+  <link rel="stylesheet" href="style.css?v=23" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -466,8 +466,22 @@
       ⏱ Time Finished — Show Answer
     </div>
 
+    <!-- Judge answer preview overlay (private, no state change) -->
+    <div id="judge-peek-overlay" class="judge-peek-overlay hidden" role="dialog" aria-modal="true">
+      <div class="judge-peek-box">
+        <p class="judge-peek-eyebrow">Full Answer — Judge Only 👁</p>
+        <div id="judge-peek-tigrinya" class="judge-peek-tigrinya" lang="ti"></div>
+        <div id="judge-peek-latin"    class="judge-peek-latin"></div>
+        <div id="judge-peek-english"  class="judge-peek-english"></div>
+        <button id="btn-judge-peek-close" class="btn-judge-peek-close">✓ Got it — Start Game</button>
+      </div>
+    </div>
+
     <!-- State A: start timer + reveal -->
     <div id="proverb-actions-show" class="proverb-actions proverb-actions-start">
+      <button id="btn-judge-peek" class="btn-judge-peek">
+        👁 See Answer (Judge)
+      </button>
       <button id="btn-proverb-start-timer" class="btn-proverb-start">
         ▶ Start Timer
       </button>
@@ -516,7 +530,7 @@
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
   <script src="packs.js?v=2"></script>
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=31"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

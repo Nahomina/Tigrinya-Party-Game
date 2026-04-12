@@ -2093,6 +2093,82 @@ details[open] > .faq-q::after {
   animation: word-pop 0.3s ease-out 0.08s both;
 }
 
+/* ── Judge Answer Preview Overlay ───────────────────── */
+.judge-peek-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(0, 0, 0, .9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.judge-peek-overlay.hidden { display: none; }
+
+.judge-peek-box {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 16px;
+  padding: 28px 24px 24px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.judge-peek-eyebrow {
+  font: 700 11px var(--font-ui);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin: 0;
+}
+.judge-peek-tigrinya {
+  font-family: var(--font-geez);
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  color: var(--text);
+  line-height: 1.5;
+}
+.judge-peek-latin {
+  font: 500 1rem var(--font-ui);
+  color: var(--text-sub);
+}
+.judge-peek-english {
+  font: 400 .95rem var(--font-ui);
+  color: var(--text-muted);
+  font-style: italic;
+}
+.btn-judge-peek-close {
+  margin-top: 4px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 13px 24px;
+  font: 700 15px var(--font-ui);
+  cursor: pointer;
+  width: 100%;
+  transition: background .2s;
+}
+.btn-judge-peek-close:hover { background: var(--red-hover); }
+
+/* Judge peek trigger button (State A) */
+.btn-judge-peek {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font: 600 14px var(--font-ui);
+  cursor: pointer;
+  transition: border-color .2s, color .2s;
+}
+.btn-judge-peek:hover { border-color: var(--red); color: var(--text); }
+
 /* ── Proverb Time-Up Banner ──────────────────────────── */
 .proverb-time-up {
   margin: 0 1rem;

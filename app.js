@@ -686,8 +686,9 @@ function showNextProverb() {
   if (fillEl) { fillEl.style.width = '100%'; fillEl.classList.remove('danger'); }
   document.getElementById('btn-proverb-start-timer')?.classList.remove('hidden');
 
-  // Reset time-up message
+  // Reset time-up message and judge peek overlay
   document.getElementById('proverb-time-up')?.classList.add('hidden');
+  document.getElementById('judge-peek-overlay')?.classList.add('hidden');
 
   // State A (Start Timer + Show Answer), hide State B (judge) and answer
   document.getElementById('proverb-actions-show')?.classList.remove('hidden');
@@ -723,6 +724,19 @@ function _renderMaskedProverb(proverb) {
       displayEl.appendChild(span);
     });
   }
+}
+
+// ── Judge peek — read-only answer preview, no game state change ────────
+function openJudgePeek() {
+  const p = gameState.currentProverb;
+  if (!p) return;
+  document.getElementById('judge-peek-tigrinya').textContent = p.tigrinya;
+  document.getElementById('judge-peek-latin').textContent    = p.latin;
+  document.getElementById('judge-peek-english').textContent  = p.english;
+  document.getElementById('judge-peek-overlay').classList.remove('hidden');
+}
+function closeJudgePeek() {
+  document.getElementById('judge-peek-overlay')?.classList.add('hidden');
 }
 
 function revealProverb() {
@@ -1223,6 +1237,11 @@ function wireEvents() {
   });
 
   // ── Proverb screen ──────────────────────────────────
+  document.getElementById('btn-judge-peek')?.addEventListener('click', openJudgePeek);
+  document.getElementById('btn-judge-peek-close')?.addEventListener('click', closeJudgePeek);
+  document.getElementById('judge-peek-overlay')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeJudgePeek();
+  });
   document.getElementById('btn-proverb-start-timer')?.addEventListener('click', startProverbTimer);
   document.getElementById('btn-show-answer')?.addEventListener('click', revealProverb);
   document.getElementById('btn-proverb-correct')?.addEventListener('click', () => judgeProverb('correct'));
