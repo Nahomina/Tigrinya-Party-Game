@@ -244,6 +244,7 @@ button {
   position: fixed;
   inset: 0;
   z-index: 2000;
+  flex-direction: column;
   background: var(--bg);
   flex-direction: column;
   align-items: center;
@@ -252,6 +253,22 @@ button {
   padding: 2rem;
 }
 #countdown-overlay.active { display: flex; }
+
+/* Team reveal banner inside countdown overlay */
+.countdown-team-reveal {
+  font: 700 clamp(1.1rem, 4vmin, 1.8rem) var(--font-display);
+  color: var(--red);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-align: center;
+  min-height: 2.2rem;
+  margin-bottom: .5rem;
+  animation: fadeInUp .4s ease both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 .countdown-number {
   font-family: var(--font-display);
@@ -1101,6 +1118,29 @@ button {
 #screen-playing.word-paused .action-buttons-paused  { display: block; }
 #screen-playing.word-paused #timer-progress         { width: 0% !important; transition: none; }
 #screen-playing.word-paused #current-word-eyebrow   { display: none; }
+/* Start Timer button (replaces Skip in Mayim) */
+.btn-start-timer {
+  background: var(--red-subtle);
+  color: var(--red);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  min-height: 80px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.18em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  touch-action: manipulation;
+  transition: background 0.1s, color 0.1s;
+}
+.btn-start-timer:hover  { background: rgba(229,57,53,.22); }
+.btn-start-timer:active { background: rgba(229,57,53,.3); }
+.btn-start-timer.hidden { display: none; }
+
+/* Legacy .btn-skip kept for compatibility */
 .btn-skip {
   background: transparent;
   color: var(--skip-fg);
@@ -1437,7 +1477,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   #winner-team-name         { font-size: clamp(1.8rem, 9vw, 3.5rem); }
   .final-scores-bar         { padding: 0.85rem 1.25rem; }
 
-  .btn-skip, .btn-correct, .btn-next-word { min-height: 70px; font-size: 1.3rem; }
+  .btn-skip, .btn-start-timer, .btn-correct, .btn-next-word { min-height: 70px; font-size: 1.3rem; }
 
   .quit-modal-box           { padding: 1.5rem 1.5rem; min-width: 260px; }
 }
@@ -1893,7 +1933,7 @@ details[open] > .faq-q::after {
 @media (min-width: 768px) {
   .setup-hero .game-title   { font-size: clamp(3rem, 8vw, 5.5rem); }
   .word-lists               { grid-template-columns: 1fr 1fr; }
-  .btn-skip, .btn-correct   { min-height: 90px; }
+  .btn-skip, .btn-start-timer, .btn-correct { min-height: 90px; }
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -2051,6 +2091,26 @@ details[open] > .faq-q::after {
   font-style: italic;
   text-align: center;
   animation: word-pop 0.3s ease-out 0.08s both;
+}
+
+/* ── Proverb Time-Up Banner ──────────────────────────── */
+.proverb-time-up {
+  margin: 0 1rem;
+  padding: 14px 20px;
+  background: var(--danger-bg);
+  border: 1px solid rgba(255, 23, 68, .4);
+  border-radius: 10px;
+  color: var(--danger);
+  font: 700 1.1rem var(--font-display);
+  letter-spacing: .1em;
+  text-align: center;
+  text-transform: uppercase;
+  animation: timeUpPulse .4s ease both;
+}
+.proverb-time-up.hidden { display: none; }
+@keyframes timeUpPulse {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ── Proverb Actions ─────────────────────────────────── */

@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=22" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -50,6 +50,7 @@
 
   <!-- ── Ready countdown overlay ─────────────────────────────── -->
   <div id="countdown-overlay" aria-live="assertive" aria-atomic="true">
+    <div id="countdown-team-reveal" class="countdown-team-reveal"></div>
     <span id="countdown-number" class="countdown-number"></span>
   </div>
 
@@ -312,11 +313,11 @@
       <span id="word-counter"></span>
     </div>
 
-    <!-- Active: Skip / Correct -->
+    <!-- Active: Start Timer / Correct -->
     <div class="action-buttons" id="action-buttons-live">
-      <button id="btn-skip"    class="btn-skip"    aria-label="Skip word">
-        <span class="btn-icon">✕</span>
-        <span>Skip</span>
+      <button id="btn-skip" class="btn-start-timer" aria-label="Start timer">
+        <span class="btn-icon">▶</span>
+        <span>Start Timer</span>
       </button>
       <button id="btn-correct" class="btn-correct" aria-label="Mark correct">
         <span class="btn-icon">✓</span>
@@ -460,6 +461,11 @@
       <div id="proverb-translation" class="proverb-translation hidden"></div>
     </div>
 
+    <!-- Time-up message for Misla -->
+    <div id="proverb-time-up" class="proverb-time-up hidden" aria-live="assertive">
+      ⏱ Time Finished — Show Answer
+    </div>
+
     <!-- State A: start timer + reveal -->
     <div id="proverb-actions-show" class="proverb-actions proverb-actions-start">
       <button id="btn-proverb-start-timer" class="btn-proverb-start">
@@ -510,7 +516,7 @@
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
   <script src="packs.js?v=2"></script>
-  <script src="app.js?v=29"></script>
+  <script src="app.js?v=30"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

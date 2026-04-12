@@ -499,6 +499,13 @@ function startProverbTimer() {
       stopProverbTimer();
       playBuzzerSound();
       vibrate([200, 100, 200]);
+      // Show time-up message, then auto-reveal the answer after a short pause
+      const timeUpEl = document.getElementById('proverb-time-up');
+      if (timeUpEl) timeUpEl.classList.remove('hidden');
+      setTimeout(() => {
+        if (timeUpEl) timeUpEl.classList.add('hidden');
+        revealProverb();
+      }, 1800);
     }
   }, 1000);
 }
@@ -533,11 +540,15 @@ function validateGameStart() {
   return true;
 }
 
-function startGame() {
+// prePickedTeam: 0 or 1 — pass from the countdown call so the same team
+// that was shown during the 3-2-1 is used to start the game.
+function startGame(prePickedTeam) {
   if (!validateGameStart()) return;
 
   const turnDuration = computeTurnDuration();
-  const startTeam    = Math.random() < 0.5 ? 0 : 1;
+  const startTeam    = (prePickedTeam === 0 || prePickedTeam === 1)
+    ? prePickedTeam
+    : (Math.random() < 0.5 ? 0 : 1);
   const basePayload  = {
     currentRound:    1,
     wordTeamIndex:   startTeam,
@@ -571,6 +582,10 @@ function showNextWord() {
 
   stopWordTimer();
 
+  // Re-show "Start Timer" button for the next word (it hides when timer runs)
+  const startTimerBtn = document.getElementById('btn-skip');
+  if (startTimerBtn) startTimerBtn.classList.remove('hidden');
+
   if (gameState.deck.length === 0) {
     endRound();
     return;
@@ -602,7 +617,8 @@ function showNextWord() {
   const total = Math.floor(gameState.wordsPerRound / 2) * 2;
   if (counter) counter.textContent = `${done + 1} / ${total}`;
 
-  startWordTimer();
+  // Timer does NOT auto-start — judge clicks "Start Timer" button to begin
+  updateTimerUI();  // reset display to full time
 }
 
 function markCorrect() {
@@ -669,6 +685,9 @@ function showNextProverb() {
   const fillEl = document.getElementById('proverb-timer-progress');
   if (fillEl) { fillEl.style.width = '100%'; fillEl.classList.remove('danger'); }
   document.getElementById('btn-proverb-start-timer')?.classList.remove('hidden');
+
+  // Reset time-up message
+  document.getElementById('proverb-time-up')?.classList.add('hidden');
 
   // State A (Start Timer + Show Answer), hide State B (judge) and answer
   document.getElementById('proverb-actions-show')?.classList.remove('hidden');
@@ -1064,14 +1083,21 @@ function makeStepper(minusId, plusId, displayId, key, min, max, onChange) {
 }
 
 // ── Ready countdown ────────────────────────────────────
-function showCountdown(callback) {
+// teamName: string to display as "X goes first!" during countdown
+function showCountdown(teamName, callback) {
   const overlay = document.getElementById('countdown-overlay');
   const el      = document.getElementById('countdown-number');
+  const teamEl  = document.getElementById('countdown-team-reveal');
 
   // Graceful fallback: stale cached HTML won't have the overlay element
   if (!overlay || !el) { callback(); return; }
 
-  const steps   = ['3', '2', '1', 'GO!'];
+  // Show which team goes first
+  if (teamEl && teamName) {
+    teamEl.textContent = `${teamName} goes first!`;
+  }
+
+  const steps = ['3', '2', '1', 'GO!'];
   let i = 0;
 
   overlay.classList.add('active');
@@ -1090,6 +1116,7 @@ function showCountdown(callback) {
     } else {
       setTimeout(() => {
         overlay.classList.remove('active');
+        if (teamEl) teamEl.textContent = '';
         callback();
       }, 800);
     }
@@ -1123,7 +1150,11 @@ function wireEvents() {
     gameState.teams[0] = { name: n0, score: 0, correctWords: [], skippedWords: [] };
     gameState.teams[1] = { name: n1, score: 0, correctWords: [], skippedWords: [] };
     gameState.turnDuration = computeTurnDuration();
-    showCountdown(() => startGame());
+
+    // Pick random starting team BEFORE countdown so it can be shown during 3-2-1
+    const startTeam     = Math.random() < 0.5 ? 0 : 1;
+    const startTeamName = gameState.teams[startTeam].name;
+    showCountdown(startTeamName, () => startGame(startTeam));
   });
 
   // ── Resume ──────────────────────────────────────────
@@ -1176,7 +1207,11 @@ function wireEvents() {
 
   // ── Playing ─────────────────────────────────────────
   document.getElementById('btn-correct').addEventListener('click', markCorrect);
-  document.getElementById('btn-skip').addEventListener('click', markSkip);
+  // "Start Timer" button (formerly Skip) — hides itself, starts the word timer
+  document.getElementById('btn-skip').addEventListener('click', () => {
+    document.getElementById('btn-skip')?.classList.add('hidden');
+    startWordTimer();
+  });
   document.getElementById('btn-next-word').addEventListener('click', () => {
     if (gameState.deck.length === 0) {
       endRound();
