@@ -3154,3 +3154,152 @@ details[open] > .faq-q::after {
     }
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   TIER SELECTOR  —  game setup screen
+   Four tiers: Starter · Intermediate · Advanced · Expert
+══════════════════════════════════════════════════════════ */
+
+.tier-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Hide the native radio button — the whole label is clickable */
+.tier-radio-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Each tier row */
+.tier-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: border-color .18s, background .18s, box-shadow .18s;
+  /* accent colour injected inline as --tier-color */
+  position: relative;
+}
+
+.tier-option:hover:not(.tier-option--locked) {
+  border-color: var(--tier-color, var(--red));
+  background: color-mix(in srgb, var(--tier-color, var(--red)) 6%, var(--bg-card));
+}
+
+/* Selected state driven by the checked radio */
+.tier-radio-input:checked + .tier-option,
+.tier-option:has(.tier-radio-input:checked) {
+  border-color: var(--tier-color, var(--red));
+  background: color-mix(in srgb, var(--tier-color, var(--red)) 10%, var(--bg-card));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier-color, var(--red)) 20%, transparent);
+}
+
+/* Because label wraps the radio, we target via :has */
+.tier-option:has(.tier-radio-input:checked) {
+  border-color: var(--tier-color, var(--red));
+  background: color-mix(in srgb, var(--tier-color, var(--red)) 10%, var(--bg-card));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tier-color, var(--red)) 20%, transparent);
+}
+
+/* Locked row — muted, not interactive */
+.tier-option--locked {
+  opacity: .55;
+  cursor: default;
+}
+
+/* Left side: icon + name/profile */
+.tier-option-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tier-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tier-name {
+  font: 700 14px var(--font-ui);
+  color: var(--text);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tier-profile {
+  font: 400 11px var(--font-ui);
+  color: var(--text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right side: badge or lock */
+.tier-option-right {
+  flex-shrink: 0;
+}
+
+/* FREE badge */
+.tier-badge--free {
+  font: 700 10px var(--font-ui);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #43a047;
+  background: rgba(67,160,71,.12);
+  border: 1px solid rgba(67,160,71,.3);
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+
+/* Unlocked badge */
+.tier-badge--unlocked {
+  font: 600 11px var(--font-ui);
+  color: #43a047;
+}
+
+/* Lock: icon + price stacked */
+.tier-lock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tier-lock-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tier-lock-price {
+  font: 600 11px var(--font-ui);
+  color: var(--text-muted);
+}
+
+/* Checked indicator dot in top-right corner of selected tier */
+.tier-option:has(.tier-radio-input:checked)::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tier-color, var(--red));
+  opacity: .8;
+}

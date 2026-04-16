@@ -915,6 +915,7 @@ function renderSetup() {
 
   updateSetupComputed();
   updateProverbSetupComputed();
+  renderTierSelector();
   checkResumeBanner();
 }
 
@@ -1385,26 +1386,33 @@ function isPackUnlocked(slug) {
   return !!getUnlockedPacks()[slug];
 }
 
-// ── Merged deck pools ──────────────────────────────────────
-function getSelectedPacks() {
-  // Get packs selected in the current setup screen
-  const checkboxes = document.querySelectorAll('.pack-toggle-input:checked');
-  const selected = new Set();
-  checkboxes.forEach(cb => {
-    const slug = cb.dataset.slug;
-    if (slug) selected.add(slug);
-  });
-  return selected;
+// ── Tier selection ─────────────────────────────────────────
+// Returns the slug of the currently selected tier radio button.
+// Falls back to 'classic' (Starter) if nothing is selected.
+function getActiveTierSlug() {
+  const radio = document.querySelector('.tier-radio-input:checked');
+  return radio ? radio.dataset.slug : 'classic';
+}
+
+// Returns the PACK_CATALOGUE entries for the active tier and all tiers below it.
+// e.g. selecting "advanced" → [classic, hadar, adi]
+function getActiveTierPacks() {
+  if (typeof PACK_CATALOGUE === 'undefined') return [];
+  const slug = getActiveTierSlug();
+  const target = PACK_CATALOGUE.find(p => p.slug === slug);
+  if (!target) return PACK_CATALOGUE.filter(p => p.slug === 'classic');
+  return PACK_CATALOGUE.filter(p => p.sequenceOrder <= target.sequenceOrder);
 }
 
 function getMergedWords() {
-  const unlocked = getUnlockedPacks();
-  const selected = getSelectedPacks();
-  let all = [...gameWords]; // Always include classic
+  const unlocked  = getUnlockedPacks();
+  const tierPacks = getActiveTierPacks();
+  let all = [...gameWords]; // classic words always included
 
-  // Add words from selected unlocked packs
-  for (const [slug, data] of Object.entries(unlocked)) {
-    if (selected.has(slug) && slug !== 'classic' && Array.isArray(data.words)) {
+  for (const pack of tierPacks) {
+    if (pack.slug === 'classic') continue; // already in gameWords
+    const data = unlocked[pack.slug];
+    if (data && Array.isArray(data.words)) {
       all = all.concat(data.words);
     }
   }
@@ -1412,13 +1420,14 @@ function getMergedWords() {
 }
 
 function getMergedProverbs() {
-  const unlocked = getUnlockedPacks();
-  const selected = getSelectedPacks();
-  let all = [...PROVERBS]; // Always include classic
+  const unlocked  = getUnlockedPacks();
+  const tierPacks = getActiveTierPacks();
+  let all = [...PROVERBS]; // classic proverbs always included
 
-  // Add proverbs from selected unlocked packs
-  for (const [slug, data] of Object.entries(unlocked)) {
-    if (selected.has(slug) && slug !== 'classic' && Array.isArray(data.proverbs)) {
+  for (const pack of tierPacks) {
+    if (pack.slug === 'classic') continue;
+    const data = unlocked[pack.slug];
+    if (data && Array.isArray(data.proverbs)) {
       all = all.concat(data.proverbs);
     }
   }
@@ -1658,7 +1667,10 @@ function renderPackCards() {
 
     const metaP = document.createElement('p');
     metaP.className = 'pack-card-meta';
-    metaP.textContent = `${pack.wordCount} words · ${pack.proverbCount} proverbs`;
+    const wordTotal = pack.sequenceOrder > 1
+      ? `+${pack.wordCount} words`
+      : `${pack.wordCount} words`;
+    metaP.textContent = `${pack.tierLabel} · ${wordTotal} · ${pack.proverbCount} proverbs`;
     info.appendChild(metaP);
 
     card.appendChild(info);
@@ -1691,66 +1703,107 @@ function renderPackCards() {
   });
 }
 
-// ── Pack toggles in game setup ────────────────────────────
-function renderPackToggles() {
-  const container = document.getElementById('pack-checkboxes');
-  const label     = document.getElementById('pack-selector-label');
+// ── Tier selector in game setup ───────────────────────────
+function renderTierSelector() {
+  const container = document.getElementById('tier-selector');
   if (!container || typeof PACK_CATALOGUE === 'undefined') return;
-
-  const unlocked = PACK_CATALOGUE.filter(p => isPackUnlocked(p.slug));
-
-  // Only show section if there's more than the classic pack unlocked
-  if (unlocked.length <= 1) {
-    container.textContent = ''; // Clear safely
-    if (label) label.classList.add('hidden');
-    return;
-  }
-  if (label) label.classList.remove('hidden');
 
   container.textContent = ''; // Clear safely
 
-  unlocked.forEach(pack => {
-    const row = document.createElement('div');
-    row.className = 'pack-toggle-row';
+  PACK_CATALOGUE.forEach((pack, idx) => {
+    const unlocked = isPackUnlocked(pack.slug);
+    const locked   = !unlocked;
 
-    const info = document.createElement('div');
+    const option = document.createElement('label');
+    option.className = 'tier-option' + (locked ? ' tier-option--locked' : '');
+    option.htmlFor   = `tier-radio-${pack.slug}`;
+    option.style.setProperty('--tier-color', pack.accentColor);
 
-    const nameP = document.createElement('p');
-    nameP.className = 'pack-toggle-name';
-    nameP.textContent = `${pack.nameGeez} — ${pack.nameEn}`;
-    info.appendChild(nameP);
+    // Radio input (hidden, driven by the label click)
+    const radio = document.createElement('input');
+    radio.type      = 'radio';
+    radio.name      = 'active-tier';
+    radio.id        = `tier-radio-${pack.slug}`;
+    radio.className = 'tier-radio-input';
+    radio.dataset.slug = pack.slug;
+    radio.disabled  = locked;
+    if (idx === 0) radio.checked = true; // Starter selected by default
 
-    const metaP = document.createElement('p');
-    metaP.className = 'pack-toggle-meta';
-    metaP.textContent = `${pack.wordCount} words · ${pack.proverbCount} proverbs`;
-    info.appendChild(metaP);
-
-    row.appendChild(info);
-
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.className = 'pack-toggle-input';
-    checkbox.id = `pack-toggle-${pack.slug}`;
-    checkbox.dataset.slug = pack.slug;
-    checkbox.checked = true;
-    if (pack.isFree) checkbox.disabled = true;
-
-    checkbox.addEventListener('change', () => {
-      // Rebuild deck with newly selected packs (applies to both modes)
+    radio.addEventListener('change', () => {
       if (gameState.mode === 'words') {
         gameState.wordDeck = buildDeck();
       } else {
         gameState.proverbDeck = buildProverbDeck();
       }
-      // Update the computed display (cards per team, etc)
       updateSetupComputed();
       updateProverbSetupComputed();
     });
 
-    row.appendChild(checkbox);
-    container.appendChild(row);
+    option.appendChild(radio);
+
+    // Left: icon + tier name
+    const left = document.createElement('div');
+    left.className = 'tier-option-left';
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'tier-icon';
+    iconSpan.textContent = pack.icon;
+    left.appendChild(iconSpan);
+
+    const nameWrap = document.createElement('div');
+
+    const nameP = document.createElement('p');
+    nameP.className = 'tier-name';
+    nameP.textContent = pack.nameEn;
+    nameWrap.appendChild(nameP);
+
+    const profileP = document.createElement('p');
+    profileP.className = 'tier-profile';
+    profileP.textContent = pack.wordProfile;
+    nameWrap.appendChild(profileP);
+
+    left.appendChild(nameWrap);
+    option.appendChild(left);
+
+    // Right: badge or lock
+    const right = document.createElement('div');
+    right.className = 'tier-option-right';
+
+    if (pack.isFree) {
+      const badge = document.createElement('span');
+      badge.className = 'tier-badge tier-badge--free';
+      badge.textContent = 'FREE';
+      right.appendChild(badge);
+    } else if (unlocked) {
+      const badge = document.createElement('span');
+      badge.className = 'tier-badge tier-badge--unlocked';
+      badge.textContent = '✓ Unlocked';
+      right.appendChild(badge);
+    } else {
+      const lockWrap = document.createElement('div');
+      lockWrap.className = 'tier-lock';
+
+      const lockIcon = document.createElement('span');
+      lockIcon.className = 'tier-lock-icon';
+      lockIcon.setAttribute('aria-hidden', 'true');
+      lockIcon.textContent = '🔒';
+      lockWrap.appendChild(lockIcon);
+
+      const lockPrice = document.createElement('span');
+      lockPrice.className = 'tier-lock-price';
+      lockPrice.textContent = `£${pack.priceGbp.toFixed(2)}`;
+      lockWrap.appendChild(lockPrice);
+
+      right.appendChild(lockWrap);
+    }
+
+    option.appendChild(right);
+    container.appendChild(option);
   });
 }
+
+// Keep old name as alias so any lingering calls don't crash
+const renderPackToggles = renderTierSelector;
 
 // ── Winner screen upsell ───────────────────────────────────
 function renderWinnerUpsell() {
@@ -1762,7 +1815,7 @@ function renderWinnerUpsell() {
   const nextLocked = PACK_CATALOGUE.find(p => !p.isFree && !isPackUnlocked(p.slug));
   if (!nextLocked) { upsell.classList.add('hidden'); return; }
 
-  if (nameEl) nameEl.textContent = `${nextLocked.nameGeez} — ${nextLocked.nameEn}`;
+  if (nameEl) nameEl.textContent = `${nextLocked.icon} ${nextLocked.nameEn} — ${nextLocked.nameGeez}`;
   upsell.classList.remove('hidden');
 
   btn?.addEventListener('click', () => openUnlockModal(nextLocked.slug), { once: true });

@@ -16,7 +16,7 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=23" />
+  <link rel="stylesheet" href="style.css?v=24" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -222,9 +222,9 @@
 
       </div><!-- /#proverb-config-rows -->
 
-      <!-- Active packs — only shown when 2+ packs are unlocked -->
-      <div id="pack-selector-label" class="setup-section-label hidden" style="margin-top:1.25rem;">Active Packs</div>
-      <div id="pack-checkboxes" class="pack-checkboxes"></div>
+      <!-- Tier selector — always visible -->
+      <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty Tier</div>
+      <div id="tier-selector" class="tier-selector" role="radiogroup" aria-label="Select difficulty tier"></div>
 
     </div><!-- /.setup-body -->
 
@@ -529,8 +529,8 @@
   <script src="supabase.min.js"></script>
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
-  <script src="packs.js?v=2"></script>
-  <script src="app.js?v=31"></script>
+  <script src="packs.js?v=3"></script>
+  <script src="app.js?v=32"></script>
 
   <script>
     if ('serviceWorker' in navigator) {
