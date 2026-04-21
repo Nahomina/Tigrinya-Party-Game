@@ -170,11 +170,11 @@
           <span class="spec-label">Difficulty</span>
           <span class="config-hint">Question complexity</span>
         </div>
-        <div class="stepper">
-          <button id="btn-diff-minus" class="stepper-btn" aria-label="Easier">−</button>
-          <span id="diff-display" class="stepper-val">Medium</span>
-          <button id="btn-diff-plus"  class="stepper-btn" aria-label="Harder">+</button>
-        </div>
+        <select id="difficulty-dropdown" class="dropdown-select">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
       </div>
 
       <div class="config-row">
@@ -182,11 +182,15 @@
           <span class="spec-label">Category</span>
           <span class="config-hint">Question topic</span>
         </div>
-        <div class="stepper">
-          <button id="btn-cat-minus" class="stepper-btn" aria-label="Previous category">−</button>
-          <span id="cat-display" class="stepper-val">All</span>
-          <button id="btn-cat-plus"  class="stepper-btn" aria-label="Next category">+</button>
-        </div>
+        <select id="category-dropdown" class="dropdown-select">
+          <option value="all" selected>All Categories</option>
+          <option value="Geography">Geography</option>
+          <option value="History">History</option>
+          <option value="Culture">Culture</option>
+          <option value="Language">Language</option>
+          <option value="Music">Music</option>
+          <option value="General">General</option>
+        </select>
       </div>
 
     </div>
@@ -475,8 +479,6 @@ function init() {
   _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   setupTheme();
   wireEvents();
-  updateDiffDisplay();
-  updateCatDisplay();
   setupModeSelector();
 }
 
@@ -509,28 +511,14 @@ function updateModeUI() {
 }
 
 function wireEvents() {
-  // Difficulty
-  document.getElementById('btn-diff-minus').addEventListener('click', () => {
-    const idx = DIFFICULTIES.indexOf(gameState.difficulty);
-    if (idx > 0) gameState.difficulty = DIFFICULTIES[idx - 1];
-    updateDiffDisplay();
-  });
-  document.getElementById('btn-diff-plus').addEventListener('click', () => {
-    const idx = DIFFICULTIES.indexOf(gameState.difficulty);
-    if (idx < DIFFICULTIES.length - 1) gameState.difficulty = DIFFICULTIES[idx + 1];
-    updateDiffDisplay();
+  // Difficulty dropdown
+  document.getElementById('difficulty-dropdown').addEventListener('change', (e) => {
+    gameState.difficulty = e.target.value;
   });
 
-  // Category
-  document.getElementById('btn-cat-minus').addEventListener('click', () => {
-    const idx = CATEGORIES.indexOf(gameState.category);
-    if (idx > 0) gameState.category = CATEGORIES[idx - 1];
-    updateCatDisplay();
-  });
-  document.getElementById('btn-cat-plus').addEventListener('click', () => {
-    const idx = CATEGORIES.indexOf(gameState.category);
-    if (idx < CATEGORIES.length - 1) gameState.category = CATEGORIES[idx + 1];
-    updateCatDisplay();
+  // Category dropdown
+  document.getElementById('category-dropdown').addEventListener('change', (e) => {
+    gameState.category = e.target.value;
   });
 
   // Team mode: Rounds
@@ -565,9 +553,9 @@ function wireEvents() {
   document.getElementById('btn-play-again').addEventListener('click', () => {
     gameState.difficulty = 'medium';
     gameState.category = 'all';
+    document.getElementById('difficulty-dropdown').value = 'medium';
+    document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
-    updateDiffDisplay();
-    updateCatDisplay();
   });
 
   // Team mode
@@ -578,9 +566,9 @@ function wireEvents() {
   document.getElementById('btn-team-play-again')?.addEventListener('click', () => {
     gameState.difficulty = 'medium';
     gameState.category = 'all';
+    document.getElementById('difficulty-dropdown').value = 'medium';
+    document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
-    updateDiffDisplay();
-    updateCatDisplay();
   });
 
   // Solo mode options
@@ -602,14 +590,6 @@ function wireEvents() {
   }
 }
 
-function updateDiffDisplay() {
-  document.getElementById('diff-display').textContent =
-    gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
-}
-
-function updateCatDisplay() {
-  document.getElementById('cat-display').textContent = gameState.category === 'all' ? 'All' : gameState.category;
-}
 
 function updateTeamDurationDisplay() {
   const rounds = gameState.totalRounds;
@@ -1067,6 +1047,33 @@ if (document.readyState === 'loading') {
   transition: color 0.2s;
 }
 
+/* ═══ DROPDOWN SELECT ═══ */
+.dropdown-select {
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23999' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.dropdown-select:hover {
+  border-color: var(--border-mid);
+}
+
+.dropdown-select:focus {
+  outline: none;
+  border-color: var(--border-mid);
+  box-shadow: 0 0 0 3px rgba(102, 102, 170, 0.1);
+}
+
 /* ═══ CONFIG SECTIONS ═══ */
 .config-section {
   display: flex;
@@ -1494,6 +1501,27 @@ if (document.readyState === 'loading') {
   }
 }
 
+/* ═══ SCROLLABLE PAGE ═══ */
+body.game-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#screen-setup {
+  max-height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+
+.setup-body {
+  max-width: 100%;
+}
+
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 640px) {
   .hito-option-btn {
@@ -1514,6 +1542,10 @@ if (document.readyState === 'loading') {
 
   .interstitial-team {
     font-size: 2rem;
+  }
+
+  .dropdown-select {
+    font-size: 16px;
   }
 }
   </style>
