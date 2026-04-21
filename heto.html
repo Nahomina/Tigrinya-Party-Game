@@ -640,26 +640,33 @@ function updateTeamDurationDisplay() {
 }
 
 async function fetchHetoQuestions(count = 10) {
+  console.log('[HITO] fetchHetoQuestions called with count=' + count);
   try {
     const cached = localStorage.getItem(HITO_CACHE_KEY);
     const cacheTime = localStorage.getItem(HITO_CACHE_KEY + '_time');
     if (cached && cacheTime && Date.now() - parseInt(cacheTime) < HITO_CACHE_TTL) {
+      console.log('[HITO] Using cached questions');
       const data = JSON.parse(cached);
       return filterQuestions(data, count);
     }
 
+    console.log('[HITO] Fetching from Supabase, category=' + gameState.category + ', difficulty=' + gameState.difficulty);
     let query = _supabase.from('heto_questions').select('*');
     if (gameState.category !== 'all') {
       query = query.eq('category', gameState.category);
     }
 
+    console.log('[HITO] Executing Supabase query...');
     const { data, error } = await query;
+    console.log('[HITO] Supabase query returned, error=' + (error ? error.message : 'null') + ', data length=' + (data ? data.length : 'null'));
     if (error) throw error;
 
     localStorage.setItem(HITO_CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(HITO_CACHE_KEY + '_time', Date.now().toString());
 
-    return filterQuestions(data, count);
+    const filtered = filterQuestions(data, count);
+    console.log('[HITO] Filtered to ' + filtered.length + ' questions');
+    return filtered;
   } catch (err) {
     console.warn('[HITO] Failed to fetch questions:', err);
     return [];
@@ -727,9 +734,12 @@ async function startTeamGame() {
   console.log('[HITO] startTeamGame: gameState.teams set to:', gameState.teams);
 
   const totalQNeeded = gameState.totalRounds * 2;
+  console.log('[HITO] startTeamGame: Fetching ' + totalQNeeded + ' questions...');
   const questions = await fetchHetoQuestions(totalQNeeded);
+  console.log('[HITO] startTeamGame: fetchHetoQuestions returned ' + (questions ? questions.length : 'null') + ' questions');
 
   if (!questions || questions.length < totalQNeeded) {
+    console.error('[HITO] startTeamGame: Not enough questions. Expected ' + totalQNeeded + ', got ' + (questions ? questions.length : 'null'));
     alert('Not enough questions for this difficulty/category combination. Try a different setting.');
     return;
   }
@@ -740,8 +750,11 @@ async function startTeamGame() {
   gameState.currentQ = 0;
   gameState.roundQuestions = [];
 
+  console.log('[HITO] startTeamGame: Going to interstitial screen...');
   goToScreen('interstitial');
+  console.log('[HITO] startTeamGame: Calling updateInterstitial...');
   updateInterstitial();
+  console.log('[HITO] startTeamGame: Complete');
 }
 
 function updateInterstitial() {
