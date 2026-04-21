@@ -478,10 +478,15 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const ROUND_OPTIONS = [3, 5, 7, 10];
 
 function init() {
+  console.log('[HITO] Initializing...');
   _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log('[HITO] Supabase client created');
   setupTheme();
+  console.log('[HITO] Theme setup complete');
   wireEvents();
+  console.log('[HITO] Events wired');
   setupModeSelector();
+  console.log('[HITO] Mode selector setup complete');
 }
 
 function setupTheme() {
@@ -511,8 +516,12 @@ function setupTheme() {
 }
 
 function setupModeSelector() {
-  document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+  const radios = document.querySelectorAll('input[name="gameMode"]');
+  console.log('[HITO] setupModeSelector: Found', radios.length, 'radio buttons');
+
+  radios.forEach(radio => {
     radio.addEventListener('change', (e) => {
+      console.log('[HITO] Mode changed to:', e.target.value);
       gameState.mode = e.target.value;
       updateModeUI();
     });
@@ -522,8 +531,24 @@ function setupModeSelector() {
 
 function updateModeUI() {
   const isSolo = gameState.mode === 'solo';
-  document.getElementById('team-config').classList.toggle('hidden', isSolo);
-  document.getElementById('solo-config').classList.toggle('hidden', !isSolo);
+  const teamConfig = document.getElementById('team-config');
+  const soloConfig = document.getElementById('solo-config');
+
+  console.log('[HITO] updateModeUI: isSolo=' + isSolo + ', teamConfig exists=' + !!teamConfig + ', soloConfig exists=' + !!soloConfig);
+
+  if (teamConfig) {
+    teamConfig.classList.toggle('hidden', isSolo);
+    console.log('[HITO] team-config hidden class:', teamConfig.classList.contains('hidden'));
+  } else {
+    console.warn('[HITO] team-config element not found!');
+  }
+
+  if (soloConfig) {
+    soloConfig.classList.toggle('hidden', !isSolo);
+    console.log('[HITO] solo-config hidden class:', soloConfig.classList.contains('hidden'));
+  } else {
+    console.warn('[HITO] solo-config element not found!');
+  }
 }
 
 function wireEvents() {
