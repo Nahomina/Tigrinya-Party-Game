@@ -1662,6 +1662,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 }
 .home-card--words::before   { background: var(--red); }
 .home-card--proverbs::before { background: var(--correct); }
+.home-card--heto::before     { background: #f4511e; }
 
 /* Ge'ez watermark via data attribute */
 .home-card::after {
@@ -1703,6 +1704,14 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 .home-card--proverbs:hover {
   border-color: var(--correct);
   background: color-mix(in srgb, var(--correct) 7%, var(--bg-card));
+}
+
+.home-card--heto {
+  border-color: color-mix(in srgb, #f4511e 30%, var(--border-mid));
+}
+.home-card--heto:hover {
+  border-color: #f4511e;
+  background: color-mix(in srgb, #f4511e 7%, var(--bg-card));
 }
 
 .home-card-names {
@@ -1753,6 +1762,7 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 }
 .home-card--words:hover .home-card-cta    { color: var(--red); }
 .home-card--proverbs:hover .home-card-cta { color: var(--correct); }
+.home-card--heto:hover .home-card-cta     { color: #f4511e; }
 
 /* ── Hero button group (How to Play + Word Packs) ── */
 .home-btn-group {
