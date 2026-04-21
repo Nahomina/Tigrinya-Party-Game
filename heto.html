@@ -485,13 +485,27 @@ function init() {
 function setupTheme() {
   const stored = localStorage.getItem('mayim_theme');
   const isDark = stored !== 'light';
-  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  document.getElementById('btn-theme-toggle').addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme');
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('mayim_theme', next);
-  });
+  const themeValue = isDark ? 'dark' : 'light';
+
+  // Set initial theme on all relevant elements
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    document.documentElement.style.colorScheme = theme;
+  }
+
+  applyTheme(themeValue);
+
+  // Setup toggle button
+  const themeBtn = document.getElementById('btn-theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('mayim_theme', next);
+    });
+  }
 }
 
 function setupModeSelector() {
@@ -669,13 +683,11 @@ async function startSoloGame() {
 }
 
 async function startTeamGame() {
-  const team1Name = document.getElementById('team1-name-input').value.trim() || 'Team A';
-  const team2Name = document.getElementById('team2-name-input').value.trim() || 'Team B';
-
-  if (!team1Name || !team2Name) {
-    alert('Please enter team names');
-    return;
-  }
+  // Get team names with fallback to defaults
+  const team1Input = document.getElementById('team1-name-input').value.trim();
+  const team2Input = document.getElementById('team2-name-input').value.trim();
+  const team1Name = team1Input || 'Team A';
+  const team2Name = team2Input || 'Team B';
 
   gameState.teams = [
     { name: team1Name, score: 0, correct: 0, skipped: 0 },
