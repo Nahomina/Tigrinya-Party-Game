@@ -716,10 +716,15 @@ async function startTeamGame() {
   const team1Name = team1Input || 'Team A';
   const team2Name = team2Input || 'Team B';
 
+  console.log('[HITO] startTeamGame: team1Input="' + team1Input + '", team2Input="' + team2Input + '"');
+  console.log('[HITO] startTeamGame: team1Name="' + team1Name + '", team2Name="' + team2Name + '"');
+
   gameState.teams = [
     { name: team1Name, score: 0, correct: 0, skipped: 0 },
     { name: team2Name, score: 0, correct: 0, skipped: 0 }
   ];
+
+  console.log('[HITO] startTeamGame: gameState.teams set to:', gameState.teams);
 
   const totalQNeeded = gameState.totalRounds * 2;
   const questions = await fetchHetoQuestions(totalQNeeded);
@@ -742,7 +747,10 @@ async function startTeamGame() {
 function updateInterstitial() {
   document.getElementById('current-round').textContent = gameState.currentRound;
   document.getElementById('total-rounds').textContent = gameState.totalRounds;
-  document.getElementById('active-team-display').textContent = gameState.teams[gameState.currentTeam].name + " is up!";
+  const teamName = gameState.teams[gameState.currentTeam].name;
+  const displayText = teamName + " is up!";
+  console.log('[HITO] updateInterstitial: currentTeam=' + gameState.currentTeam + ', teamName="' + teamName + '", displayText="' + displayText + '"');
+  document.getElementById('active-team-display').textContent = displayText;
 }
 
 function startTeamRound() {
