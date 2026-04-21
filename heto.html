@@ -4,19 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f11" />
-  <meta name="description" content="HITO — Tigrinya trivia game. Answer 10 questions in a row for the ultimate challenge." />
+  <meta name="description" content="HITO — Tigrinya trivia game. Solo challenge or team competition." />
   <link rel="canonical" href="https://habeshagame.com/heto.html" />
   <meta name="robots" content="index, follow" />
   <meta property="og:type"        content="website" />
   <meta property="og:locale"      content="en_US" />
   <meta property="og:title"       content="HITO — Tigrinya Trivia Challenge" />
-  <meta property="og:description" content="Answer 10 rapid-fire trivia questions about Tigrinya culture, history, and language." />
+  <meta property="og:description" content="Solo or team trivia game about Tigrinya culture, history, and language." />
   <meta property="og:url"         content="https://habeshagame.com/heto.html" />
   <meta property="og:image"       content="https://habeshagame.com/assets/og-image.png" />
   <meta property="og:site_name"   content="Tigrinya Party Games" />
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="HITO — Tigrinya Trivia Challenge" />
-  <meta name="twitter:description" content="10 questions, 20 seconds each, no going back. How many can you answer?" />
+  <meta name="twitter:description" content="Solo or team: How well do you know Tigrinya?" />
   <meta name="twitter:image"       content="https://habeshagame.com/assets/og-image.png" />
 
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -76,7 +76,7 @@
     <button id="btn-update-reload">RELOAD</button>
   </div>
 
-
+  <!-- ═══ SETUP SCREEN ═══ -->
   <section id="screen-setup" class="screen active" role="main">
 
     <div class="setup-hero">
@@ -88,23 +88,81 @@
 
     <div class="setup-body">
 
-      <div class="setup-section-label">Game Config</div>
+      <!-- MODE SELECTOR -->
+      <div class="setup-section-label">Game Mode</div>
 
-      <div class="config-row">
-        <div class="config-row-label">
-          <span class="spec-label">Questions</span>
-          <span class="config-hint">Rapid-fire trivia</span>
+      <div class="mode-selector">
+        <label class="mode-option">
+          <input type="radio" name="gameMode" value="solo" checked />
+          <span class="mode-name">🎯 Solo Challenge</span>
+          <span class="mode-desc">10 rapid-fire questions, 20 sec each, no going back</span>
+        </label>
+        <label class="mode-option">
+          <input type="radio" name="gameMode" value="team" />
+          <span class="mode-name">👥 Team Competition</span>
+          <span class="mode-desc">Multiple teams take turns, configurable rounds</span>
+        </label>
+      </div>
+
+      <!-- TEAM MODE CONFIG -->
+      <div id="team-config" class="config-section hidden">
+        <div class="setup-section-label">Team Setup</div>
+
+        <div class="config-row">
+          <div class="config-row-label">
+            <span class="spec-label">Team 1 Name</span>
+            <span class="config-hint">Enter name</span>
+          </div>
+          <input id="team1-name-input" type="text" class="team-name-input" maxlength="20" placeholder="Team A" />
         </div>
-        <div class="stepper">
-          <span class="stepper-val" style="pointer-events: none; cursor: default;">10</span>
+
+        <div class="config-row">
+          <div class="config-row-label">
+            <span class="spec-label">Team 2 Name</span>
+            <span class="config-hint">Enter name</span>
+          </div>
+          <input id="team2-name-input" type="text" class="team-name-input" maxlength="20" placeholder="Team B" />
+        </div>
+
+        <div class="config-row">
+          <div class="config-row-label">
+            <span class="spec-label">Rounds</span>
+            <span class="config-hint">Questions per team</span>
+          </div>
+          <div class="stepper">
+            <button id="btn-rounds-minus" class="stepper-btn" aria-label="Fewer rounds">−</button>
+            <span id="rounds-display" class="stepper-val">5</span>
+            <button id="btn-rounds-plus"  class="stepper-btn" aria-label="More rounds">+</button>
+          </div>
+        </div>
+
+        <div class="computed-row">
+          <span class="computed-label">Game Duration</span>
+          <span class="computed-value" id="team-duration-display">2 teams × 5 rounds = ~10 questions</span>
         </div>
       </div>
 
-      <div class="computed-row">
-        <span class="computed-label">Challenge Duration</span>
-        <span class="computed-value">10 questions × 20s = ~3-4 min</span>
+      <!-- SOLO MODE CONFIG -->
+      <div id="solo-config" class="config-section">
+        <div class="setup-section-label">Challenge Config</div>
+
+        <div class="config-row">
+          <div class="config-row-label">
+            <span class="spec-label">Questions</span>
+            <span class="config-hint">Rapid-fire trivia</span>
+          </div>
+          <div class="stepper">
+            <span class="stepper-val" style="pointer-events: none; cursor: default;">10</span>
+          </div>
+        </div>
+
+        <div class="computed-row">
+          <span class="computed-label">Challenge Duration</span>
+          <span class="computed-value">10 questions × 20s = ~3-4 min</span>
+        </div>
       </div>
 
+      <!-- DIFFICULTY & CATEGORY (BOTH MODES) -->
       <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty & Category</div>
 
       <div class="config-row">
@@ -131,18 +189,10 @@
         </div>
       </div>
 
-      <div class="tier-selector" style="margin-top: 1.5rem;">
-        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-          ⚡ Answer each question within 20 seconds<br/>
-          🔥 No going back — your answer is final<br/>
-          🎯 Beat your score!
-        </p>
-      </div>
-
     </div>
 
     <div class="button-footer">
-      <button id="btn-start-game" class="btn-primary">Start Challenge</button>
+      <button id="btn-start-game" class="btn-primary">Start Game</button>
     </div>
 
     <footer class="game-legal-footer">
@@ -157,7 +207,88 @@
 
   </section>
 
+  <!-- ═══ TEAM MODE: INTERSTITIAL SCREEN ═══ -->
+  <section id="screen-interstitial" class="screen" role="main">
+    <div class="interstitial-box">
+      <p class="interstitial-label">Round <span id="current-round">1</span> / <span id="total-rounds">5</span></p>
+      <p class="interstitial-team" id="active-team-display" lang="ti">Team A's Turn</p>
+      <p class="interstitial-hint">Pass phone to the team. Judge, get ready!</p>
+      <button id="btn-start-round" class="btn-primary">▶ Start</button>
+    </div>
+  </section>
 
+  <!-- ═══ TEAM MODE: PLAYING SCREEN ═══ -->
+  <section id="screen-team-playing" class="screen" role="main">
+
+    <div class="timer-strip">
+      <button class="btn-quit-game" id="btn-quit-team-playing" aria-label="Quit game">✕ Quit</button>
+      <div class="team-info-mini">
+        <span id="team-mini-display" class="team-name-mini">Team A</span>
+        <span id="round-mini-display" class="round-counter-mini">R1 • 1/5</span>
+      </div>
+      <span id="timer-display-team" aria-live="polite" aria-label="Seconds remaining" class="timer-display-team">30</span>
+    </div>
+
+    <div class="word-stage">
+      <span class="label-eyebrow">Question</span>
+      <div id="current-question-team" lang="ti" aria-live="assertive" class="hito-question">
+        Sample question in Tigrinya?
+      </div>
+      <div id="current-question-latin-team" class="hito-question-latin">
+        Sample question in Latin?
+      </div>
+    </div>
+
+    <div class="team-answer-buttons">
+      <button id="btn-team-correct" class="btn-team-action btn-team-correct">✓ Correct</button>
+      <button id="btn-team-skip" class="btn-team-action btn-team-skip">⊘ Skip / Pass</button>
+    </div>
+
+  </section>
+
+  <!-- ═══ TEAM MODE: SUMMARY SCREEN ═══ -->
+  <section id="screen-summary" class="screen" role="main">
+
+    <div class="summary-header">
+      <a href="index.html" class="btn-home-back summary-home-back" aria-label="Back to home">← Home</a>
+      <span class="label-eyebrow" id="summary-round-label">Round 1 Complete</span>
+    </div>
+
+    <div class="summary-scores">
+      <div class="summary-team" id="summary-team1">
+        <div class="summary-team-name" id="summary-team1-name">Team A</div>
+        <div class="summary-team-score" id="summary-team1-score">0</div>
+        <div class="summary-team-stat">
+          <span class="stat-label">Correct</span>
+          <span class="stat-value" id="summary-team1-correct">0</span>
+        </div>
+        <div class="summary-team-stat">
+          <span class="stat-label">Skipped</span>
+          <span class="stat-value" id="summary-team1-skipped">0</span>
+        </div>
+      </div>
+
+      <div class="summary-team" id="summary-team2">
+        <div class="summary-team-name" id="summary-team2-name">Team B</div>
+        <div class="summary-team-score" id="summary-team2-score">0</div>
+        <div class="summary-team-stat">
+          <span class="stat-label">Correct</span>
+          <span class="stat-value" id="summary-team2-correct">0</span>
+        </div>
+        <div class="summary-team-stat">
+          <span class="stat-label">Skipped</span>
+          <span class="stat-value" id="summary-team2-skipped">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-footer">
+      <button id="btn-next-round" class="btn-primary">Next Round</button>
+    </div>
+
+  </section>
+
+  <!-- ═══ SOLO MODE: QUESTION SCREEN ═══ -->
   <section id="screen-question" class="screen" role="main">
 
     <div class="timer-strip">
@@ -207,7 +338,7 @@
 
   </section>
 
-
+  <!-- ═══ SOLO MODE: WINNER SCREEN ═══ -->
   <section id="screen-winner" class="screen" role="main">
 
     <div class="winner-eyebrow-bar">
@@ -253,6 +384,54 @@
 
   </section>
 
+  <!-- ═══ TEAM MODE: FINAL WINNER SCREEN ═══ -->
+  <section id="screen-team-winner" class="screen" role="main">
+
+    <div class="winner-eyebrow-bar">
+      <a href="index.html" class="btn-home-back winner-home-back" aria-label="Back to home">← Home</a>
+      <span class="label-eyebrow">Game Over</span>
+    </div>
+
+    <div class="winner-hero">
+      <span class="winner-trophy" aria-hidden="true">🏆</span>
+      <span class="winner-label" id="team-winner-label">Team A Wins!</span>
+      <h2 id="team-winner-scores">0 - 0</h2>
+    </div>
+
+    <div class="final-team-stats">
+      <div class="final-team-stat" id="team-stat-1">
+        <div class="stat-team-name" id="stat-team1-name">Team A</div>
+        <div class="stat-team-score" id="stat-team1-score">0</div>
+        <div class="stat-detail">
+          <span class="stat-d-label">Correct</span>
+          <span class="stat-d-value" id="stat-team1-c">0</span>
+        </div>
+        <div class="stat-detail">
+          <span class="stat-d-label">Skipped</span>
+          <span class="stat-d-value" id="stat-team1-s">0</span>
+        </div>
+      </div>
+
+      <div class="final-team-stat" id="team-stat-2">
+        <div class="stat-team-name" id="stat-team2-name">Team B</div>
+        <div class="stat-team-score" id="stat-team2-score">0</div>
+        <div class="stat-detail">
+          <span class="stat-d-label">Correct</span>
+          <span class="stat-d-value" id="stat-team2-c">0</span>
+        </div>
+        <div class="stat-detail">
+          <span class="stat-d-label">Skipped</span>
+          <span class="stat-d-value" id="stat-team2-s">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-footer">
+      <button id="btn-team-play-again" class="btn-primary">Play Again</button>
+    </div>
+
+  </section>
+
   <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
   <script src="supabase.min.js"></script>
@@ -270,6 +449,7 @@ const HITO_CACHE_TTL = 5 * 60 * 1000;
 let _supabase = null;
 let gameState = {
   screen: 'setup',
+  mode: 'solo', // 'solo' or 'team'
   difficulty: 'medium',
   category: 'all',
   questions: [],
@@ -279,10 +459,17 @@ let gameState = {
   timeLeft: 20,
   timerActive: false,
   currentlyAnswering: false,
+  // Team mode fields
+  teams: [{ name: 'Team A', score: 0, correct: 0, skipped: 0 }, { name: 'Team B', score: 0, correct: 0, skipped: 0 }],
+  currentTeam: 0,
+  currentRound: 1,
+  totalRounds: 5,
+  roundQuestions: [],
 };
 
 const CATEGORIES = ['all', 'Geography', 'History', 'Culture', 'Language', 'Music', 'General'];
 const DIFFICULTIES = ['easy', 'medium', 'hard'];
+const ROUND_OPTIONS = [3, 5, 7, 10];
 
 function init() {
   _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -290,6 +477,7 @@ function init() {
   wireEvents();
   updateDiffDisplay();
   updateCatDisplay();
+  setupModeSelector();
 }
 
 function setupTheme() {
@@ -304,7 +492,24 @@ function setupTheme() {
   });
 }
 
+function setupModeSelector() {
+  document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      gameState.mode = e.target.value;
+      updateModeUI();
+    });
+  });
+  updateModeUI();
+}
+
+function updateModeUI() {
+  const isSolo = gameState.mode === 'solo';
+  document.getElementById('team-config').classList.toggle('hidden', isSolo);
+  document.getElementById('solo-config').classList.toggle('hidden', !isSolo);
+}
+
 function wireEvents() {
+  // Difficulty
   document.getElementById('btn-diff-minus').addEventListener('click', () => {
     const idx = DIFFICULTIES.indexOf(gameState.difficulty);
     if (idx > 0) gameState.difficulty = DIFFICULTIES[idx - 1];
@@ -316,6 +521,7 @@ function wireEvents() {
     updateDiffDisplay();
   });
 
+  // Category
   document.getElementById('btn-cat-minus').addEventListener('click', () => {
     const idx = CATEGORIES.indexOf(gameState.category);
     if (idx > 0) gameState.category = CATEGORIES[idx - 1];
@@ -327,13 +533,35 @@ function wireEvents() {
     updateCatDisplay();
   });
 
+  // Team mode: Rounds
+  document.getElementById('btn-rounds-minus')?.addEventListener('click', () => {
+    const idx = ROUND_OPTIONS.indexOf(gameState.totalRounds);
+    if (idx > 0) {
+      gameState.totalRounds = ROUND_OPTIONS[idx - 1];
+      updateTeamDurationDisplay();
+    }
+  });
+  document.getElementById('btn-rounds-plus')?.addEventListener('click', () => {
+    const idx = ROUND_OPTIONS.indexOf(gameState.totalRounds);
+    if (idx < ROUND_OPTIONS.length - 1) {
+      gameState.totalRounds = ROUND_OPTIONS[idx + 1];
+      updateTeamDurationDisplay();
+    }
+  });
+
+  // Game start
   document.getElementById('btn-start-game').addEventListener('click', startGame);
+
+  // Solo mode play
   document.getElementById('btn-quit-playing').addEventListener('click', showQuitModal);
+  document.getElementById('btn-quit-team-playing')?.addEventListener('click', showQuitModal);
   document.getElementById('btn-quit-cancel').addEventListener('click', closeQuitModal);
   document.getElementById('btn-quit-confirm').addEventListener('click', () => {
     closeQuitModal();
     goToScreen('setup');
   });
+
+  // Solo mode winner
   document.getElementById('btn-play-again').addEventListener('click', () => {
     gameState.difficulty = 'medium';
     gameState.category = 'all';
@@ -342,10 +570,25 @@ function wireEvents() {
     updateCatDisplay();
   });
 
+  // Team mode
+  document.getElementById('btn-start-round')?.addEventListener('click', startTeamRound);
+  document.getElementById('btn-next-round')?.addEventListener('click', goToNextRound);
+  document.getElementById('btn-team-correct')?.addEventListener('click', () => recordTeamAnswer(true));
+  document.getElementById('btn-team-skip')?.addEventListener('click', () => recordTeamAnswer(false));
+  document.getElementById('btn-team-play-again')?.addEventListener('click', () => {
+    gameState.difficulty = 'medium';
+    gameState.category = 'all';
+    goToScreen('setup');
+    updateDiffDisplay();
+    updateCatDisplay();
+  });
+
+  // Solo mode options
   document.querySelectorAll('.hito-option-btn').forEach(btn => {
     btn.addEventListener('click', () => selectAnswer(btn.dataset.option));
   });
 
+  // Service worker update
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_UPDATE' });
     navigator.serviceWorker.addEventListener('message', (e) => {
@@ -368,13 +611,20 @@ function updateCatDisplay() {
   document.getElementById('cat-display').textContent = gameState.category === 'all' ? 'All' : gameState.category;
 }
 
-async function fetchHetoQuestions() {
+function updateTeamDurationDisplay() {
+  const rounds = gameState.totalRounds;
+  const totalQ = 2 * rounds;
+  document.getElementById('rounds-display').textContent = rounds;
+  document.getElementById('team-duration-display').textContent = `2 teams × ${rounds} rounds = ~${totalQ} questions`;
+}
+
+async function fetchHetoQuestions(count = 10) {
   try {
     const cached = localStorage.getItem(HITO_CACHE_KEY);
     const cacheTime = localStorage.getItem(HITO_CACHE_KEY + '_time');
     if (cached && cacheTime && Date.now() - parseInt(cacheTime) < HITO_CACHE_TTL) {
       const data = JSON.parse(cached);
-      return filterQuestions(data);
+      return filterQuestions(data, count);
     }
 
     let query = _supabase.from('heto_questions').select('*');
@@ -388,15 +638,16 @@ async function fetchHetoQuestions() {
     localStorage.setItem(HITO_CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(HITO_CACHE_KEY + '_time', Date.now().toString());
 
-    return filterQuestions(data);
+    return filterQuestions(data, count);
   } catch (err) {
     console.warn('[HITO] Failed to fetch questions:', err);
     return [];
   }
 }
 
-function filterQuestions(allQ) {
-  return allQ.filter(q => q.difficulty === gameState.difficulty);
+function filterQuestions(allQ, count) {
+  const filtered = allQ.filter(q => q.difficulty === gameState.difficulty);
+  return filtered.sort(() => Math.random() - 0.5).slice(0, count);
 }
 
 async function startGame() {
@@ -404,30 +655,190 @@ async function startGame() {
   overlay.classList.remove('hidden');
 
   try {
-    const questions = await fetchHetoQuestions();
-
-    if (!questions || questions.length < 10) {
-      alert('Not enough questions for this difficulty/category combination. Try a different setting.');
-      overlay.classList.add('hidden');
-      return;
+    if (gameState.mode === 'solo') {
+      await startSoloGame();
+    } else {
+      await startTeamGame();
     }
-
-    gameState.questions = questions.sort(() => Math.random() - 0.5).slice(0, 10);
-    gameState.currentQ = 0;
-    gameState.score = 0;
-    gameState.answers = [];
-    gameState.timerActive = false;
-    gameState.currentlyAnswering = false;
-
     overlay.classList.add('hidden');
-    goToScreen('question');
-    showQuestion();
-    startTimer();
   } catch (err) {
     console.error('[HITO] Failed to start game:', err);
     alert('Failed to load questions. Please try again.');
     overlay.classList.add('hidden');
   }
+}
+
+async function startSoloGame() {
+  const questions = await fetchHetoQuestions(10);
+
+  if (!questions || questions.length < 10) {
+    alert('Not enough questions for this difficulty/category combination. Try a different setting.');
+    return;
+  }
+
+  gameState.questions = questions;
+  gameState.currentQ = 0;
+  gameState.score = 0;
+  gameState.answers = [];
+  gameState.timerActive = false;
+  gameState.currentlyAnswering = false;
+
+  goToScreen('question');
+  showQuestion();
+  startTimer();
+}
+
+async function startTeamGame() {
+  const team1Name = document.getElementById('team1-name-input').value.trim() || 'Team A';
+  const team2Name = document.getElementById('team2-name-input').value.trim() || 'Team B';
+
+  if (!team1Name || !team2Name) {
+    alert('Please enter team names');
+    return;
+  }
+
+  gameState.teams = [
+    { name: team1Name, score: 0, correct: 0, skipped: 0 },
+    { name: team2Name, score: 0, correct: 0, skipped: 0 }
+  ];
+
+  const totalQNeeded = gameState.totalRounds * 2;
+  const questions = await fetchHetoQuestions(totalQNeeded);
+
+  if (!questions || questions.length < totalQNeeded) {
+    alert('Not enough questions for this difficulty/category combination. Try a different setting.');
+    return;
+  }
+
+  gameState.questions = questions;
+  gameState.currentRound = 1;
+  gameState.currentTeam = 0;
+  gameState.currentQ = 0;
+  gameState.roundQuestions = [];
+
+  goToScreen('interstitial');
+  updateInterstitial();
+}
+
+function updateInterstitial() {
+  document.getElementById('current-round').textContent = gameState.currentRound;
+  document.getElementById('total-rounds').textContent = gameState.totalRounds;
+  document.getElementById('active-team-display').textContent = gameState.teams[gameState.currentTeam].name + " is up!";
+}
+
+function startTeamRound() {
+  gameState.roundQuestions = [];
+  goToScreen('team-playing');
+  showTeamQuestion();
+}
+
+function showTeamQuestion() {
+  const qIdx = (gameState.currentRound - 1) * 2 + gameState.currentTeam;
+  if (qIdx >= gameState.questions.length) {
+    goToSummary();
+    return;
+  }
+
+  const q = gameState.questions[qIdx];
+  document.getElementById('current-question-team').textContent = q.question;
+  document.getElementById('current-question-latin-team').textContent = q.question_latin || '';
+  document.getElementById('team-mini-display').textContent = gameState.teams[gameState.currentTeam].name;
+  document.getElementById('round-mini-display').textContent = `R${gameState.currentRound} • ${gameState.currentTeam + 1}/2`;
+
+  gameState.timerActive = false;
+  startTeamTimer();
+}
+
+function startTeamTimer() {
+  if (gameState.timerActive) return;
+  gameState.timerActive = true;
+  gameState.timeLeft = 30;
+
+  const interval = setInterval(() => {
+    gameState.timeLeft--;
+    document.getElementById('timer-display-team').textContent = gameState.timeLeft;
+
+    if (gameState.timeLeft <= 0) {
+      clearInterval(interval);
+      gameState.timerActive = false;
+      recordTeamAnswer(false);
+    }
+  }, 1000);
+}
+
+function recordTeamAnswer(isCorrect) {
+  gameState.timerActive = false;
+  const qIdx = (gameState.currentRound - 1) * 2 + gameState.currentTeam;
+  const q = gameState.questions[qIdx];
+
+  gameState.roundQuestions.push({ question: q, isCorrect });
+
+  const team = gameState.teams[gameState.currentTeam];
+  team.correct += isCorrect ? 1 : 0;
+  team.skipped += isCorrect ? 0 : 1;
+
+  if (isCorrect) {
+    team.score += 10;
+  }
+
+  // Switch to other team or go to summary
+  if (gameState.currentTeam === 0) {
+    gameState.currentTeam = 1;
+    showTeamQuestion();
+  } else {
+    goToSummary();
+  }
+}
+
+function goToSummary() {
+  document.getElementById('summary-round-label').textContent = `Round ${gameState.currentRound} Complete`;
+
+  document.getElementById('summary-team1-name').textContent = gameState.teams[0].name;
+  document.getElementById('summary-team1-score').textContent = gameState.teams[0].score;
+  document.getElementById('summary-team1-correct').textContent = gameState.teams[0].correct;
+  document.getElementById('summary-team1-skipped').textContent = gameState.teams[0].skipped;
+
+  document.getElementById('summary-team2-name').textContent = gameState.teams[1].name;
+  document.getElementById('summary-team2-score').textContent = gameState.teams[1].score;
+  document.getElementById('summary-team2-correct').textContent = gameState.teams[1].correct;
+  document.getElementById('summary-team2-skipped').textContent = gameState.teams[1].skipped;
+
+  goToScreen('summary');
+}
+
+function goToNextRound() {
+  if (gameState.currentRound >= gameState.totalRounds) {
+    showTeamWinner();
+  } else {
+    gameState.currentRound++;
+    gameState.currentTeam = 0;
+    gameState.currentQ += 2;
+    goToScreen('interstitial');
+    updateInterstitial();
+  }
+}
+
+function showTeamWinner() {
+  const team1 = gameState.teams[0];
+  const team2 = gameState.teams[1];
+
+  const winner = team1.score > team2.score ? team1 : team2;
+  const winnerIdx = gameState.teams.indexOf(winner);
+
+  document.getElementById('team-winner-label').textContent = winner.name + ' Wins!';
+  document.getElementById('team-winner-scores').textContent = `${team1.score} - ${team2.score}`;
+
+  document.getElementById('stat-team1-name').textContent = team1.name;
+  document.getElementById('stat-team1-score').textContent = team1.score;
+  document.getElementById('stat-team1-c').textContent = team1.correct;
+  document.getElementById('stat-team1-s').textContent = team1.skipped;
+
+  document.getElementById('stat-team2-name').textContent = team2.name;
+  document.getElementById('stat-team2-score').textContent = team2.score;
+  document.getElementById('stat-team2-c').textContent = team2.correct;
+  document.getElementById('stat-team2-s').textContent = team2.skipped;
+
+  goToScreen('team-winner');
 }
 
 function showQuestion() {
@@ -604,6 +1015,301 @@ if (document.readyState === 'loading') {
   </script>
 
   <style>
+/* ═══ MODE SELECTOR ═══ */
+.mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.mode-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.mode-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mode-option input[type="radio"]:checked + .mode-name {
+  color: var(--red);
+}
+
+.mode-option input[type="radio"]:checked ~ .mode-desc {
+  color: var(--text-muted);
+}
+
+.mode-option:has(input:checked) {
+  border-color: var(--red);
+  background: var(--bg-elevated);
+}
+
+.mode-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.mode-desc {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  transition: color 0.2s;
+}
+
+/* ═══ CONFIG SECTIONS ═══ */
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.config-section.hidden {
+  display: none;
+}
+
+.team-name-input {
+  padding: 0.75rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  transition: border 0.2s;
+}
+
+.team-name-input:focus {
+  outline: none;
+  border-color: var(--border-mid);
+}
+
+/* ═══ TEAM MODE: INTERSTITIAL ═══ */
+.interstitial-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  height: 100vh;
+  display: flex;
+}
+
+.interstitial-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.interstitial-team {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--text);
+  margin: 0.5rem 0;
+}
+
+.interstitial-hint {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+}
+
+/* ═══ TEAM MODE: PLAYING ═══ */
+.team-info-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+  text-align: center;
+}
+
+.team-name-mini {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.round-counter-mini {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.timer-display-team {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.team-answer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.btn-team-action {
+  padding: 1.1rem 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-team-correct {
+  background: rgba(67, 160, 71, 0.1);
+  color: #43a047;
+  border-color: #43a047;
+}
+
+.btn-team-correct:active {
+  background: rgba(67, 160, 71, 0.2);
+  transform: scale(0.98);
+}
+
+.btn-team-skip {
+  background: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.btn-team-skip:active {
+  background: var(--bg-elevated);
+  transform: scale(0.98);
+}
+
+/* ═══ TEAM MODE: SUMMARY ═══ */
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-home-back {
+  margin-right: auto;
+}
+
+.summary-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.5rem 1.25rem;
+}
+
+.summary-team {
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-team-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.summary-team-score {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  line-height: 1;
+  color: var(--text);
+  margin: 0.25rem 0;
+}
+
+.summary-team-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text-muted);
+}
+
+.stat-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ═══ TEAM MODE: FINAL WINNER ═══ */
+.final-team-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.5rem 1.25rem;
+}
+
+.final-team-stat {
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-team-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-team-score {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--text);
+}
+
+.stat-detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.stat-d-label {
+  color: var(--text-muted);
+}
+
+.stat-d-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ═══ SOLO MODE: QUESTION & OPTIONS ═══ */
 .hito-question {
   font-size: clamp(1.2rem, 5vw, 1.8rem);
   font-weight: 600;
@@ -717,6 +1423,7 @@ if (document.readyState === 'loading') {
   border: 1px solid rgba(255, 152, 0, 0.3);
 }
 
+/* ═══ SOLO MODE: RESULTS ═══ */
 .hito-results-detail {
   margin: 1.5rem 0;
   display: flex;
@@ -775,6 +1482,7 @@ if (document.readyState === 'loading') {
   border-bottom: none;
 }
 
+/* ═══ ANIMATIONS ═══ */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -786,6 +1494,7 @@ if (document.readyState === 'loading') {
   }
 }
 
+/* ═══ RESPONSIVE ═══ */
 @media (max-width: 640px) {
   .hito-option-btn {
     padding: 0.9rem 1rem;
@@ -796,6 +1505,15 @@ if (document.readyState === 'loading') {
     min-width: 2rem;
     height: 2rem;
     font-size: 0.95rem;
+  }
+
+  .summary-scores,
+  .final-team-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .interstitial-team {
+    font-size: 2rem;
   }
 }
   </style>
