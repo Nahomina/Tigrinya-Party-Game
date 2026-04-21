@@ -8,7 +8,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { jwtDecode } from 'https://esm.sh/jwt-decode@4.0.0';
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin':  'https://tigrinya-party-game.vercel.app',
+  'Access-Control-Allow-Origin':  'https://habeshagame.com',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
@@ -16,9 +16,13 @@ const CORS_HEADERS = {
 // Map pack slug → Gumroad product permalink
 // Update these when you create the Gumroad products
 const PACK_PERMALINKS: Record<string, string> = {
-  hadar:  'xzcczm',  // nahomworks0.gumroad.com/l/xzcczm ✅
-  adi:    '',        // add permalink once product created
-  weledo: '',        // add permalink once product created
+  qola:         'xzcczm',  // nahomworks0.gumroad.com/l/xzcczm ✅ (was: intermediate)
+  gobez:        '',        // add permalink once Gobez product created
+  shimagile:    '',        // add permalink once Shimagile product created
+  // legacy slugs — keep for any outstanding codes already sold
+  intermediate: 'xzcczm',
+  advanced:     '',
+  expert:       '',
 };
 
 Deno.serve(async (req: Request) => {

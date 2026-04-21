@@ -625,12 +625,29 @@ button {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.65rem 0;
-  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+/* Gradient-fade separator — more elegant than a raw border */
+.config-row::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--border-mid) 18%,
+    var(--border-mid) 82%,
+    transparent 100%
+  );
+  opacity: 0.55;
 }
 .config-row-label {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
 }
 .config-hint {
   font-size: 0.58rem;
@@ -640,31 +657,77 @@ button {
 .stepper {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 6px;
   flex-shrink: 0;
 }
 .stepper-btn {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-mid);
-  color: var(--text);
-  font-size: 1.2rem;
-  width: var(--min-touch);
-  height: var(--min-touch);
+  /* Outlined tile — clean, game-piece aesthetic */
+  background: transparent;
+  border: 1.5px solid var(--border-mid);
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  font-weight: 300;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.12s, border-color 0.12s;
+  flex-shrink: 0;
+  box-shadow: none;
+  transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1),
+              border-color 0.14s ease,
+              color 0.14s ease,
+              background 0.14s ease;
+  line-height: 1;
 }
-.stepper-btn:hover  { background: var(--border-mid); }
-.stepper-btn:active { background: var(--border); }
+.stepper-btn:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+  transform: scale(1.08);
+  box-shadow: none;
+}
+.stepper-btn:active {
+  transform: scale(0.90);
+}
+/* Minus — stays outlined, shifts to a cool tone on hover */
+.stepper-btn:first-child {
+  background: transparent;
+  border-color: var(--border-mid);
+  box-shadow: none;
+}
+.stepper-btn:first-child:hover {
+  border-color: #5c7fff;
+  color: #7b96ff;
+  background: rgba(92,127,255,0.07);
+  box-shadow: none;
+}
+/* Plus — filled accent */
+.stepper-btn:last-child {
+  background: var(--basket-crimson);
+  border-color: var(--basket-crimson);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(183,28,28,0.30);
+}
+.stepper-btn:last-child:hover {
+  background: #c62828;
+  border-color: #c62828;
+  box-shadow: 0 4px 14px rgba(183,28,28,0.42);
+  color: #fff;
+  transform: scale(1.1);
+}
 .stepper-val {
   font-family: var(--font-display);
   font-size: 1.9rem;
   letter-spacing: 0.04em;
-  min-width: 3rem;
+  min-width: 2.8rem;
   text-align: center;
   color: var(--text);
   line-height: 1;
+  background: rgba(255,255,255,0.04);
+  border-radius: 7px;
+  padding: 1px 0;
 }
 
 /* ── Computed turn time display ───────────────────────── */
@@ -1904,7 +1967,15 @@ details[open] > .faq-q::after {
 
 /* Config-rows wrappers — match siblings' full width */
 #word-config-rows,
-#proverb-config-rows { margin: 0; padding: 0; width: 100%; align-self: stretch; }
+#proverb-config-rows {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
 /* ── Back-to-home link in game setup ──────────────────── */
 .btn-home-back {
@@ -2093,34 +2164,27 @@ details[open] > .faq-q::after {
   animation: word-pop 0.3s ease-out 0.08s both;
 }
 
-/* ── Judge Answer Preview Overlay ───────────────────── */
-.judge-peek-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1500;
-  background: rgba(0, 0, 0, .9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.judge-peek-overlay.hidden { display: none; }
-
-.judge-peek-box {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-mid);
-  border-radius: 16px;
-  padding: 28px 24px 24px;
-  width: 100%;
-  max-width: 420px;
+/* ── Judge Answer — inline reveal (no overlay) ───────── */
+.judge-peek-inline {
+  margin: 0 1rem 0;
+  padding: 14px 18px;
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  border: 1px dashed var(--border-mid);
+  border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 6px;
   text-align: center;
+  animation: fade-in-down 0.2s ease both;
+}
+.judge-peek-inline.hidden { display: none; }
+@keyframes fade-in-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .judge-peek-eyebrow {
-  font: 700 11px var(--font-ui);
+  font: 700 10px var(--font-ui);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .12em;
@@ -2128,32 +2192,19 @@ details[open] > .faq-q::after {
 }
 .judge-peek-tigrinya {
   font-family: var(--font-geez);
-  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-size: clamp(1.2rem, 4.5vw, 1.7rem);
   color: var(--text);
   line-height: 1.5;
 }
 .judge-peek-latin {
-  font: 500 1rem var(--font-ui);
+  font: 500 0.9rem var(--font-ui);
   color: var(--text-sub);
 }
 .judge-peek-english {
-  font: 400 .95rem var(--font-ui);
+  font: 400 .85rem var(--font-ui);
   color: var(--text-muted);
   font-style: italic;
 }
-.btn-judge-peek-close {
-  margin-top: 4px;
-  background: var(--red);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 13px 24px;
-  font: 700 15px var(--font-ui);
-  cursor: pointer;
-  width: 100%;
-  transition: background .2s;
-}
-.btn-judge-peek-close:hover { background: var(--red-hover); }
 
 /* Judge peek trigger button (State A) */
 .btn-judge-peek {
@@ -2165,9 +2216,16 @@ details[open] > .faq-q::after {
   color: var(--text-muted);
   font: 600 14px var(--font-ui);
   cursor: pointer;
-  transition: border-color .2s, color .2s;
+  transition: border-color .2s, color .2s, background .2s;
 }
 .btn-judge-peek:hover { border-color: var(--red); color: var(--text); }
+
+/* Disabled correct button */
+#btn-correct:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 
 /* ── Proverb Time-Up Banner ──────────────────────────── */
 .proverb-time-up {
@@ -2287,7 +2345,7 @@ details[open] > .faq-q::after {
 /* ── Pack showcase (landing page) ──────────────────────── */
 .pack-showcase {
   width: 100%;
-  padding: 0 1.25rem 1.5rem;
+  padding: 0.75rem 1.25rem 1rem;
 }
 .pack-showcase-label {
   font-size: 0.6rem;
@@ -2295,15 +2353,15 @@ details[open] > .faq-q::after {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
-.pack-cards { display: flex; flex-direction: column; gap: 0.75rem; }
+.pack-cards { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .pack-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.1rem;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--bg-card);
@@ -2318,9 +2376,10 @@ details[open] > .faq-q::after {
   background: var(--pack-accent, #e63946);
 }
 .pack-card-geez {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
-  line-height: 1;
+  font-family: var(--font-geez);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.5;
   color: var(--text);
   min-width: 2.5rem;
   text-align: center;
@@ -2408,22 +2467,8 @@ details[open] > .faq-q::after {
 }
 .unlock-buy-link:hover { color: var(--accent); }
 
-/* ── Pack toggles in game setup ─────────────────────────── */
-.pack-checkboxes {
-  display: flex; flex-direction: column; gap: 0;
-  width: 100%; align-self: stretch; margin-bottom: 0.5rem;
-}
-.pack-toggle-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0.6rem 0; border-bottom: 1px solid var(--border);
-}
-.pack-toggle-name { font-size: 0.8rem; font-weight: 600; color: var(--text); margin: 0 0 0.1rem; }
-.pack-toggle-meta { font-size: 0.65rem; color: var(--text-muted); margin: 0; }
-.pack-toggle-input {
-  width: 1.1rem; height: 1.1rem;
-  accent-color: var(--accent);
-  cursor: pointer; flex-shrink: 0;
-}
+/* Legacy multi-select pack-toggle styles removed — replaced by the single-select
+   `.tier-selector` radiogroup below (see "tier-*" rules further down). */
 
 /* ── Winner upsell ───────────────────────────────────────── */
 .winner-upsell {
@@ -3274,22 +3319,67 @@ details[open] > .faq-q::after {
   color: #43a047;
 }
 
-/* Lock: icon + price stacked */
+/* Lock: key icon + price stacked */
 .tier-lock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .tier-lock-icon {
-  font-size: 14px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* No circle container — raw key icon in tier colour */
+  color: var(--tier-color, #b71c1c);
+  flex-shrink: 0;
+  opacity: 0.65;
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tier-lock-icon svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--tier-color, #b71c1c) 40%, transparent));
+}
+.tier-option--locked:hover .tier-lock-icon {
+  opacity: 1;
+  animation: key-turn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes key-turn {
+  0%   { transform: rotate(0deg)   translateX(0); }
+  25%  { transform: rotate(-22deg) translateX(-2px); }
+  55%  { transform: rotate(14deg)  translateX(1px); }
+  75%  { transform: rotate(-7deg)  translateX(0); }
+  100% { transform: rotate(0deg)   translateX(0); }
 }
 
 .tier-lock-price {
   font: 600 11px var(--font-ui);
   color: var(--text-muted);
+}
+
+/* Unlock button inside a locked tier row */
+.tier-unlock-btn {
+  margin-top: 6px;
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--tier-color, var(--red));
+  border-radius: 6px;
+  color: var(--tier-color, var(--red));
+  font: 600 11px var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s, color .18s;
+  width: 100%;
+}
+.tier-unlock-btn:hover {
+  background: var(--tier-color, var(--red));
+  color: #fff;
+}
+.tier-unlock-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 /* Checked indicator dot in top-right corner of selected tier */
@@ -3302,4 +3392,491 @@ details[open] > .faq-q::after {
   font-weight: 700;
   color: var(--tier-color, var(--red));
   opacity: .8;
+}
+
+/* ── App Toast ───────────────────────────────────────────── */
+.app-toast {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font: 600 14px var(--font-ui);
+  color: #fff;
+  background: #333;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  transition: opacity .35s ease;
+  pointer-events: none;
+}
+.app-toast.hidden        { display: none; }
+.app-toast--hide         { opacity: 0; }
+.app-toast--info         { background: #1565c0; }
+.app-toast--success      { background: #2e7d32; }
+.app-toast--error        { background: #c62828; }
+.app-toast--warning      { background: #e65100; }
+
+/* ── Google sign-in button ──────────────────────────── */
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: var(--bg-elevated, #1e1e22);
+  border: 1px solid var(--border, #2a2a30);
+  border-radius: 8px;
+  color: var(--text, #f0f0f0);
+  font: 600 14px var(--font-ui, system-ui);
+  cursor: pointer;
+  transition: background .18s, border-color .18s;
+}
+.btn-google:hover {
+  background: var(--bg-card, #222228);
+  border-color: #4285F4;
+}
+
+/* ── Auth divider ─────────────────────────────────── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+  color: var(--text-muted, #666);
+  font: 400 12px var(--font-ui, system-ui);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border, #2a2a30);
+}
+
+/* ── Auth login prompt button (indicator) ─────────── */
+.auth-login-prompt-btn {
+  background: none;
+  border: 1px solid var(--border, #2a2a30);
+  border-radius: 6px;
+  color: var(--text-muted, #888);
+  font: 600 12px var(--font-ui, system-ui);
+  cursor: pointer;
+  padding: 6px 12px;
+  transition: border-color .18s, color .18s;
+  white-space: nowrap;
+}
+.auth-login-prompt-btn:hover {
+  border-color: var(--red, #e53935);
+  color: var(--text, #f0f0f0);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TRADITIONAL BASKET REDESIGN
+   Inspired by Eritrean/Ethiopian mesob woven basket patterns — bold geometric
+   colour, radial energy, craft-first warmth. Spring interactions replace flat
+   hard borders for a native mobile-app feel.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  /* Basket palette — from the mesob woven colour spectrum */
+  --basket-crimson:  #b71c1c;
+  --basket-emerald:  #1b5e20;
+  --basket-gold:     #e65100;
+  --basket-purple:   #4a148c;
+  --basket-teal:     #006064;
+  --basket-saffron:  #f57f17;
+
+  /* Per-tier accent colours */
+  --tier-gasha-color:     #2e7d32;
+  --tier-qola-color:      #01579b;
+  --tier-gobez-color:     #4a148c;
+  --tier-shimagile-color: #b71c1c;
+
+  /* Shape */
+  --r-pill:  100px;
+  --r-card:   16px;
+  --r-input:  12px;
+
+  /* Spring easing — overshoots then settles, feels native */
+  --spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Coloured shadows matching button accent */
+  --shadow-red:    0 4px 18px rgba(183,28,28,0.40), 0 1px 4px rgba(0,0,0,0.15);
+  --shadow-green:  0 4px 18px rgba(27,94,32,0.40),  0 1px 4px rgba(0,0,0,0.15);
+  --shadow-purple: 0 4px 18px rgba(74,20,140,0.40), 0 1px 4px rgba(0,0,0,0.15);
+}
+
+/* ── 2. Primary CTA — pill + spring ──────────────────────────────────────── */
+.btn-primary {
+  border-radius: var(--r-pill) !important;
+  box-shadow: var(--shadow-red);
+  transition:
+    transform  0.22s var(--spring),
+    box-shadow 0.18s var(--ease-out),
+    background 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 6px 24px rgba(183,28,28,0.50), 0 2px 6px rgba(0,0,0,0.18);
+}
+.btn-primary:active {
+  transform: scale(0.95) !important;
+  box-shadow: 0 2px 8px rgba(183,28,28,0.30) !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+}
+.btn-primary:disabled { box-shadow: none; transform: none !important; }
+
+/* ── 3. Resume buttons ────────────────────────────────────────────────────── */
+.btn-resume-yes,
+.btn-resume-no {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease, border-color 0.15s ease;
+}
+.btn-resume-yes { box-shadow: var(--shadow-red); }
+.btn-resume-yes:active,
+.btn-resume-no:active { transform: scale(0.94) !important; }
+
+/* ── 4. Game action buttons ───────────────────────────────────────────────── */
+.btn-correct,
+.btn-proverb-correct {
+  border-radius: var(--r-pill) !important;
+  box-shadow: var(--shadow-green);
+  transition:
+    transform  0.22s var(--spring),
+    box-shadow 0.18s var(--ease-out),
+    background 0.15s ease;
+}
+.btn-correct:active,
+.btn-proverb-correct:active {
+  transform: scale(0.93) !important;
+  box-shadow: 0 2px 6px rgba(27,94,32,0.30) !important;
+  transition: transform 0.07s ease, box-shadow 0.07s ease !important;
+}
+.btn-correct:hover,
+.btn-proverb-correct:hover { transform: translateY(-2px) scale(1.015); }
+
+.btn-proverb-wrong {
+  border-radius: var(--r-pill) !important;
+  box-shadow: var(--shadow-red);
+  transition:
+    transform  0.22s var(--spring),
+    box-shadow 0.18s var(--ease-out),
+    background 0.15s ease;
+}
+.btn-proverb-wrong:active {
+  transform: scale(0.93) !important;
+  box-shadow: 0 2px 6px rgba(183,28,28,0.30) !important;
+  transition: transform 0.07s ease, box-shadow 0.07s ease !important;
+}
+.btn-proverb-wrong:hover { transform: translateY(-2px) scale(1.015); }
+
+.btn-next-word,
+.btn-skip {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease;
+}
+.btn-next-word:active,
+.btn-skip:active { transform: scale(0.94) !important; }
+
+.btn-start-timer,
+.btn-proverb-start {
+  border-radius: var(--r-pill) !important;
+  box-shadow: 0 4px 16px rgba(229,57,53,0.28), 0 1px 4px rgba(0,0,0,0.12);
+  transition: transform 0.22s var(--spring), box-shadow 0.18s var(--ease-out);
+}
+.btn-start-timer:active,
+.btn-proverb-start:active {
+  transform: scale(0.94) !important;
+  box-shadow: 0 2px 6px rgba(229,57,53,0.18) !important;
+  transition: transform 0.07s ease, box-shadow 0.07s ease !important;
+}
+
+.btn-show-answer {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease;
+}
+.btn-show-answer:active { transform: scale(0.94) !important; }
+
+.btn-judge-peek {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), border-color 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+.btn-judge-peek:active { transform: scale(0.94) !important; }
+
+.btn-back,
+.btn-quit-game {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease, color 0.15s ease;
+}
+.btn-back:active,
+.btn-quit-game:active { transform: scale(0.90) !important; }
+
+.tier-unlock-btn {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease, box-shadow 0.18s ease;
+}
+.tier-unlock-btn:active { transform: scale(0.93) !important; }
+
+.unlock-submit-btn,
+.btn-google-auth {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease, box-shadow 0.18s ease;
+}
+.unlock-submit-btn:active,
+.btn-google-auth:active { transform: scale(0.95) !important; }
+
+.auth-login-prompt-btn {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), border-color 0.18s ease, color 0.18s ease;
+}
+
+.btn-play-again,
+.btn-home,
+.winner-upsell-btn {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease, box-shadow 0.18s ease;
+}
+.btn-play-again:active,
+.btn-home:active { transform: scale(0.94) !important; }
+
+/* ── 5. Cards and modals — rounded ───────────────────────────────────────── */
+.unlock-modal-box,
+.judge-peek-box,
+.auth-modal-box {
+  border-radius: var(--r-card) !important;
+  overflow: hidden;
+}
+
+.auth-modal-header {
+  border-radius: var(--r-card) var(--r-card) 0 0 !important;
+  /* Basket-inspired animated gradient: crimson → burnt-orange → crimson */
+  background: linear-gradient(135deg, #c62828 0%, #e65100 50%, #c62828 100%) !important;
+  background-size: 200% 200% !important;
+  animation: basket-gradient-shift 6s ease infinite;
+}
+@keyframes basket-gradient-shift {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+.unlock-code-input,
+.auth-input,
+.auth-form input {
+  border-radius: var(--r-input) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* ── 6. Tier cards — per-tier basket accent colour ────────────────────────── */
+.tier-option[data-tier="starter"]      { --basket-accent: var(--tier-gasha-color); }
+.tier-option[data-tier="gasha"]        { --basket-accent: var(--tier-gasha-color); }
+.tier-option[data-tier="intermediate"] { --basket-accent: var(--tier-qola-color); }
+.tier-option[data-tier="qola"]         { --basket-accent: var(--tier-qola-color); }
+.tier-option[data-tier="advanced"]     { --basket-accent: var(--tier-gobez-color); }
+.tier-option[data-tier="gobez"]        { --basket-accent: var(--tier-gobez-color); }
+.tier-option[data-tier="expert"]       { --basket-accent: var(--tier-shimagile-color); }
+.tier-option[data-tier="shimagile"]    { --basket-accent: var(--tier-shimagile-color); }
+
+.tier-option {
+  border-radius: var(--r-card) !important;
+  border-top: 4px solid var(--basket-accent, var(--border-mid)) !important;
+  transition: transform 0.22s var(--spring), border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.tier-option:not(.tier-option--locked):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+}
+.tier-radio-input:checked + .tier-option,
+.tier-option.selected {
+  box-shadow:
+    0 0 0 2px var(--basket-accent, var(--red)),
+    0 4px 16px rgba(0,0,0,0.15) !important;
+}
+
+/* Gasha/Starter badge: green to match tier colour */
+.tier-option[data-tier="gasha"]   .tier-badge--free,
+.tier-option[data-tier="starter"] .tier-badge--free {
+  background: rgba(27,94,32,0.15);
+  color: #2e7d32;
+}
+
+/* Unlock button inherits tier colour */
+.tier-option[data-tier="intermediate"] .tier-unlock-btn,
+.tier-option[data-tier="qola"]         .tier-unlock-btn { color: var(--tier-qola-color);      border-color: var(--tier-qola-color); }
+.tier-option[data-tier="advanced"]     .tier-unlock-btn,
+.tier-option[data-tier="gobez"]        .tier-unlock-btn { color: var(--tier-gobez-color);     border-color: var(--tier-gobez-color); }
+.tier-option[data-tier="expert"]       .tier-unlock-btn,
+.tier-option[data-tier="shimagile"]    .tier-unlock-btn { color: var(--tier-shimagile-color); border-color: var(--tier-shimagile-color); }
+.tier-option[data-tier="intermediate"] .tier-unlock-btn:hover,
+.tier-option[data-tier="qola"]         .tier-unlock-btn:hover { background: rgba(1,87,155,0.10); }
+.tier-option[data-tier="advanced"]     .tier-unlock-btn:hover,
+.tier-option[data-tier="gobez"]        .tier-unlock-btn:hover { background: rgba(74,20,140,0.10); }
+.tier-option[data-tier="expert"]       .tier-unlock-btn:hover,
+.tier-option[data-tier="shimagile"]    .tier-unlock-btn:hover { background: rgba(183,28,28,0.10); }
+
+/* ── 7. Setup hero — diamond-row basket divider ───────────────────────────── */
+.setup-hero {
+  border-bottom: none !important;
+  position: relative;
+}
+.setup-hero::after {
+  content: '';
+  display: block;
+  height: 10px;
+  margin-top: 1.4rem;
+  width: 100%;
+  /* Row of rotating diamonds using SVG data-URI — basket palette */
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='10' viewBox='0 0 72 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolygon points='5,0 10,5 5,10 0,5' fill='%23b71c1c'/%3E%3Cpolygon points='17,0 22,5 17,10 12,5' fill='%231b5e20'/%3E%3Cpolygon points='29,0 34,5 29,10 24,5' fill='%23e65100'/%3E%3Cpolygon points='41,0 46,5 41,10 36,5' fill='%234a148c'/%3E%3Cpolygon points='53,0 58,5 53,10 48,5' fill='%23006064'/%3E%3Cpolygon points='65,0 70,5 65,10 60,5' fill='%23f57f17'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 72px 10px;
+  opacity: 0.9;
+}
+
+/* ── 8. Winner screen — geometric celebration overlay ─────────────────────── */
+.winner-header { position: relative; overflow: hidden; }
+.winner-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(183,28,28,0.07)  0px,  rgba(183,28,28,0.07)  6px,
+    transparent            6px,  transparent           16px,
+    rgba(27,94,32,0.07)  16px, rgba(27,94,32,0.07)   22px,
+    transparent           22px, transparent            32px,
+    rgba(74,20,140,0.07) 32px, rgba(74,20,140,0.07)  38px,
+    transparent           38px, transparent            48px
+  );
+  pointer-events: none;
+}
+
+/* ── 9. Screen enter animation ────────────────────────────────────────────── */
+@keyframes screen-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.screen:not(.hidden) {
+  animation: screen-enter 0.32s var(--ease-out) both;
+}
+
+/* ── 10. Pack cards on home page ──────────────────────────────────────────── */
+.pack-card {
+  border-radius: var(--r-card) !important;
+  overflow: hidden;
+  transition: transform 0.22s var(--spring), box-shadow 0.18s ease;
+}
+.pack-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+.pack-unlock-btn {
+  border-radius: var(--r-pill) !important;
+  transition: transform 0.22s var(--spring), background 0.15s ease;
+}
+.pack-unlock-btn:active { transform: scale(0.93) !important; }
+
+/* ── 11. Admin stat cards ─────────────────────────────────────────────────── */
+.stat-card { border-radius: var(--r-card) !important; }
+
+/* ── 12. Modal enter animation ────────────────────────────────────────────── */
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.94) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.auth-modal:not(.hidden) .auth-modal-box,
+.unlock-modal:not(.hidden) .unlock-modal-box,
+#edit-word-modal:not(.hidden) .modal-content,
+#confirm-modal:not(.hidden) .modal-content {
+  animation: modal-enter 0.28s var(--spring) both;
+}
+
+/* ── 13. Global polish ────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+/* Remove tap flash on mobile */
+button, a, input, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 14. Winner upsell card ──────────────────────────────────────────────── */
+.winner-upsell-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--r-card);
+  border: 1.5px solid var(--tier-color, var(--border-mid));
+  background: color-mix(in srgb, var(--tier-color, var(--red)) 6%, var(--bg-elevated));
+  margin: 0.6rem 0 0.9rem;
+  transition: border-color 0.2s ease;
+}
+.winner-upsell-card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+.winner-upsell-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.winner-upsell-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.winner-upsell-profile {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  line-height: 1.3;
+}
+.winner-upsell-card-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.winner-upsell-price {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--tier-color, var(--red));
+}
+.winner-upsell-btn {
+  font-size: 0.78rem !important;
+  padding: 0.4rem 0.9rem !important;
+  white-space: nowrap;
+  background: var(--tier-color, var(--red)) !important;
+}
+
+/* ── 15. Unlock modal — Stripe-only ─────────────────────────────────────── */
+.unlock-modal-price {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--red);
+  margin: 0.2rem 0 0.5rem;
+  text-align: center;
+}
+.unlock-modal-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0 0 1.2rem;
+  line-height: 1.4;
 }

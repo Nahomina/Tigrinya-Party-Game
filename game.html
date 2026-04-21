@@ -5,10 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f11" />
   <meta name="description" content="Mayim &amp; Misla — Tigrinya party games. Guess the word or complete the proverb." />
-  <link rel="canonical" href="https://tigrinya-party-game.vercel.app/game.html" />
-  <meta property="og:title"       content="Tigrinya Traditional Games" />
-  <meta property="og:description" content="Play Mayim (word guessing) or Misla (proverbs) — fun Tigrinya party games." />
-  <meta property="og:url"         content="https://tigrinya-party-game.vercel.app/" />
+  <link rel="canonical" href="https://habeshagame.com/game.html" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:locale"      content="en_US" />
+  <meta property="og:title"       content="Play Tigrinya Party Games — Mayim &amp; Misla" />
+  <meta property="og:description" content="Play Mayim (word guessing) or Misla (proverbs) — fun Tigrinya party games for groups." />
+  <meta property="og:url"         content="https://habeshagame.com/game.html" />
+  <meta property="og:image"       content="https://habeshagame.com/assets/og-image.png" />
+  <meta property="og:site_name"   content="Tigrinya Party Games" />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Play Tigrinya Party Games — Mayim &amp; Misla" />
+  <meta name="twitter:description" content="Play Mayim (word guessing) or Misla (proverbs) — fun Tigrinya party games." />
+  <meta name="twitter:image"       content="https://habeshagame.com/assets/og-image.png" />
 
   <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -16,7 +25,9 @@
   <meta name="apple-mobile-web-app-title" content="Mayim" />
 
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="style.css?v=24" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=25" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -240,6 +251,8 @@
       <a href="terms.html" class="footer-link">Terms</a>
       <span class="game-footer-sep">·</span>
       <a href="privacy.html" class="footer-link">Privacy</a>
+      <span class="game-footer-sep">·</span>
+      <a href="contact.html" class="footer-link">Contact</a>
     </footer>
 
   </section>
@@ -420,9 +433,20 @@
 
     <!-- Pack upsell — shown when at least one pack is still locked -->
     <div class="winner-upsell hidden" id="winner-upsell">
-      <p class="winner-upsell-label">Want harder rounds?</p>
-      <p class="winner-upsell-name" id="upsell-pack-name"></p>
-      <button class="btn-secondary winner-upsell-btn" id="btn-winner-unlock">Unlock Pack</button>
+      <p class="winner-upsell-label">Ready for harder rounds?</p>
+      <div class="winner-upsell-card" id="upsell-pack-card">
+        <div class="winner-upsell-card-left">
+          <span class="winner-upsell-icon" id="upsell-pack-icon"></span>
+          <div>
+            <p class="winner-upsell-name" id="upsell-pack-name"></p>
+            <p class="winner-upsell-profile" id="upsell-pack-profile"></p>
+          </div>
+        </div>
+        <div class="winner-upsell-card-right">
+          <span class="winner-upsell-price" id="upsell-pack-price"></span>
+          <button class="btn-primary winner-upsell-btn" id="btn-winner-unlock">Unlock →</button>
+        </div>
+      </div>
     </div>
 
     <div class="button-footer">
@@ -466,15 +490,12 @@
       ⏱ Time Finished — Show Answer
     </div>
 
-    <!-- Judge answer preview overlay (private, no state change) -->
-    <div id="judge-peek-overlay" class="judge-peek-overlay hidden" role="dialog" aria-modal="true">
-      <div class="judge-peek-box">
-        <p class="judge-peek-eyebrow">Full Answer — Judge Only 👁</p>
-        <div id="judge-peek-tigrinya" class="judge-peek-tigrinya" lang="ti"></div>
-        <div id="judge-peek-latin"    class="judge-peek-latin"></div>
-        <div id="judge-peek-english"  class="judge-peek-english"></div>
-        <button id="btn-judge-peek-close" class="btn-judge-peek-close">✓ Got it — Start Game</button>
-      </div>
+    <!-- Inline judge answer peek (no overlay, no state change) -->
+    <div id="judge-peek-inline" class="judge-peek-inline hidden" aria-live="polite">
+      <p class="judge-peek-eyebrow">Judge Only 👁</p>
+      <div id="judge-peek-tigrinya" class="judge-peek-tigrinya" lang="ti"></div>
+      <div id="judge-peek-latin"    class="judge-peek-latin"></div>
+      <div id="judge-peek-english"  class="judge-peek-english"></div>
     </div>
 
     <!-- State A: start timer + reveal -->
@@ -486,7 +507,7 @@
         ▶ Start Timer
       </button>
       <button id="btn-show-answer" class="btn-show-answer">
-        <span>Show Answer</span>
+        <span>Reveal Answer</span>
         <span class="pass-arrow">↓</span>
       </button>
     </div>
@@ -511,18 +532,16 @@
     <div class="unlock-modal-box">
       <button class="unlock-modal-close" id="btn-unlock-close" aria-label="Close">✕</button>
       <p class="unlock-modal-eyebrow">Unlock Pack</p>
-      <p class="unlock-modal-pack-name" id="unlock-pack-name">ሓዳር</p>
-      <p class="unlock-modal-hint">Enter your code from Gumroad</p>
-      <input type="text" id="unlock-code-input" class="unlock-code-input"
-             placeholder="XXXXXXXXXXXXXXXXXXXXXXXX" maxlength="40"
-             autocomplete="off" autocapitalize="characters" spellcheck="false" />
-      <button id="btn-unlock-submit" class="btn-primary unlock-submit-btn">Unlock</button>
-      <p id="unlock-error"   class="unlock-error   hidden"></p>
-      <p id="unlock-success" class="unlock-success hidden">✓ Pack unlocked! Enjoy.</p>
-      <a class="unlock-buy-link" href="https://tigrinyapartygames.gumroad.com"
-         target="_blank" rel="noopener noreferrer">Buy a code on Gumroad →</a>
+      <p class="unlock-modal-pack-name" id="unlock-pack-name"></p>
+      <p class="unlock-modal-price" id="unlock-pack-price"></p>
+      <p class="unlock-modal-hint" id="unlock-pack-profile"></p>
+      <button id="btn-unlock-submit" class="btn-primary unlock-submit-btn">Buy &amp; Unlock →</button>
+      <p id="unlock-error" class="unlock-error hidden"></p>
     </div>
   </div>
+
+  <!-- ── Toast notification ─────────────────────────────────────── -->
+  <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
   <!-- ── Scripts ──────────────────────────────────────────────── -->
   <!-- Supabase Auth Client — bundled locally for reliability (no CDN dependency) -->
@@ -530,7 +549,7 @@
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
   <script src="packs.js?v=3"></script>
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=33"></script>
 
   <script>
     if ('serviceWorker' in navigator) {

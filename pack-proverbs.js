@@ -13,14 +13,14 @@
 //      difficulty — 'easy' | 'medium' | 'hard'
 //
 //  HOW TO ADD / EDIT A PROVERB
-//  1. Find the pack object below (HADAR_PROVERBS / ADI_PROVERBS / WELEDO_PROVERBS)
+//  1. Find the pack object below (INTERMEDIATE_PROVERBS / ADVANCED_PROVERBS / EXPERT_PROVERBS)
 //  2. Add or edit an entry in the array
 //  3. Open Supabase SQL Editor → run the matching UPDATE/INSERT (see bottom of file)
 //  4. The Edge Function will serve the new content automatically on next unlock
 // ═══════════════════════════════════════════════════════════════
 
-// ── ሓዳር  ·  HADAR  —  Wedding & Family (15 proverbs) ────────────
-const HADAR_PROVERBS = [
+// ── ሓዳር  ·  INTERMEDIATE  —  Wedding & Family (15 proverbs) ────────────
+const INTERMEDIATE_PROVERBS = [
   {
     tigrinya:   'ሃላይ ሰበይቲ፡ ጸብሓ ይጥዕማ',
     latin:      'Halay sebeiti, tsebHa ytima',
@@ -114,8 +114,8 @@ const HADAR_PROVERBS = [
 ];
 
 
-// ── ዓዲ  ·  ADI  —  Homeland & Places (15 proverbs) ─────────────
-const ADI_PROVERBS = [
+// ── ዓዲ  ·  ADVANCED  —  Homeland & Places (15 proverbs) ─────────────
+const ADVANCED_PROVERBS = [
   {
     tigrinya:   'ሩባ ዘለዎ ፈሳሲ፣ ጎቦ ዘለዎ መላሲ',
     latin:      'Ruba zelew fesasi, gobo zelew melasi',
@@ -209,8 +209,8 @@ const ADI_PROVERBS = [
 ];
 
 
-// ── ወለዶ  ·  WELEDO  —  Generations & Wisdom (15 proverbs) ──────
-const WELEDO_PROVERBS = [
+// ── ወለዶ  ·  EXPERT  —  Generations & Wisdom (15 proverbs) ──────
+const EXPERT_PROVERBS = [
   {
     tigrinya:   'ልሳን ዓጽሚ የብሉን፡ ግና ዓጽሚ ይሰብር',
     latin:      'Lisan atsmi yebilun, gna atsmi ysiebir',
@@ -317,7 +317,7 @@ const WELEDO_PROVERBS = [
 //      'your latin here',
 //      'your English meaning here',
 //      'easy',   -- or 'medium' or 'hard'
-//      (SELECT id FROM packs WHERE slug = 'hadar')
+//      (SELECT id FROM packs WHERE slug = 'intermediate')
 //    );
 //
 //  ► UPDATE an existing proverb (find its id in Table Editor first):
@@ -330,7 +330,7 @@ const WELEDO_PROVERBS = [
 //
 //    DELETE FROM proverbs
 //    WHERE tigrinya = 'the Ge\'ez text'
-//      AND pack_id = (SELECT id FROM packs WHERE slug = 'hadar');
+//      AND pack_id = (SELECT id FROM packs WHERE slug = 'intermediate');
 //
 //  See seed-packs.sql for the full initial INSERT of all 45 proverbs.
 // ─────────────────────────────────────────────────────────────────

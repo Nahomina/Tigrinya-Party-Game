@@ -1,8 +1,8 @@
-// Mayim Service Worker — v9
+// Mayim Service Worker — v15
 // HTML pages: network-first (always fresh)
 // Assets/fonts: cache-first (fast)
 // Supabase API: network-first with cache fallback
-const CACHE_VERSION = 'mayim-v9';
+const CACHE_VERSION = 'mayim-v18';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 const PRECACHE_ASSETS = [
@@ -112,24 +112,28 @@ self.addEventListener('fetch', event => {
   }
 
   // ── Everything else: cache-first, network fallback ─────────────────────
+  // Try exact URL first, then strip query string so precached bare filenames
+  // (e.g. ./app.js) serve versioned requests (e.g. ./app.js?v=33) — this
+  // enables offline from the very first SW install without a second visit.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-      return fetch(event.request)
-        .then(response => {
-          // Only cache same-origin basic responses (not opaque/cors — can't clone those safely)
-          if (response && response.status === 200 && response.type === 'basic') {
-            const toCache = response.clone();
-            caches.open(CACHE_VERSION)
-              .then(c => c.put(event.request, toCache))
-              .catch(err => console.warn('[SW] Cache write failed:', err));
-          }
-          return response;
-        })
-        .catch(err => {
-          console.warn('[SW] Fetch failed, returning cached:', event.request.url);
-          return caches.match(event.request);
-        });
+      // Fallback: try the same URL without query params (catches versioned assets)
+      const bareUrl = event.request.url.split('?')[0];
+      return caches.match(bareUrl).then(cachedBare => {
+        if (cachedBare) return cachedBare;
+        return fetch(event.request)
+          .then(response => {
+            if (response && response.status === 200 && response.type === 'basic') {
+              const toCache = response.clone();
+              caches.open(CACHE_VERSION)
+                .then(c => c.put(event.request, toCache))
+                .catch(err => console.warn('[SW] Cache write failed:', err));
+            }
+            return response;
+          })
+          .catch(() => caches.match(event.request));
+      });
     })
   );
 });

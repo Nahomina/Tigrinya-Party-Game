@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;500;600;700&family=Noto+Sans+Ethiopic:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* FAQ Compact Tokens */
+    --faq-padding-mobile: 12px;
+    --faq-padding-desktop: 16px;
+    --faq-answer-font-size: 14px;
+    --faq-line-height: 1.4;
+    --faq-gap: 8px;
+  }
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  /* Heto Design System */
+  :root[data-theme="dark"] {
+    --bg: #0f0f11;
+    --bg-card: #16161a;
+    --bg-elevated: #1e1e24;
+    --border: #28282f;
+    --border-mid: #3a3a44;
+    --text: #ededf0;
+    --text-muted: #8b8b9b;
+    --red: #e53935;
+    --red-hover: #c62828;
+    --accent-orange: #ff6f00;
+    --correct: #43a047;
+    --danger: #e53935;
+    
+    --tier-gasha: #43a047;
+    --tier-qola: #fbc02d;
+    --tier-gobez: #e53935;
+    --tier-shimagile: #8e24aa;
+  }
+
+  :root[data-theme="light"] {
+    --bg: #faf8f4;
+    --bg-card: #ffffff;
+    --bg-elevated: #f5f5f5;
+    --border: #e4ddd3;
+    --border-mid: #d0c9bf;
+    --text: #1a1410;
+    --text-muted: #6b6560;
+    --red: #e53935;
+    --red-hover: #c62828;
+    --accent-orange: #ff6f00;
+    --correct: #1e7e34;
+    --danger: #e53935;
+    
+    --tier-gasha: #1e7e34;
+    --tier-qola: #fbc02d;
+    --tier-gobez: #e53935;
+    --tier-shimagile: #8e24aa;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: clip;
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+  
+  /* Focus Rings */
+  *:focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 2px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.95; transform: scale(0.98); }
+}
+
+@keyframes scaleHover {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+@keyframes spring-bounce {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes float-up {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes bounce-trophy {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2.5s ease-in-out infinite;
+}
+
+.spring-bounce {
+  animation: spring-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.float-up {
+  animation: float-up 0.5s ease-out forwards;
+}
+
+.bounce-trophy {
+  animation: bounce-trophy 2.5s ease-in-out infinite;
+}
+
+/* Confetti System */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confetti-fall linear infinite forwards;
+  top: -20px;
+}
+
+/* Modals Overlay Transitions */
+[data-state="open"] .fixed.inset-0 {
+  animation: modal-fade-in 0.2s ease-out;
+}
+[data-state="closed"] .fixed.inset-0 {
+  animation: modal-fade-out 0.2s ease-in;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (max-width: 640px) {
+  .confetti {
+    width: 8px;
+    height: 8px;
+  }
+}

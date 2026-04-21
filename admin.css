@@ -125,6 +125,72 @@ body {
   color: var(--text-muted);
 }
 
+.btn-google-admin {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  background: #fff;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  color: #3c4043;
+  font: 600 14px var(--font-ui, system-ui);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  transition: background .15s, box-shadow .15s;
+}
+.btn-google-admin:hover {
+  background: #f8f9fa;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+
+.auth-divider-admin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 1rem 0;
+  color: var(--text-muted, #888);
+  font-size: 12px;
+}
+.auth-divider-admin::before,
+.auth-divider-admin::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border, #e0e0e0);
+}
+
+.auth-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+.auth-game-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  margin: 1rem 0 0.5rem;
+}
+.auth-error-msg {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+.auth-error-msg.hidden { display: none; }
+.grant-success {
+  color: #2e7d32;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+.grant-success.hidden { display: none; }
+.section-hint {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: -0.5rem 0 1rem;
+}
+
 /* ── Admin Container ─────────────────────────────────– */
 .admin-container {
   background: var(--bg);

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f11" />
+  <title>Page Not Found — Tigrinya Party Games</title>
+  <meta name="robots" content="noindex" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=25" />
+  <style>
+    .notfound-wrap {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+    .notfound-code {
+      font-family: var(--font-display);
+      font-size: clamp(5rem, 20vw, 9rem);
+      line-height: 1;
+      color: var(--red);
+      margin: 0;
+    }
+    .notfound-geez {
+      font-family: var(--font-geez);
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      color: var(--text-muted);
+      margin: 0.25rem 0 0;
+    }
+    .notfound-en {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 1.25rem 0 0.35rem;
+    }
+    .notfound-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0 0 2rem;
+    }
+    .notfound-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--red);
+      color: #fff;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.8rem 1.75rem;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .notfound-home:hover { background: var(--red-hover); transform: translateY(-2px); }
+    .notfound-home:active { transform: translateY(0); }
+    .notfound-footer {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 0; right: 0;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .notfound-footer a { color: inherit; text-decoration: none; }
+    .notfound-footer a:hover { color: var(--text); }
+  </style>
+</head>
+<body style="position:relative;">
+
+  <div class="notfound-wrap">
+    <p class="notfound-code">404</p>
+    <p class="notfound-geez">እዚ ገጽ ኣይርከብን</p>
+    <p class="notfound-en">Page not found</p>
+    <p class="notfound-sub">The page you're looking for doesn't exist or has been moved.</p>
+    <a href="index.html" class="notfound-home">← Back Home</a>
+  </div>
+
+  <div class="notfound-footer">
+    <a href="index.html">Home</a>
+    &nbsp;·&nbsp;
+    <a href="contact.html">Contact</a>
+    &nbsp;·&nbsp;
+    <a href="terms.html">Terms</a>
+    &nbsp;·&nbsp;
+    <a href="privacy.html">Privacy</a>
+  </div>
+
+</body>
+</html>

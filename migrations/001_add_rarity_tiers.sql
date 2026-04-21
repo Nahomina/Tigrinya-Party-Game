@@ -62,9 +62,9 @@ ALTER TABLE packs ADD COLUMN IF NOT EXISTS difficulty_max TEXT DEFAULT 'hard';
 
 -- Update existing packs with tier info
 UPDATE packs SET rarity = 'starter', sequence_order = 1 WHERE slug = 'classic';
-UPDATE packs SET rarity = 'intermediate', sequence_order = 2 WHERE slug = 'hadar';
-UPDATE packs SET rarity = 'advanced', sequence_order = 3 WHERE slug = 'adi';
-UPDATE packs SET rarity = 'expert', sequence_order = 4 WHERE slug = 'weledo';
+UPDATE packs SET rarity = 'intermediate', sequence_order = 2 WHERE slug = 'intermediate';
+UPDATE packs SET rarity = 'advanced', sequence_order = 3 WHERE slug = 'advanced';
+UPDATE packs SET rarity = 'expert', sequence_order = 4 WHERE slug = 'expert';
 
 -- Set difficulty ranges per tier
 UPDATE packs SET difficulty_min = 'easy', difficulty_max = 'medium' WHERE rarity = 'starter';
@@ -133,6 +133,6 @@ WHERE word_length > 11;
 --
 -- Packs:
 --   classic (Starter) → sequence_order=1, difficulty_min='easy'
---   hadar (Intermediate) → sequence_order=2, difficulty_min='medium'
---   adi (Advanced) → sequence_order=3, difficulty_min='hard'
---   weledo (Expert) → sequence_order=4, difficulty_min='hard'
+--   intermediate (Intermediate) → sequence_order=2, difficulty_min='medium'
+--   advanced (Advanced) → sequence_order=3, difficulty_min='hard'
+--   expert (Expert) → sequence_order=4, difficulty_min='hard'

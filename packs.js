@@ -1,104 +1,100 @@
-// packs.js — Pack / Tier catalogue  (v3)
+// packs.js — Pack / Tier catalogue  (v5)
 // Slugs match the database — do NOT rename them.
-// Premium content arrives only via validate-code Edge Function after unlock.
+// Premium content unlocked via Stripe payment only.
+// Counts are exact — pulled from DB 2026-04-19.
 
 const PACK_CATALOGUE = [
   {
-    // ── TIER 1 ────────────────────────────────────────────────
-    slug:          'classic',
+    // ── LEVEL 1 ───────────────────────────────────────────────
+    slug:          'gasha',
     tier:          'starter',
     sequenceOrder: 1,
 
     // Display
-    nameGeez:    'ጀማሪ',
-    nameLatin:   'Jemari',
-    nameEn:      'Starter',
-    tierLabel:   'Tier 1',
+    nameGeez:    'ጋሻ',
+    nameLatin:   'Gasha',
+    nameEn:      'Gasha',
+    tierLabel:   'Level 1',
     icon:        '🟢',
-    accentColor: '#43a047',          // green
+    accentColor: '#43a047',
 
-    description:  'Core vocabulary — everyday words & simple proverbs.',
-    wordCount:    60,
-    proverbCount: 25,
+    description:  "The Guest. You're just arriving — core vocabulary & easy proverbs.",
+    wordCount:    35,
+    proverbCount: 68,
 
     priceGbp: 0,
     isFree:   true,
-    gumroadUrl: null,
 
-    // Word characteristics for this tier
-    wordProfile: '2–5 character words · daily household vocabulary',
-    proverbProfile: '2–4 word sayings · easy to follow',
+    wordProfile:    '35 words · everyday vocabulary',
+    proverbProfile: '68 proverbs · easy to follow',
   },
   {
-    // ── TIER 2 ────────────────────────────────────────────────
-    slug:          'hadar',
+    // ── LEVEL 2 ───────────────────────────────────────────────
+    slug:          'qola',
     tier:          'intermediate',
     sequenceOrder: 2,
 
-    nameGeez:    'መካከለኛ',
-    nameLatin:   'Mekakelegna',
-    nameEn:      'Intermediate',
-    tierLabel:   'Tier 2',
+    nameGeez:    'ቁልዓ',
+    nameLatin:   "Qol'a",
+    nameEn:      "Qol'a",
+    tierLabel:   'Level 2',
     icon:        '🔵',
-    accentColor: '#1e88e5',          // blue
+    accentColor: '#1e88e5',
 
-    description:  'Thematic vocabulary — food, family, travel & culture.',
-    wordCount:    40,
+    description:  "The Baby. You know the basics — weddings, family & cultural vocab.",
+    wordCount:    9,
     proverbCount: 15,
 
     priceGbp: 1.99,
     isFree:   false,
-    gumroadUrl: null,
 
-    wordProfile: '5–7 character words · themed groups',
-    proverbProfile: '4–7 word proverbs · cultural references',
+    wordProfile:    "+9 words · weddings, family & kinship",
+    proverbProfile: "+15 proverbs · cultural references",
   },
   {
-    // ── TIER 3 ────────────────────────────────────────────────
-    slug:          'adi',
+    // ── LEVEL 3 ───────────────────────────────────────────────
+    slug:          'gobez',
     tier:          'advanced',
     sequenceOrder: 3,
 
-    nameGeez:    'ምዕቡል',
-    nameLatin:   'Mi\'ebul',
-    nameEn:      'Advanced',
-    tierLabel:   'Tier 3',
+    nameGeez:    'ጎበዝ',
+    nameLatin:   'Gobez',
+    nameEn:      'Gobez',
+    tierLabel:   'Level 3',
     icon:        '🟣',
-    accentColor: '#8e24aa',          // purple
+    accentColor: '#8e24aa',
 
-    description:  'Complex vocabulary — synonyms, idioms & poetic language.',
-    wordCount:    40,
-    proverbCount: 15,
+    description:  "The Cool Youth. You navigate a wedding and homeland vocab — but deep proverbs still trip you up.",
+    wordCount:    9,
+    proverbCount: 10,
 
     priceGbp: 4.99,
     isFree:   false,
-    gumroadUrl: null,
 
-    wordProfile: '6–9 character words · synonyms & archaic terms',
-    proverbProfile: '8–10 word proverbs · idioms & deeper meaning',
+    wordProfile:    '+9 words · geography & homeland',
+    proverbProfile: '+10 proverbs · idioms & deeper meaning',
   },
   {
-    // ── TIER 4 ────────────────────────────────────────────────
-    slug:          'weledo',
+    // ── LEVEL 4 ───────────────────────────────────────────────
+    slug:          'shimagile',
     tier:          'expert',
     sequenceOrder: 4,
 
-    nameGeez:    'ክኢላ',
-    nameLatin:   'K\'ela',
-    nameEn:      'Expert',
-    tierLabel:   'Tier 4',
+    nameGeez:    'ሽማግለ',
+    nameLatin:   'Shimagile',
+    nameEn:      'Shimagile',
+    tierLabel:   'Level 4',
     icon:        '🟠',
-    accentColor: '#f4511e',          // deep orange
+    accentColor: '#f4511e',
 
-    description:  'Rare & complex — slang, cultural wisdom & full proverbs.',
-    wordCount:    40,
-    proverbCount: 15,
+    description:  "The Village Elder. You are officially the person everyone asks. Advanced vocab, rare proverbs & cultural wisdom.",
+    wordCount:    5,
+    proverbCount: 11,
 
     priceGbp: 9.99,
     isFree:   false,
-    gumroadUrl: null,
 
-    wordProfile: '7–12 character words · slang & cultural terms',
-    proverbProfile: '10+ word proverbs · advanced metaphors',
+    wordProfile:    '+5 words · rare & advanced vocab',
+    proverbProfile: '+11 proverbs · advanced metaphors & wisdom',
   },
 ];

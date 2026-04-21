@@ -1,13 +1,13 @@
 {
-  "name": "Mayim — Tigrinya Party Game",
-  "short_name": "Mayim",
-  "description": "A Tigrinya word-guessing party game",
+  "name": "Tigrinya Party Games — Mayim & Misla",
+  "short_name": "Tigrinya Games",
+  "description": "Play Mayim (word guessing) and Misla (proverb completion) — free Tigrinya party games for groups. Works offline.",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#0f0f11",
   "background_color": "#0f0f11",
-  "lang": "ti",
+  "lang": "en",
   "icons": [
     {
       "src": "assets/icon-192.png",

@@ -21,11 +21,43 @@ function debugLog(...args) {
   if (DEBUG) console.log('[DEBUG]', ...args);
 }
 
+// ── Slug migration: all historical slug names → current names ─────────────────
+// Maps: hadar/adi/weledo (v1) → intermediate/advanced/expert (v2)
+//       classic/intermediate/advanced/expert (v2) → gasha/qola/gobez/shimagile (v3)
+// Runs once on load so existing users don't lose their unlocked packs.
+(function migratePackSlugs() {
+  const SLUG_MAP = {
+    hadar:        'qola',
+    adi:          'gobez',
+    weledo:       'shimagile',
+    classic:      'gasha',
+    intermediate: 'qola',
+    advanced:     'gobez',
+    expert:       'shimagile',
+  };
+  try {
+    const raw = localStorage.getItem('mayim_unlocked_packs');
+    if (!raw) return;
+    const packs = JSON.parse(raw);
+    let changed = false;
+    for (const [oldSlug, newSlug] of Object.entries(SLUG_MAP)) {
+      if (packs[oldSlug] !== undefined) {
+        packs[newSlug] = packs[oldSlug];
+        delete packs[oldSlug];
+        changed = true;
+      }
+    }
+    if (changed) localStorage.setItem('mayim_unlocked_packs', JSON.stringify(packs));
+  } catch { /* ignore */ }
+})();
+
 // ── Defaults ───────────────────────────────────────────
 const STORAGE_KEY  = 'mayim_state';
 const NAMES_KEY    = 'mayim_team_names';
-const WORDS_CACHE_KEY = 'mayim_words_cache';
-const WORDS_CACHE_TTL = 86400000; // 24 hours in ms
+const WORDS_CACHE_KEY    = 'mayim_words_cache';
+const WORDS_CACHE_TTL    = 86400000; // 24 hours in ms
+const PROVERBS_CACHE_KEY = 'mayim_proverbs_cache';
+const PROVERBS_CACHE_TTL = 300000;   // 5 minutes — short so admin changes reflect quickly
 
 const DEFAULTS = {
   totalRounds:    3,
@@ -63,7 +95,8 @@ function initSupabase() {
 }
 
 // ── Fetch Words from Supabase ───────────────────────────
-let gameWords = [];
+let gameWords    = [];
+let gameProverbs = []; // classic proverbs loaded from Supabase (keeps in sync with admin)
 
 async function fetchWordsFromSupabase() {
   try {
@@ -117,6 +150,40 @@ async function initializeWords() {
   gameWords = await fetchWordsFromSupabase();
 
   if (overlay) overlay.classList.add('hidden');
+}
+
+// ── Fetch Proverbs from Supabase (classic pack only) ───
+// Short 5-min cache so admin panel edits appear in-game quickly.
+async function fetchProverbsFromSupabase() {
+  const CLASSIC_PACK_ID = 'ebaec11f-dbb3-4625-b810-6c0f85624d25';
+  try {
+    const cached    = localStorage.getItem(PROVERBS_CACHE_KEY);
+    const cacheTime = localStorage.getItem(PROVERBS_CACHE_KEY + '_time');
+    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < PROVERBS_CACHE_TTL) {
+      debugLog('✓ Using cached proverbs (5-min TTL)');
+      return JSON.parse(cached);
+    }
+    if (!_supabase) throw new Error('Supabase not initialized');
+    const { data, error } = await _supabase
+      .from('proverbs')
+      .select('tigrinya, latin, english, difficulty')
+      .eq('pack_id', CLASSIC_PACK_ID);
+    if (error) throw error;
+    localStorage.setItem(PROVERBS_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(PROVERBS_CACHE_KEY + '_time', Date.now().toString());
+    debugLog(`✓ Fetched ${data.length} proverbs from Supabase`);
+    return data;
+  } catch (err) {
+    console.warn('⚠ Failed to fetch proverbs from Supabase:', err);
+    const cached = localStorage.getItem(PROVERBS_CACHE_KEY);
+    if (cached) { debugLog('✓ Using offline cached proverbs'); return JSON.parse(cached); }
+    debugLog('✓ Falling back to proverbs.js');
+    return typeof PROVERBS !== 'undefined' ? [...PROVERBS] : [];
+  }
+}
+
+async function initializeProverbs() {
+  gameProverbs = await fetchProverbsFromSupabase();
 }
 
 // ── Team name persistence ──────────────────────────────
@@ -305,14 +372,28 @@ function initNetworkMonitoring() {
   });
 }
 
+let _toastTimer = null;
 function showNotification(message, type = 'info') {
-  // Log to console for debugging
+  // Console logging
   if (type === 'warning') console.warn(message);
-  if (type === 'error') console.error(message);
-  if (type === 'success') debugLog(message);
+  if (type === 'error')   console.error(message);
+  else debugLog(message);
 
-  // Could be extended to show toast notification UI
-  // For now, just log to console
+  // Visual toast (#app-toast in game.html)
+  const toast = document.getElementById('app-toast');
+  if (!toast) return;
+
+  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+
+  toast.textContent = message;
+  toast.className   = `app-toast app-toast--${type}`;
+
+  // Auto-hide after 4 s (errors linger 6 s)
+  const delay = type === 'error' ? 6000 : 4000;
+  _toastTimer = setTimeout(() => {
+    toast.classList.add('app-toast--hide');
+    setTimeout(() => toast.classList.add('hidden'), 400);
+  }, delay);
 }
 
 // ── Input Validation & Sanitization ────────────────────
@@ -418,6 +499,9 @@ function stopWordTimer() {
 function startWordTimer() {
   gameState.wordTimeLeft = gameState.secondsPerWord;
   updateTimerUI();
+  // Enable Correct btn now that the timer is running
+  const correctBtn = document.getElementById('btn-correct');
+  if (correctBtn) correctBtn.disabled = false;
   _wordTimer = setInterval(() => {
     gameState.wordTimeLeft -= 1;
     updateTimerUI();
@@ -581,6 +665,13 @@ function showNextWord() {
   if (badge) { badge.textContent = ''; badge.className = ''; }
 
   stopWordTimer();
+  // Reset timer display to full time for the new word
+  gameState.wordTimeLeft = gameState.secondsPerWord;
+  updateTimerUI();
+
+  // Disable Correct btn until judge starts the timer
+  const correctBtn = document.getElementById('btn-correct');
+  if (correctBtn) correctBtn.disabled = true;
 
   // Re-show "Start Timer" button for the next word (it hides when timer runs)
   const startTimerBtn = document.getElementById('btn-skip');
@@ -688,7 +779,8 @@ function showNextProverb() {
 
   // Reset time-up message and judge peek overlay
   document.getElementById('proverb-time-up')?.classList.add('hidden');
-  document.getElementById('judge-peek-overlay')?.classList.add('hidden');
+  // Reset inline judge peek
+  closeJudgePeek();
 
   // State A (Start Timer + Show Answer), hide State B (judge) and answer
   document.getElementById('proverb-actions-show')?.classList.remove('hidden');
@@ -730,13 +822,28 @@ function _renderMaskedProverb(proverb) {
 function openJudgePeek() {
   const p = gameState.currentProverb;
   if (!p) return;
+  const inline = document.getElementById('judge-peek-inline');
+  if (!inline) return;
+  const isVisible = !inline.classList.contains('hidden');
+  if (isVisible) {
+    // Toggle off
+    inline.classList.add('hidden');
+    const btn = document.getElementById('btn-judge-peek');
+    if (btn) btn.textContent = '👁 See Answer (Judge)';
+    return;
+  }
   document.getElementById('judge-peek-tigrinya').textContent = p.tigrinya;
   document.getElementById('judge-peek-latin').textContent    = p.latin;
   document.getElementById('judge-peek-english').textContent  = p.english;
-  document.getElementById('judge-peek-overlay').classList.remove('hidden');
+  inline.classList.remove('hidden');
+  const btn = document.getElementById('btn-judge-peek');
+  if (btn) btn.textContent = '🙈 Hide Answer';
 }
 function closeJudgePeek() {
-  document.getElementById('judge-peek-overlay')?.classList.add('hidden');
+  const inline = document.getElementById('judge-peek-inline');
+  if (inline) inline.classList.add('hidden');
+  const btn = document.getElementById('btn-judge-peek');
+  if (btn) btn.textContent = '👁 See Answer (Judge)';
 }
 
 function revealProverb() {
@@ -1239,10 +1346,6 @@ function wireEvents() {
 
   // ── Proverb screen ──────────────────────────────────
   document.getElementById('btn-judge-peek')?.addEventListener('click', openJudgePeek);
-  document.getElementById('btn-judge-peek-close')?.addEventListener('click', closeJudgePeek);
-  document.getElementById('judge-peek-overlay')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeJudgePeek();
-  });
   document.getElementById('btn-proverb-start-timer')?.addEventListener('click', startProverbTimer);
   document.getElementById('btn-show-answer')?.addEventListener('click', revealProverb);
   document.getElementById('btn-proverb-correct')?.addEventListener('click', () => judgeProverb('correct'));
@@ -1337,9 +1440,11 @@ function listenForSWUpdates() {
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();             // apply theme before first paint
   initNetworkMonitoring(); // set up offline/online detection
-  initSupabase();          // initialize Supabase client
-  await initializeWords(); // fetch words from Supabase (or fallback)
-  initAuth();              // initialize authentication
+  initSupabase();             // initialize Supabase client
+  await initializeWords();    // fetch words from Supabase (or fallback)
+  await initializeProverbs(); // fetch classic proverbs from Supabase (keeps in sync with admin)
+  await initAuth();           // initialize authentication (must complete before payment return check)
+  await handlePaymentReturn(); // handle ?payment=success|cancelled from Stripe redirect
 
   // Read mode from URL param (?mode=words | ?mode=proverbs)
   const urlMode = new URLSearchParams(window.location.search).get('mode');
@@ -1382,35 +1487,35 @@ function storePack(slug, words, proverbs) {
 }
 
 function isPackUnlocked(slug) {
-  if (slug === 'classic') return true;
+  if (slug === 'gasha') return true;
   return !!getUnlockedPacks()[slug];
 }
 
 // ── Tier selection ─────────────────────────────────────────
 // Returns the slug of the currently selected tier radio button.
-// Falls back to 'classic' (Starter) if nothing is selected.
+// Falls back to 'gasha' (Level 1) if nothing is selected.
 function getActiveTierSlug() {
   const radio = document.querySelector('.tier-radio-input:checked');
-  return radio ? radio.dataset.slug : 'classic';
+  return radio ? radio.dataset.slug : 'gasha';
 }
 
 // Returns the PACK_CATALOGUE entries for the active tier and all tiers below it.
-// e.g. selecting "advanced" → [classic, hadar, adi]
+// e.g. selecting "gobez" → [gasha, qola, gobez]
 function getActiveTierPacks() {
   if (typeof PACK_CATALOGUE === 'undefined') return [];
   const slug = getActiveTierSlug();
   const target = PACK_CATALOGUE.find(p => p.slug === slug);
-  if (!target) return PACK_CATALOGUE.filter(p => p.slug === 'classic');
+  if (!target) return PACK_CATALOGUE.filter(p => p.slug === 'gasha');
   return PACK_CATALOGUE.filter(p => p.sequenceOrder <= target.sequenceOrder);
 }
 
 function getMergedWords() {
   const unlocked  = getUnlockedPacks();
   const tierPacks = getActiveTierPacks();
-  let all = [...gameWords]; // classic words always included
+  let all = [...gameWords]; // gasha words always included
 
   for (const pack of tierPacks) {
-    if (pack.slug === 'classic') continue; // already in gameWords
+    if (pack.slug === 'gasha') continue; // already in gameWords
     const data = unlocked[pack.slug];
     if (data && Array.isArray(data.words)) {
       all = all.concat(data.words);
@@ -1419,16 +1524,35 @@ function getMergedWords() {
   return all;
 }
 
+// Which difficulty labels are allowed per tier (cumulative).
+// Gasha (L1) → easy only; Qol'a (L2) → easy+medium; Gobez/Shimagile (L3/4) → all.
+const TIER_DIFFICULTIES = {
+  gasha:     ['easy'],
+  qola:      ['easy', 'medium'],
+  gobez:     ['easy', 'medium', 'hard'],
+  shimagile: ['easy', 'medium', 'hard'],
+};
+
 function getMergedProverbs() {
-  const unlocked  = getUnlockedPacks();
-  const tierPacks = getActiveTierPacks();
-  let all = [...PROVERBS]; // classic proverbs always included
+  const unlocked     = getUnlockedPacks();
+  const activeTier   = getActiveTierSlug();
+  const tierPacks    = getActiveTierPacks();
+  const allowedDiffs = TIER_DIFFICULTIES[activeTier] || ['easy', 'medium', 'hard'];
+
+  let all = [];
 
   for (const pack of tierPacks) {
-    if (pack.slug === 'classic') continue;
-    const data = unlocked[pack.slug];
-    if (data && Array.isArray(data.proverbs)) {
-      all = all.concat(data.proverbs);
+    if (pack.slug === 'gasha') {
+      // Gasha pack: filter by difficulty matching the selected tier
+      const source = gameProverbs.length > 0 ? gameProverbs
+        : (typeof PROVERBS !== 'undefined' ? PROVERBS : []);
+      all = all.concat(source.filter(p => allowedDiffs.includes(p.difficulty)));
+    } else {
+      // Premium packs: include all proverbs (they're already tier-appropriate by assignment)
+      const data = unlocked[pack.slug];
+      if (data && Array.isArray(data.proverbs)) {
+        all = all.concat(data.proverbs);
+      }
     }
   }
   return all;
@@ -1445,65 +1569,233 @@ function validateScores() {
   }
 }
 
-// ── Edge Function code validation ─────────────────────────
-const EDGE_FN_URL = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/validate-code';
+// ── Edge Function URLs ─────────────────────────────────────
+const CHECKOUT_FN_URL   = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session';
+const FETCH_PACK_FN_URL = 'https://rzcrdngpybrsjlbenqep.functions.supabase.co/fetch-pack-content';
 
-async function validateAndUnlockCode(code, packSlug) {
-  // Input validation
-  const trimmedCode = code.trim();
-
-  if (!trimmedCode) {
-    throw new Error('Please enter a code');
-  }
-
-  if (!validateUnlockCode(trimmedCode)) {
-    throw new Error('Invalid code format. Codes should be 20-40 characters.');
-  }
-
-  // Get the current session to include auth token
+// ── Stripe: fetch pack content after purchase ─────────────
+async function fetchPackContent(slug) {
   if (!_supabase) throw new Error('Supabase not initialized');
   const { data: { session } } = await _supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
 
-  // Set up request timeout (10 seconds)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId  = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const res = await fetch(EDGE_FN_URL, {
+    const res = await fetch(FETCH_PACK_FN_URL, {
       method:  'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type':  'application/json',
         'Authorization': `Bearer ${session.access_token}`,
       },
-      body:    JSON.stringify({ code: trimmedCode.toUpperCase(), pack_slug: packSlug }),
-      signal:  controller.signal,
+      body:   JSON.stringify({ pack_slug: slug }),
+      signal: controller.signal,
     });
-
     clearTimeout(timeoutId);
 
     const json = await res.json();
-    if (!res.ok || !json.success) throw new Error(json.error || 'Invalid code');
-    storePack(packSlug, json.words, json.proverbs);
+    if (!res.ok || !json.success) throw new Error(json.error || 'Failed to fetch pack content');
+
+    storePack(slug, json.words, json.proverbs);
     return json;
   } catch (err) {
     clearTimeout(timeoutId);
-
-    // Report to Sentry
-    reportError(err, { action: 'unlock_code', pack: packSlug });
-
-    // Handle timeout error
-    if (err.name === 'AbortError') {
-      throw new Error('Request timed out. Please check your internet connection and try again.');
-    }
-
-    // Handle network errors
-    if (err instanceof TypeError && err.message.includes('fetch')) {
-      throw new Error('Network error. Please check your internet connection.');
-    }
-
-    // Re-throw other errors
+    if (err.name === 'AbortError') throw new Error('Request timed out — please try again.');
     throw err;
+  }
+}
+
+// ── Stripe: start checkout flow for a locked tier ─────────
+async function startPaymentFlow(slug) {
+  if (!_currentUser) {
+    _pendingPaymentSlug = slug;   // remember after login
+    openAuthModal('signup');
+    return;
+  }
+
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    // Show brief loading state on the unlock button if present
+    const btn = document.querySelector(`[data-pay-slug="${slug}"]`);
+    if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+    const res = await fetch(CHECKOUT_FN_URL, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ pack_slug: slug }),
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json.url) throw new Error(json.error || 'Could not start checkout');
+
+    // Navigate to Stripe Checkout (hosted page)
+    window.location.href = json.url;
+  } catch (err) {
+    reportError(err, { action: 'startPaymentFlow', slug });
+    showNotification(`Payment error: ${err.message}`, 'error');
+    // Re-enable button on error
+    const btn = document.querySelector(`[data-pay-slug="${slug}"]`);
+    if (btn) { btn.textContent = 'Unlock'; btn.disabled = false; }
+  }
+}
+
+// ── Stripe: sync all DB-unlocked packs into localStorage ──
+// Runs on login and on every page load when a session exists.
+// Uses a 5-min TTL so admin edits to pack content propagate quickly.
+const PACK_CONTENT_TTL = 300000; // 5 minutes
+
+async function fetchAndSyncUnlockedPacks() {
+  if (!_supabase || !_currentUser) return;
+  if (typeof PACK_CATALOGUE === 'undefined') return;
+
+  const premiumPacks = PACK_CATALOGUE.filter(p => !p.isFree);
+  const unlocked     = getUnlockedPacks();
+  const now          = Date.now();
+
+  for (const pack of premiumPacks) {
+    const cached = unlocked[pack.slug];
+
+    // Skip only if content was synced recently (within TTL).
+    // If not in cache at all, or cache is stale → re-fetch from DB.
+    if (cached && cached.unlockedAt && (now - cached.unlockedAt) < PACK_CONTENT_TTL) {
+      debugLog(`Pack content fresh (${Math.round((now - cached.unlockedAt) / 1000)}s old): ${pack.slug}`);
+      continue;
+    }
+
+    try {
+      await fetchPackContent(pack.slug);
+      debugLog(`✓ Synced pack from DB: ${pack.slug}`);
+    } catch (err) {
+      // 403/Not unlocked = user hasn't bought this pack — expected, not an error
+      if (!err.message.includes('Not unlocked') && !err.message.includes('403')) {
+        console.warn(`[sync] Pack ${pack.slug}:`, err.message);
+      }
+    }
+  }
+
+  // Refresh UI after sync
+  renderTierSelector();
+  if (typeof renderPackCards === 'function') renderPackCards();
+}
+
+// ── Stripe: handle return from Stripe Checkout ────────────
+// ── Stripe return handler ─────────────────────────────────
+// Persists slug to sessionStorage before cleaning the URL so a manual refresh
+// still picks up the pending unlock (fixes the "slug lost on reload" bug).
+// Uses exponential backoff (3 s → 7 s → 15 s) to survive Stripe webhook cold
+// starts. Detects 401 explicitly so we can prompt login instead of silently
+// failing.
+
+const PENDING_UNLOCK_KEY = 'mayim_pending_unlock';
+
+async function handlePaymentReturn() {
+  const params  = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  const slug    = params.get('slug');
+  const sessionId = params.get('session_id');
+
+  // Also check sessionStorage for a pending unlock from a previous load
+  // (handles the case where the user refreshed after the URL was cleaned)
+  const stored  = (() => {
+    try { return JSON.parse(sessionStorage.getItem(PENDING_UNLOCK_KEY) || 'null'); }
+    catch { return null; }
+  })();
+
+  const effectiveSlug    = slug    || stored?.slug;
+  const effectivePayment = payment || stored?.payment;
+
+  if (!effectivePayment) return; // normal page load — nothing to do
+
+  // ── Persist before cleaning URL so refresh still works ──
+  if (payment === 'success' && slug) {
+    try {
+      sessionStorage.setItem(PENDING_UNLOCK_KEY, JSON.stringify({
+        payment: 'success',
+        slug,
+        sessionId: sessionId ?? null,
+        storedAt: Date.now(),
+      }));
+    } catch { /* private browsing — continue without persistence */ }
+  }
+
+  // Clean the payment params from the URL immediately
+  const clean = window.location.pathname + (params.get('mode') ? `?mode=${params.get('mode')}` : '');
+  window.history.replaceState({}, '', clean);
+
+  if (effectivePayment === 'cancelled') {
+    showNotification('Payment cancelled — no charge was made.', 'info');
+    try { sessionStorage.removeItem(PENDING_UNLOCK_KEY); } catch { /* ignore */ }
+    return;
+  }
+
+  if (effectivePayment === 'success' && effectiveSlug) {
+    // Stale stored record (>5 min) — user probably already got their pack
+    if (stored && Date.now() - stored.storedAt > 300_000) {
+      try { sessionStorage.removeItem(PENDING_UNLOCK_KEY); } catch { /* ignore */ }
+      return;
+    }
+
+    showNotification('Payment confirmed! Loading your pack…', 'info');
+
+    const packName = (typeof PACK_CATALOGUE !== 'undefined')
+      ? PACK_CATALOGUE.find(p => p.slug === effectiveSlug)?.nameEn ?? effectiveSlug
+      : effectiveSlug;
+
+    const tryFetch = async () => {
+      try {
+        await fetchPackContent(effectiveSlug);
+        return { ok: true };
+      } catch (err) {
+        // Surface auth failures immediately — retrying won't help
+        if (err.message === 'Not authenticated') return { ok: false, auth: true };
+        return { ok: false, auth: false };
+      }
+    };
+
+    const onSuccess = () => {
+      showNotification(`✓ ${packName} tier unlocked — enjoy!`, 'success');
+      try { sessionStorage.removeItem(PENDING_UNLOCK_KEY); } catch { /* ignore */ }
+      renderTierSelector();
+      if (typeof renderPackCards === 'function') renderPackCards();
+    };
+
+    // Exponential back-off: attempt 0 (immediate) → 3 s → 7 s → 15 s
+    const DELAYS = [0, 3000, 7000, 15000];
+    let attempt = 0;
+
+    const poll = async () => {
+      const { ok, auth } = await tryFetch();
+      if (ok) { onSuccess(); return; }
+
+      if (auth) {
+        // Webhook may have fired but session expired — prompt re-login
+        showNotification('Please log in again to finish unlocking your pack.', 'info');
+        _pendingPaymentSlug = effectiveSlug;
+        openAuthModal('login');
+        return;
+      }
+
+      attempt++;
+      if (attempt < DELAYS.length) {
+        debugLog(`[payment] webhook not ready, retrying in ${DELAYS[attempt]}ms (attempt ${attempt})`);
+        setTimeout(poll, DELAYS[attempt]);
+      } else {
+        // All retries exhausted — pack will appear automatically once the
+        // webhook fires; user can refresh at any time.
+        showNotification(
+          `${packName} purchased! If it doesn't appear, refresh the page in a moment.`,
+          'info',
+        );
+      }
+    };
+
+    poll();
   }
 }
 
@@ -1545,7 +1837,7 @@ function openUnlockModal(slug) {
   // Check if user is authenticated before showing code input modal
   if (!_currentUser) {
     _pendingUnlockPackSlug = slug;
-    openAuthModal('login');
+    openAuthModal('signup');
     return;
   }
 
@@ -1553,20 +1845,19 @@ function openUnlockModal(slug) {
   const catalogue   = (typeof PACK_CATALOGUE !== 'undefined') ? PACK_CATALOGUE : [];
   const pack        = catalogue.find(p => p.slug === slug);
   const modal       = document.getElementById('unlock-modal');
-  const nameEl      = document.getElementById('unlock-pack-name');
-  const input       = document.getElementById('unlock-code-input');
-  const errEl       = document.getElementById('unlock-error');
-  const successEl   = document.getElementById('unlock-success');
-  const buyLink     = document.getElementById('unlock-buy-link');
   if (!modal) return;
-  if (nameEl)    nameEl.textContent  = pack ? `${pack.nameGeez} — ${pack.nameEn}` : slug;
-  if (input)     input.value         = '';
+
+  const nameEl    = document.getElementById('unlock-pack-name');
+  const priceEl   = document.getElementById('unlock-pack-price');
+  const profileEl = document.getElementById('unlock-pack-profile');
+  const errEl     = document.getElementById('unlock-error');
+
+  if (nameEl)    nameEl.textContent    = pack ? `${pack.nameGeez} · ${pack.nameEn}` : slug;
+  if (priceEl)   priceEl.textContent   = pack ? `£${pack.priceGbp.toFixed(2)} · one-time` : '';
+  if (profileEl) profileEl.textContent = pack ? pack.wordProfile : '';
   if (errEl)     errEl.classList.add('hidden');
-  if (successEl) successEl.classList.add('hidden');
-  // Point "Buy on Gumroad" link to the specific pack product
-  if (buyLink && pack?.gumroadUrl) buyLink.href = pack.gumroadUrl;
+
   modal.classList.remove('hidden');
-  input?.focus();
 }
 
 function closeUnlockModal() {
@@ -1580,47 +1871,10 @@ function wireUnlockModal() {
     if (e.target === e.currentTarget) closeUnlockModal();
   });
 
-  document.getElementById('btn-unlock-submit')?.addEventListener('click', async () => {
-    const code      = document.getElementById('unlock-code-input')?.value?.trim();
-    const errEl     = document.getElementById('unlock-error');
-    const successEl = document.getElementById('unlock-success');
-    const btn       = document.getElementById('btn-unlock-submit');
-
-    if (!code) { showUnlockError('Please enter your unlock code.'); return; }
+  document.getElementById('btn-unlock-submit')?.addEventListener('click', () => {
     if (!_unlockTargetSlug) return;
-
-    btn.disabled     = true;
-    btn.textContent  = 'Checking…';
-    errEl?.classList.add('hidden');
-
-    try {
-      await validateAndUnlockCode(code, _unlockTargetSlug);
-      successEl?.classList.remove('hidden');
-      btn.textContent = 'Unlocked ✓';
-      // Refresh pack cards on landing page if present
-      if (typeof renderPackCards === 'function') renderPackCards();
-      // Refresh setup pack toggles if on game page
-      if (typeof renderSetup === 'function') renderSetup();
-
-      // After success, close modal and scroll to pack showcase
-      setTimeout(() => {
-        closeUnlockModal();
-        const packShowcase = document.getElementById('pack-showcase');
-        if (packShowcase) {
-          packShowcase.removeAttribute('hidden');
-          packShowcase.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 1500);
-    } catch (err) {
-      btn.disabled    = false;
-      btn.textContent = 'Unlock';
-      showUnlockError(err.message || 'Code not valid. Please try again.');
-    }
-  });
-
-  // Allow Enter key in code input
-  document.getElementById('unlock-code-input')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('btn-unlock-submit')?.click();
+    closeUnlockModal();
+    startPaymentFlow(_unlockTargetSlug);
   });
 }
 
@@ -1643,13 +1897,6 @@ function renderPackCards() {
     const card = document.createElement('div');
     card.className = 'pack-card';
     card.style.setProperty('--pack-accent', pack.accentColor);
-
-    // Ge'ez name
-    const geezSpan = document.createElement('span');
-    geezSpan.className = 'pack-card-geez';
-    geezSpan.lang = 'ti';
-    geezSpan.textContent = pack.nameGeez;
-    card.appendChild(geezSpan);
 
     // Info section
     const info = document.createElement('div');
@@ -1694,7 +1941,7 @@ function renderPackCards() {
       btn.className = 'pack-unlock-btn';
       btn.dataset.slug = pack.slug;
       btn.textContent = `£${pack.priceGbp.toFixed(2)} — Unlock`;
-      btn.addEventListener('click', () => openUnlockModal(pack.slug));
+      btn.addEventListener('click', () => startPaymentFlow(pack.slug));
       action.appendChild(btn);
     }
 
@@ -1786,13 +2033,25 @@ function renderTierSelector() {
       const lockIcon = document.createElement('span');
       lockIcon.className = 'tier-lock-icon';
       lockIcon.setAttribute('aria-hidden', 'true');
-      lockIcon.textContent = '🔒';
+      lockIcon.innerHTML = '<svg viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="10" height="8" rx="2" fill="currentColor" opacity="0.18"/><rect x="2" y="7" width="10" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 7V5.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="7" cy="11" r="1.1" fill="currentColor"/><line x1="7" y1="12.1" x2="7" y2="13.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
       lockWrap.appendChild(lockIcon);
 
       const lockPrice = document.createElement('span');
       lockPrice.className = 'tier-lock-price';
       lockPrice.textContent = `£${pack.priceGbp.toFixed(2)}`;
       lockWrap.appendChild(lockPrice);
+
+      // "Unlock" button — triggers Stripe checkout
+      const unlockBtn = document.createElement('button');
+      unlockBtn.className = 'tier-unlock-btn';
+      unlockBtn.textContent = 'Unlock';
+      unlockBtn.dataset.paySlug = pack.slug;
+      unlockBtn.addEventListener('click', (e) => {
+        e.preventDefault(); // don't trigger the label/radio
+        e.stopPropagation();
+        startPaymentFlow(pack.slug);
+      });
+      lockWrap.appendChild(unlockBtn);
 
       right.appendChild(lockWrap);
     }
@@ -1807,26 +2066,45 @@ const renderPackToggles = renderTierSelector;
 
 // ── Winner screen upsell ───────────────────────────────────
 function renderWinnerUpsell() {
-  const upsell  = document.getElementById('winner-upsell');
-  const nameEl  = document.getElementById('upsell-pack-name');
-  const btn     = document.getElementById('btn-winner-unlock');
+  const upsell = document.getElementById('winner-upsell');
   if (!upsell || typeof PACK_CATALOGUE === 'undefined') return;
 
   const nextLocked = PACK_CATALOGUE.find(p => !p.isFree && !isPackUnlocked(p.slug));
   if (!nextLocked) { upsell.classList.add('hidden'); return; }
 
-  if (nameEl) nameEl.textContent = `${nextLocked.icon} ${nextLocked.nameEn} — ${nextLocked.nameGeez}`;
+  const iconEl    = document.getElementById('upsell-pack-icon');
+  const nameEl    = document.getElementById('upsell-pack-name');
+  const profileEl = document.getElementById('upsell-pack-profile');
+  const priceEl   = document.getElementById('upsell-pack-price');
+  const btn       = document.getElementById('btn-winner-unlock');
+  const card      = document.getElementById('upsell-pack-card');
+
+  if (iconEl)    iconEl.textContent    = nextLocked.icon;
+  if (nameEl)    nameEl.textContent    = nextLocked.nameEn;
+  if (profileEl) profileEl.textContent = nextLocked.wordProfile;
+  if (priceEl)   priceEl.textContent   = `£${nextLocked.priceGbp.toFixed(2)}`;
+  if (card)      card.style.setProperty('--tier-color', nextLocked.accentColor);
+
   upsell.classList.remove('hidden');
 
-  btn?.addEventListener('click', () => openUnlockModal(nextLocked.slug), { once: true });
+  // Remove any previous listener clone to avoid stacking
+  const freshBtn = btn?.cloneNode(true);
+  if (btn && freshBtn) {
+    btn.parentNode.replaceChild(freshBtn, btn);
+    // Go to pack showcase on landing page so user can unlock
+    freshBtn.addEventListener('click', () => {
+      window.location.href = 'index.html#pack-showcase';
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 // ── AUTHENTICATION SYSTEM ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-let _currentUser = null;
-let _pendingUnlockPackSlug = null;
+let _currentUser          = null;
+let _pendingUnlockPackSlug = null; // code-based unlock pending after auth
+let _pendingPaymentSlug    = null; // Stripe payment pending after auth
 
 // ── Initialize Supabase Auth ───────────────────────────────────────────
 async function initAuth() {
@@ -1841,6 +2119,8 @@ async function initAuth() {
     if (session) {
       _currentUser = session.user;
       updateAuthUI(true);
+      // Sync any DB-unlocked packs that may have been purchased on another device
+      fetchAndSyncUnlockedPacks();
     } else {
       updateAuthUI(false);
     }
@@ -1851,12 +2131,20 @@ async function initAuth() {
         _currentUser = session.user;
         updateAuthUI(true);
 
-        // If there's a pending pack unlock after login, open the unlock modal
-        if (_pendingUnlockPackSlug) {
-          setTimeout(() => {
-            openUnlockModal(_pendingUnlockPackSlug);
-            _pendingUnlockPackSlug = null;
-          }, 300);
+        // Sync any DB-unlocked packs into localStorage
+        fetchAndSyncUnlockedPacks();
+
+        // Resume pending Stripe payment flow
+        if (_pendingPaymentSlug) {
+          const slug = _pendingPaymentSlug;
+          _pendingPaymentSlug = null;
+          setTimeout(() => startPaymentFlow(slug), 300);
+        }
+        // Resume pending code-based unlock
+        else if (_pendingUnlockPackSlug) {
+          const slug = _pendingUnlockPackSlug;
+          _pendingUnlockPackSlug = null;
+          setTimeout(() => openUnlockModal(slug), 300);
         }
       } else {
         _currentUser = null;
@@ -1964,6 +2252,23 @@ function closeAuthModal() {
     strengthBar.style.width = '0%';
   }
   if (strengthText) strengthText.textContent = 'Weak';
+}
+
+// ── Google OAuth sign-in ───────────────────────────────────
+async function handleGoogleSignIn() {
+  if (!_supabase) return;
+  try {
+    const { error } = await _supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname,
+      },
+    });
+    if (error) throw error;
+    // Page will redirect to Google — no further action needed
+  } catch (err) {
+    showNotification('Google sign-in failed: ' + err.message, 'error');
+  }
 }
 
 // ── Handle Login ───────────────────────────────────────────────────────
@@ -2096,7 +2401,12 @@ function updateAuthUI(isLoggedIn) {
     indicator.appendChild(document.createTextNode(' · '));
     indicator.appendChild(logoutBtn);
   } else {
-    indicator.textContent = 'Log in to unlock packs';
+    indicator.textContent = '';
+    const loginBtn = document.createElement('button');
+    loginBtn.className = 'auth-login-prompt-btn';
+    loginBtn.textContent = 'Log in to unlock packs';
+    loginBtn.addEventListener('click', () => openAuthModal('signup'));
+    indicator.appendChild(loginBtn);
   }
 }
 
@@ -2124,3 +2434,41 @@ function showAuthSuccess(msg) {
 
 // ── Updated validateAndUnlockCode with Auth Token ─────────────────────
 // (This function modifies the existing validateAndUnlockCode, see below)
+
+// ── Heto Questions Fetching ────────────────────────────────────────────
+const HETO_CACHE_KEY = 'heto_questions_cache';
+const HETO_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function fetchHetoQuestions(filters = {}) {
+  try {
+    // Check cache
+    const cached = localStorage.getItem(HETO_CACHE_KEY);
+    const cacheTime = localStorage.getItem(HETO_CACHE_KEY + '_time');
+    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < HETO_CACHE_TTL) {
+      let data = JSON.parse(cached);
+      if (filters.difficulty) data = data.filter(q => q.difficulty === filters.difficulty);
+      if (filters.category) data = data.filter(q => q.category === filters.category);
+      return data;
+    }
+
+    // Fetch from Supabase with filters
+    let query = _supabase.from('heto_questions').select('*');
+    if (filters.difficulty) query = query.eq('difficulty', filters.difficulty);
+    if (filters.category) query = query.eq('category', filters.category);
+
+    const { data, error } = await query.limit(100);
+    if (error) throw error;
+
+    // Cache result
+    localStorage.setItem(HETO_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(HETO_CACHE_KEY + '_time', Date.now().toString());
+
+    return data || [];
+  } catch (err) {
+    console.warn('Failed to fetch Heto questions:', err);
+    return [];
+  }
+}
+
+// Expose to global scope for heto.html
+window.fetchHetoQuestions = fetchHetoQuestions;

@@ -7,21 +7,37 @@
 const SUPABASE_URL     = 'https://rzcrdngpybrsjlbenqep.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
 
+// ── Admin whitelist — only these emails can access the panel ──
+const ADMIN_EMAILS = ['mnahom23@gmail.com', 'nahom.developer@gmail.com'];
+
 let _sb          = null;
 let currentUser  = null;
 let allWords     = [];
 let allProverbs  = [];
+let allHeto      = [];   // Heto questions
 let allPacks     = [];   // [{id, slug, tier_label, sequence_order, name_en}]
-let pendingDeleteType = null; // 'word' | 'proverb'
+let pendingDeleteType = null; // 'word' | 'proverb' | 'heto'
 let pendingDeleteId   = null;
 let pendingDeleteName = null;
 
 // ── Init ──────────────────────────────────────────────────
 function initSupabase() {
-  _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, detectSessionInUrl: false }
+  });
+
+  // React to sign-out (e.g. session expired)
+  _sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      showAuthScreen();
+    }
+  });
 }
 
-// ── Auth ──────────────────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────
+// Admin reuses the session created by the game on the same domain.
+// No separate login — just open the game, sign in there, then come here.
 async function checkAuth() {
   const { data } = await _sb.auth.getSession();
   currentUser = data.session?.user || null;
@@ -29,20 +45,29 @@ async function checkAuth() {
 }
 
 async function onSignedIn() {
+  // ── Admin whitelist check ──────────────────────────────
+  if (!ADMIN_EMAILS.includes(currentUser.email?.toLowerCase())) {
+    await _sb.auth.signOut();
+    showAuthScreen();
+    const errEl = document.getElementById('login-error');
+    if (errEl) { errEl.textContent = '⛔ Access denied — not an admin account.'; errEl.classList.remove('hidden'); }
+    return;
+  }
+
+  // Show shell immediately — don't block on data
   showAdminScreen();
   document.getElementById('admin-user-info').textContent = `📧 ${currentUser.email}`;
-  await loadPacks();
-  await Promise.all([loadAllWords(), loadAllProverbs()]);
+
+  // Load data in background with individual error handling
+  try { await loadPacks(); } catch(e) { console.error('loadPacks failed:', e); }
+  await Promise.allSettled([
+    loadAllWords().catch(e => console.error('loadAllWords failed:', e)),
+    loadAllProverbs().catch(e => console.error('loadAllProverbs failed:', e)),
+    loadAllHeto().catch(e => console.error('loadAllHeto failed:', e)),
+    loadAllGrants().catch(e => console.error('loadAllGrants failed:', e)),
+  ]);
 }
 
-async function loginUser(email) {
-  const { error } = await _sb.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin + '/admin.html' },
-  });
-  if (error) { showToast('❌ ' + error.message, 'error'); return; }
-  showToast('✓ Check your email for the login link!', 'success');
-}
 
 async function logoutUser() {
   await _sb.auth.signOut();
@@ -52,14 +77,27 @@ async function logoutUser() {
 }
 
 // ── Packs (tier list) ─────────────────────────────────────
+// Fallback pack list — used if DB query fails or returns empty
+const FALLBACK_PACKS = [
+  { id: 'ebaec11f-dbb3-4625-b810-6c0f85624d25', slug: 'gasha',     name_en: 'Gasha — The Guest',           tier_label: 'starter',      sequence_order: 1 },
+  { id: 'c57b5398-f954-4801-8413-36198b728317', slug: 'qola',      name_en: "Qol'a — The Baby",            tier_label: 'intermediate', sequence_order: 2 },
+  { id: '6301d663-0989-4473-b2ab-f40a050e1e38', slug: 'gobez',     name_en: 'Gobez — The Cool Youth',      tier_label: 'advanced',     sequence_order: 3 },
+  { id: '081261fa-5174-47de-9c3f-40723690372a', slug: 'shimagile', name_en: 'Shimagile — The Village Elder', tier_label: 'expert',     sequence_order: 4 },
+];
+
 async function loadPacks() {
   const { data, error } = await _sb
     .from('packs')
     .select('id, slug, name_en, tier_label, sequence_order')
     .order('sequence_order');
 
-  if (error) { showToast('❌ Could not load tiers: ' + error.message, 'error'); return; }
-  allPacks = data || [];
+  if (error) {
+    showToast('⚠️ Could not load tiers from DB — using defaults', 'error');
+    allPacks = FALLBACK_PACKS;
+    populatePackSelects();
+    return;
+  }
+  allPacks = (data && data.length > 0) ? data : FALLBACK_PACKS;
   populatePackSelects();
 }
 
@@ -67,22 +105,26 @@ function populatePackSelects() {
   const selects = [
     'input-pack', 'edit-word-pack',
     'input-proverb-pack', 'edit-proverb-pack',
+    'input-heto-pack', 'edit-heto-pack',
     'filter-tier', 'filter-proverb-tier',
+    'grant-pack',
   ];
 
   selects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    const isFilter = id.startsWith('filter-');
-    // Keep blank/first option
-    const blank = el.options[0];
+    // filter selects and the grant select use slug; form selects use UUID
+    const useSlug = id.startsWith('filter-') || id === 'grant-pack';
+    // Only preserve a true blank placeholder (value=""), never a real pack option
+    const blank = (el.options[0]?.value === '') ? el.options[0] : null;
     el.textContent = '';
-    el.appendChild(blank);
+    if (blank) el.appendChild(blank);
 
+    // All 4 tiers (Classic/Starter included) go into every select
     allPacks.forEach(p => {
       const opt = document.createElement('option');
-      opt.value = isFilter ? p.slug : p.id;
-      const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] || '⬜';
+      opt.value = useSlug ? p.slug : p.id;
+      const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] ?? '⬜';
       opt.textContent = `${icon} ${p.name_en}`;
       el.appendChild(opt);
     });
@@ -93,7 +135,7 @@ function populatePackSelects() {
 function packName(pack_id) {
   const p = allPacks.find(p => p.id === pack_id);
   if (!p) return '—';
-  const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] || '⬜';
+  const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] ?? '⬜';
   return `${icon} ${p.name_en}`;
 }
 
@@ -323,6 +365,295 @@ function filterProverbs() {
   renderProverbsTable(list);
 }
 
+// ── GRANTS (manual pack access) ───────────────────────────
+let allGrants = [];
+
+async function loadAllGrants() {
+  const { data, error } = await _sb
+    .from('user_pack_unlocks')
+    .select('id, user_id, pack_id, payment_method, unlocked_at')
+    .eq('payment_method', 'manual')
+    .order('unlocked_at', { ascending: false });
+  if (error) { console.warn('Could not load grants:', error.message); return; }
+  allGrants = data || [];
+  renderGrantsTable();
+}
+
+async function grantPackAccess(email, packSlug) {
+  const errEl  = document.getElementById('grant-error');
+  const succEl = document.getElementById('grant-success');
+  errEl.classList.add('hidden');
+  succEl.classList.add('hidden');
+
+  try {
+    // Refresh session to avoid stale token 401s
+    await _sb.auth.refreshSession();
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) throw new Error('Session expired — please refresh the page and log in again');
+    const res = await fetch(
+      'https://rzcrdngpybrsjlbenqep.functions.supabase.co/admin-grant-pack',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ target_email: email, pack_slug: packSlug }),
+      }
+    );
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Grant failed');
+
+    succEl.textContent = `✓ ${json.message}`;
+    succEl.classList.remove('hidden');
+    document.getElementById('form-grant').reset();
+    await loadAllGrants();
+  } catch (err) {
+    errEl.textContent = '❌ ' + err.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function revokeGrant(id) {
+  const { error } = await _sb.from('user_pack_unlocks').delete().eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('✓ Access revoked', 'success');
+  await loadAllGrants();
+}
+
+function renderGrantsTable() {
+  const tbody = document.getElementById('grants-tbody');
+  if (!tbody) return;
+  tbody.textContent = '';
+  if (!allGrants.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-row">No manual grants yet</td></tr>';
+    return;
+  }
+  allGrants.forEach(g => {
+    const pack = allPacks.find(p => p.id === g.pack_id);
+    const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[pack?.tier_label] || '⬜';
+    const date = new Date(g.unlocked_at).toLocaleDateString();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escHtml(g.user_id)}</td>
+      <td><span class="badge badge--grey">${icon} ${escHtml(pack?.name_en || '—')}</span></td>
+      <td>${date}</td>
+      <td><button class="btn btn-sm btn-danger" data-id="${g.id}" data-action="revoke">Revoke</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('[data-action="revoke"]').forEach(btn =>
+    btn.addEventListener('click', () => revokeGrant(btn.dataset.id)));
+}
+
+// ── HETO QUESTIONS CRUD ──────────────────────────────────
+async function loadAllHeto() {
+  const { data, error } = await _sb
+    .from('heto_questions')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  allHeto = data || [];
+  renderHetoTable(allHeto);
+  updateHetoStats();
+}
+
+async function createHeto() {
+  const question = document.getElementById('input-heto-question').value.trim();
+  const question_latin = document.getElementById('input-heto-question-latin').value.trim();
+  const explanation = document.getElementById('input-heto-explanation').value.trim();
+  const category = document.getElementById('input-heto-category').value;
+  const difficulty = document.getElementById('input-heto-difficulty').value;
+  const pack_id = document.getElementById('input-heto-pack').value || null;
+
+  // Get selected correct answer
+  const correct = document.querySelector('input[name="heto-correct"]:checked')?.value;
+
+  // Build options array
+  const optionA = document.getElementById('input-heto-option-a').value.trim();
+  const optionA_latin = document.getElementById('input-heto-option-a-latin').value.trim();
+  const optionB = document.getElementById('input-heto-option-b').value.trim();
+  const optionB_latin = document.getElementById('input-heto-option-b-latin').value.trim();
+  const optionC = document.getElementById('input-heto-option-c').value.trim();
+  const optionC_latin = document.getElementById('input-heto-option-c-latin').value.trim();
+  const optionD = document.getElementById('input-heto-option-d').value.trim();
+  const optionD_latin = document.getElementById('input-heto-option-d-latin').value.trim();
+
+  // Validate
+  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category) {
+    showToast('❌ Please fill in all required fields', 'error');
+    return;
+  }
+
+  const options = [
+    { label: 'A', text: optionA, latin: optionA_latin },
+    { label: 'B', text: optionB, latin: optionB_latin },
+    { label: 'C', text: optionC, latin: optionC_latin },
+    { label: 'D', text: optionD, latin: optionD_latin },
+  ];
+
+  const { error } = await _sb.from('heto_questions').insert([{
+    question,
+    question_latin,
+    options,
+    correct_option: correct,
+    explanation: explanation || null,
+    category,
+    difficulty,
+    pack_id,
+  }]);
+
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('✓ Question added', 'success');
+  document.getElementById('form-add-heto').reset();
+  await loadAllHeto();
+}
+
+async function updateHeto(id) {
+  const question = document.getElementById('edit-heto-question').value.trim();
+  const question_latin = document.getElementById('edit-heto-question-latin').value.trim();
+  const explanation = document.getElementById('edit-heto-explanation').value.trim();
+  const category = document.getElementById('edit-heto-category').value;
+  const difficulty = document.getElementById('edit-heto-difficulty').value;
+  const pack_id = document.getElementById('edit-heto-pack').value || null;
+
+  const correct = document.querySelector('input[name="edit-heto-correct"]:checked')?.value;
+
+  const optionA = document.getElementById('edit-heto-option-a').value.trim();
+  const optionA_latin = document.getElementById('edit-heto-option-a-latin').value.trim();
+  const optionB = document.getElementById('edit-heto-option-b').value.trim();
+  const optionB_latin = document.getElementById('edit-heto-option-b-latin').value.trim();
+  const optionC = document.getElementById('edit-heto-option-c').value.trim();
+  const optionC_latin = document.getElementById('edit-heto-option-c-latin').value.trim();
+  const optionD = document.getElementById('edit-heto-option-d').value.trim();
+  const optionD_latin = document.getElementById('edit-heto-option-d-latin').value.trim();
+
+  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category) {
+    showToast('❌ Please fill in all required fields', 'error');
+    return;
+  }
+
+  const options = [
+    { label: 'A', text: optionA, latin: optionA_latin },
+    { label: 'B', text: optionB, latin: optionB_latin },
+    { label: 'C', text: optionC, latin: optionC_latin },
+    { label: 'D', text: optionD, latin: optionD_latin },
+  ];
+
+  const { error } = await _sb.from('heto_questions').update({
+    question,
+    question_latin,
+    options,
+    correct_option: correct,
+    explanation: explanation || null,
+    category,
+    difficulty,
+    pack_id,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id);
+
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('✓ Question updated', 'success');
+  closeModal('edit-heto-modal');
+  await loadAllHeto();
+}
+
+async function deleteHeto(id) {
+  const { error } = await _sb.from('heto_questions').delete().eq('id', id);
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  showToast('✓ Question deleted', 'success');
+  closeModal('confirm-modal');
+  await loadAllHeto();
+}
+
+function updateHetoStats() {
+  document.getElementById('stat-heto-total').textContent  = allHeto.length;
+  document.getElementById('stat-heto-easy').textContent   = allHeto.filter(q => q.difficulty === 'easy').length;
+  document.getElementById('stat-heto-medium').textContent = allHeto.filter(q => q.difficulty === 'medium').length;
+  document.getElementById('stat-heto-hard').textContent   = allHeto.filter(q => q.difficulty === 'hard').length;
+}
+
+function renderHetoTable(questions) {
+  const tbody = document.getElementById('heto-tbody');
+  tbody.textContent = '';
+
+  if (!questions.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-row">No questions found</td></tr>';
+    return;
+  }
+
+  questions.forEach(q => {
+    const tr = document.createElement('tr');
+    const diffColor = { easy: 'green', medium: 'blue', hard: 'orange' }[q.difficulty] || 'grey';
+
+    tr.innerHTML = `
+      <td lang="ti" class="question-cell">${escHtml(q.question.substring(0, 50))}</td>
+      <td><strong>${q.correct_option}</strong></td>
+      <td><span class="badge badge--grey">${escHtml(q.category)}</span></td>
+      <td><span class="badge badge--${diffColor}">${q.difficulty}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-sm btn-primary" data-id="${q.id}" data-action="edit-heto">Edit</button>
+          <button class="btn btn-sm btn-danger"  data-id="${q.id}" data-action="delete-heto">Del</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('[data-action="edit-heto"]').forEach(btn =>
+    btn.addEventListener('click', () => openEditHetoModal(btn.dataset.id)));
+  tbody.querySelectorAll('[data-action="delete-heto"]').forEach(btn =>
+    btn.addEventListener('click', () => openConfirmModal('heto', btn.dataset.id, 'this question')));
+}
+
+function openEditHetoModal(id) {
+  const q = allHeto.find(x => x.id === id);
+  if (!q) return;
+
+  document.getElementById('edit-heto-id').value = q.id;
+  document.getElementById('edit-heto-question').value = q.question;
+  document.getElementById('edit-heto-question-latin').value = q.question_latin;
+
+  // Populate options
+  if (q.options && Array.isArray(q.options)) {
+    ['A', 'B', 'C', 'D'].forEach((label, idx) => {
+      const opt = q.options[idx];
+      if (opt) {
+        document.getElementById(`edit-heto-option-${label}`).value = opt.text || '';
+        document.getElementById(`edit-heto-option-${label}-latin`).value = opt.latin || '';
+      }
+    });
+  }
+
+  // Set correct answer
+  document.querySelector(`input[name="edit-heto-correct"][value="${q.correct_option}"]`).checked = true;
+
+  document.getElementById('edit-heto-explanation').value = q.explanation || '';
+  document.getElementById('edit-heto-category').value = q.category;
+  document.getElementById('edit-heto-difficulty').value = q.difficulty;
+  document.getElementById('edit-heto-pack').value = q.pack_id || '';
+
+  openModal('edit-heto-modal');
+}
+
+function filterHeto() {
+  const search = document.getElementById('search-heto').value.toLowerCase();
+  const category = document.getElementById('filter-heto-category').value;
+  const difficulty = document.getElementById('filter-heto-difficulty').value;
+
+  let list = allHeto;
+  if (search) {
+    list = list.filter(q =>
+      q.question.toLowerCase().includes(search) ||
+      q.question_latin.toLowerCase().includes(search) ||
+      (q.options && q.options.some(o => o.text.toLowerCase().includes(search)))
+    );
+  }
+  if (category) list = list.filter(q => q.category === category);
+  if (difficulty) list = list.filter(q => q.difficulty === difficulty);
+
+  renderHetoTable(list);
+}
+
 // ── Delete confirm (shared) ───────────────────────────────
 function openConfirmModal(type, id, name) {
   pendingDeleteType = type;
@@ -370,11 +701,6 @@ function escHtml(str) {
 document.addEventListener('DOMContentLoaded', async () => {
   initSupabase();
 
-  // ── Login
-  document.getElementById('form-login').addEventListener('submit', e => {
-    e.preventDefault();
-    loginUser(document.getElementById('login-email').value.trim());
-  });
   document.getElementById('btn-logout').addEventListener('click', logoutUser);
 
   // ── Tabs
@@ -384,6 +710,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
       tab.classList.add('active');
       document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+      // Re-populate selects on every tab switch in case packs loaded after initial render
+      if (allPacks.length > 0) populatePackSelects();
     });
   });
 
@@ -441,6 +769,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-confirm-delete').addEventListener('click', () => {
     if (pendingDeleteType === 'word')    deleteWord(pendingDeleteId);
     if (pendingDeleteType === 'proverb') deleteProverb(pendingDeleteId);
+    if (pendingDeleteType === 'heto')    deleteHeto(pendingDeleteId);
   });
   document.getElementById('btn-cancel-confirm').addEventListener('click', () => closeModal('confirm-modal'));
 
@@ -453,6 +782,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('search-proverbs').addEventListener('input', filterProverbs);
   document.getElementById('filter-proverb-difficulty').addEventListener('change', filterProverbs);
   document.getElementById('filter-proverb-tier').addEventListener('change', filterProverbs);
+
+  // ── Add heto question
+  document.getElementById('form-add-heto').addEventListener('submit', e => {
+    e.preventDefault();
+    createHeto();
+  });
+
+  // ── Edit heto question submit
+  document.getElementById('form-edit-heto').addEventListener('submit', e => {
+    e.preventDefault();
+    updateHeto(document.getElementById('edit-heto-id').value);
+  });
+  document.getElementById('btn-cancel-edit-heto').addEventListener('click', () => closeModal('edit-heto-modal'));
+
+  // ── Heto filters
+  document.getElementById('search-heto').addEventListener('input', filterHeto);
+  document.getElementById('filter-heto-category').addEventListener('change', filterHeto);
+  document.getElementById('filter-heto-difficulty').addEventListener('change', filterHeto);
+
+  // ── Grant access form
+  document.getElementById('form-grant')?.addEventListener('submit', e => {
+    e.preventDefault();
+    grantPackAccess(
+      document.getElementById('grant-email').value.trim().toLowerCase(),
+      document.getElementById('grant-pack').value,
+    );
+  });
 
   // ── Auth
   await checkAuth();

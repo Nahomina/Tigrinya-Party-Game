@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mayim Admin — Content Management</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="stylesheet" href="admin.css" />
 </head>
 <body>
@@ -22,13 +23,12 @@
   <!-- ── Auth Screen ─────────────────────────────────────── -->
   <section id="screen-auth" class="admin-screen">
     <div class="auth-container">
-      <h2>Admin Sign In</h2>
-      <p class="auth-subtitle">Enter your email to receive a magic link</p>
-      <form id="form-login" class="auth-form">
-        <input type="email" id="login-email" placeholder="your@email.com" required autocomplete="email" />
-        <button type="submit" class="btn btn-primary">Send Magic Link</button>
-      </form>
-      <p class="auth-note">📧 Check your email — link is valid for 24 hours</p>
+      <div class="auth-icon">🔐</div>
+      <h2>Admin Panel</h2>
+      <p class="auth-subtitle">You must be logged into the game first</p>
+      <a href="/" class="btn btn-primary auth-game-link">Go to Game & Sign In →</a>
+      <p class="auth-note">After signing in, come back to this page.</p>
+      <p id="login-error" class="auth-error-msg hidden"></p>
     </div>
   </section>
 
@@ -40,6 +40,8 @@
       <div class="admin-tabs">
         <button class="admin-tab active" data-tab="words">📝 Words</button>
         <button class="admin-tab"        data-tab="proverbs">🗣 Proverbs</button>
+        <button class="admin-tab" data-tab="heto">❓ Heto</button>
+        <button class="admin-tab" data-tab="grants">🔑 Grants</button>
       </div>
 
       <!-- ════════════════════════════════════════════════
@@ -50,10 +52,10 @@
         <!-- Stats -->
         <div class="admin-stats">
           <div class="stat-card"><span class="stat-label">Total</span><span id="stat-total" class="stat-value">0</span></div>
-          <div class="stat-card stat-card--green"><span class="stat-label">🟢 Starter</span><span id="stat-starter" class="stat-value">0</span></div>
-          <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Intermediate</span><span id="stat-intermediate" class="stat-value">0</span></div>
-          <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Advanced</span><span id="stat-advanced" class="stat-value">0</span></div>
-          <div class="stat-card stat-card--orange"><span class="stat-label">🟠 Expert</span><span id="stat-expert" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--green"><span class="stat-label">🟢 Gasha</span><span id="stat-starter" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Qol'a</span><span id="stat-intermediate" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Gobez</span><span id="stat-advanced" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--orange"><span class="stat-label">🟠 Shimagile</span><span id="stat-expert" class="stat-value">0</span></div>
         </div>
 
         <!-- Add Word Form -->
@@ -177,6 +179,148 @@
         </div>
       </div><!-- /#tab-proverbs -->
 
+      <!-- ════════════════════════════════════════════════
+           TAB: HETO (Questions & Answers)
+      ════════════════════════════════════════════════ -->
+      <div id="tab-heto" class="tab-panel hidden">
+
+        <!-- Stats -->
+        <div class="admin-stats">
+          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-heto-total" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Easy</span><span id="stat-heto-easy" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Medium</span><span id="stat-heto-medium" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Hard</span><span id="stat-heto-hard" class="stat-value">0</span></div>
+        </div>
+
+        <!-- Add Question Form -->
+        <div class="admin-section">
+          <h2>➕ Add Question</h2>
+          <form id="form-add-heto" class="word-form word-form--heto">
+            <input type="text" id="input-heto-question" placeholder="Question (Tigrinya Ge'ez)" required lang="ti" />
+            <input type="text" id="input-heto-question-latin" placeholder="Question (Latin)" required />
+
+            <div class="heto-options-group">
+              <label class="heto-option-label">Option A</label>
+              <input type="text" id="input-heto-option-a" placeholder="Answer text (Tigrinya)" required lang="ti" />
+              <input type="text" id="input-heto-option-a-latin" placeholder="Answer text (Latin)" required />
+
+              <label class="heto-option-label">Option B</label>
+              <input type="text" id="input-heto-option-b" placeholder="Answer text (Tigrinya)" required lang="ti" />
+              <input type="text" id="input-heto-option-b-latin" placeholder="Answer text (Latin)" required />
+
+              <label class="heto-option-label">Option C</label>
+              <input type="text" id="input-heto-option-c" placeholder="Answer text (Tigrinya)" required lang="ti" />
+              <input type="text" id="input-heto-option-c-latin" placeholder="Answer text (Latin)" required />
+
+              <label class="heto-option-label">Option D</label>
+              <input type="text" id="input-heto-option-d" placeholder="Answer text (Tigrinya)" required lang="ti" />
+              <input type="text" id="input-heto-option-d-latin" placeholder="Answer text (Latin)" required />
+            </div>
+
+            <div class="heto-correct-answer">
+              <label>Correct Answer</label>
+              <div class="radio-group">
+                <label><input type="radio" name="heto-correct" value="A" required /> A</label>
+                <label><input type="radio" name="heto-correct" value="B" /> B</label>
+                <label><input type="radio" name="heto-correct" value="C" /> C</label>
+                <label><input type="radio" name="heto-correct" value="D" /> D</label>
+              </div>
+            </div>
+
+            <input type="text" id="input-heto-explanation" placeholder="Explanation (optional)" />
+
+            <select id="input-heto-category" required>
+              <option value="">Category</option>
+              <option value="Geography">🗺️ Geography</option>
+              <option value="History">📜 History</option>
+              <option value="Culture">🌿 Culture & Traditions</option>
+              <option value="Language">🔤 Language</option>
+              <option value="Music">🎵 Music & Art</option>
+              <option value="General">🧠 General Knowledge</option>
+            </select>
+
+            <select id="input-heto-difficulty" required>
+              <option value="">Difficulty</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+
+            <select id="input-heto-pack">
+              <option value="">Pack (optional)</option>
+              <!-- Populated by JS -->
+            </select>
+
+            <button type="submit" class="btn btn-success">Add Question</button>
+          </form>
+        </div>
+
+        <!-- Questions List -->
+        <div class="admin-section">
+          <h2>📋 All Questions</h2>
+          <div class="filter-controls">
+            <input type="text" id="search-heto" placeholder="Search question text…" class="search-input" />
+            <select id="filter-heto-category" class="filter-select">
+              <option value="">All Categories</option>
+              <option value="Geography">Geography</option>
+              <option value="History">History</option>
+              <option value="Culture">Culture & Traditions</option>
+              <option value="Language">Language</option>
+              <option value="Music">Music & Art</option>
+              <option value="General">General Knowledge</option>
+            </select>
+            <select id="filter-heto-difficulty" class="filter-select">
+              <option value="">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="heto-table" class="admin-table">
+              <thead>
+                <tr>
+                  <th>Question</th><th>Answer</th><th>Category</th><th>Difficulty</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="heto-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /#tab-heto -->
+
+      <!-- ════════════════════════════════════════════════
+           TAB: GRANTS (manual pack access)
+      ════════════════════════════════════════════════ -->
+      <div id="tab-grants" class="tab-panel hidden">
+        <div class="admin-section">
+          <h2>🔑 Grant Pack Access</h2>
+          <p class="section-hint">Give a user free access to a paid tier — no payment required.</p>
+          <form id="form-grant" class="word-form">
+            <input type="email" id="grant-email" placeholder="User's email address" required />
+            <select id="grant-pack" required>
+              <option value="">Select tier to grant</option>
+              <!-- Populated by JS -->
+            </select>
+            <button type="submit" class="btn btn-success">Grant Access</button>
+          </form>
+          <p id="grant-error"   class="auth-error-msg hidden"></p>
+          <p id="grant-success" class="grant-success hidden"></p>
+        </div>
+
+        <div class="admin-section">
+          <h2>📋 Manual Grants</h2>
+          <div class="table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr><th>Email</th><th>Tier</th><th>Granted</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="grants-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /#tab-grants -->
+
     </div><!-- /.admin-container -->
   </section>
 
@@ -229,6 +373,73 @@
     </div>
   </div>
 
+  <!-- ── Edit Heto Question Modal ──────────────────── -->
+  <div id="edit-heto-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Edit Question</h3>
+      <form id="form-edit-heto" class="word-form word-form--heto">
+        <input type="hidden" id="edit-heto-id" />
+        <input type="text" id="edit-heto-question" placeholder="Question (Tigrinya)" required lang="ti" />
+        <input type="text" id="edit-heto-question-latin" placeholder="Question (Latin)" required />
+
+        <div class="heto-options-group">
+          <label class="heto-option-label">Option A</label>
+          <input type="text" id="edit-heto-option-a" placeholder="Answer (Tigrinya)" required lang="ti" />
+          <input type="text" id="edit-heto-option-a-latin" placeholder="Answer (Latin)" required />
+
+          <label class="heto-option-label">Option B</label>
+          <input type="text" id="edit-heto-option-b" placeholder="Answer (Tigrinya)" required lang="ti" />
+          <input type="text" id="edit-heto-option-b-latin" placeholder="Answer (Latin)" required />
+
+          <label class="heto-option-label">Option C</label>
+          <input type="text" id="edit-heto-option-c" placeholder="Answer (Tigrinya)" required lang="ti" />
+          <input type="text" id="edit-heto-option-c-latin" placeholder="Answer (Latin)" required />
+
+          <label class="heto-option-label">Option D</label>
+          <input type="text" id="edit-heto-option-d" placeholder="Answer (Tigrinya)" required lang="ti" />
+          <input type="text" id="edit-heto-option-d-latin" placeholder="Answer (Latin)" required />
+        </div>
+
+        <div class="heto-correct-answer">
+          <label>Correct Answer</label>
+          <div class="radio-group">
+            <label><input type="radio" name="edit-heto-correct" value="A" required /> A</label>
+            <label><input type="radio" name="edit-heto-correct" value="B" /> B</label>
+            <label><input type="radio" name="edit-heto-correct" value="C" /> C</label>
+            <label><input type="radio" name="edit-heto-correct" value="D" /> D</label>
+          </div>
+        </div>
+
+        <input type="text" id="edit-heto-explanation" placeholder="Explanation (optional)" />
+
+        <select id="edit-heto-category" required>
+          <option value="Geography">Geography</option>
+          <option value="History">History</option>
+          <option value="Culture">Culture & Traditions</option>
+          <option value="Language">Language</option>
+          <option value="Music">Music & Art</option>
+          <option value="General">General Knowledge</option>
+        </select>
+
+        <select id="edit-heto-difficulty" required>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+
+        <select id="edit-heto-pack">
+          <option value="">No Pack</option>
+          <!-- Populated by JS -->
+        </select>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-edit-heto" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ── Delete Confirmation Modal ──────────────────────── -->
   <div id="confirm-modal" class="modal hidden">
     <div class="modal-content">
@@ -244,7 +455,7 @@
   <!-- ── Toast ───────────────────────────────────────────── -->
   <div id="toast" class="toast hidden"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="admin.js"></script>
+  <script src="supabase.min.js"></script>
+  <script src="admin.js?v=9"></script>
 </body>
 </html>

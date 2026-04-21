@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f11" />
+  <title>Heto — Tigrinya Trivia Game</title>
+  <meta name="description" content="ሕቶ Heto — Test your Tigrinya knowledge with trivia questions." />
+  <link rel="canonical" href="https://habeshagame.com/heto.html" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+Ethiopic:wdth,wght@75,400;75,700&display=swap" rel="stylesheet" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0f0f11;
+      --bg-card: #16161a;
+      --bg-elevated: #1e1e24;
+      --border: #28282f;
+      --text: #ededf0;
+      --text-muted: #66667a;
+      --accent: #e53935;
+      --accent-hover: #c62828;
+      --correct: #43a047;
+      --danger: #ff1744;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-geez: 'Noto Sans Ethiopic', sans-serif;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #faf8f4;
+      --bg-card: #ffffff;
+      --bg-elevated: #f2ede6;
+      --border: #e4ddd3;
+      --text: #1a1410;
+      --text-muted: #7c6e62;
+      --accent: #c0392b;
+      --accent-hover: #a02622;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: 16px;
+      line-height: 1.6;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* Theme toggle */
+    #btn-theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 100;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.7rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #btn-theme-toggle:hover { background: var(--bg-elevated); }
+    .theme-icon-dark { display: none; }
+    [data-theme="light"] .theme-icon-dark { display: inline; }
+    [data-theme="light"] .theme-icon-light { display: none; }
+
+    /* Layout */
+    .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem; }
+
+    /* Header */
+    .heto-header {
+      text-align: center;
+      padding: 2rem 0 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .heto-back {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 1rem;
+      transition: color 0.2s;
+    }
+    .heto-back:hover { color: var(--text); }
+    .heto-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 8vw, 3.5rem);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .heto-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Screens */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Setup Screen */
+    .setup-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .setup-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+    .setup-input, .setup-select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      font-family: var(--font-ui);
+    }
+    .setup-input:focus, .setup-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
+    }
+    .setup-button {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .setup-button:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    .setup-button:active { transform: translateY(0); }
+
+    /* Question Screen */
+    .question-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .question-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .question-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .timer-ring {
+      width: 60px;
+      height: 60px;
+      position: relative;
+      margin-left: auto;
+    }
+    .timer-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+    .timer-circle-bg {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 3;
+    }
+    .timer-circle {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+    .timer-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .question-text {
+      font-family: var(--font-geez);
+      font-size: 1.3rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      color: var(--text);
+    }
+    .question-text-latin {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .option-btn {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+      font-size: 1rem;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--bg-elevated);
+    }
+    .option-btn:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+    .option-btn.correct {
+      background: rgba(67, 160, 71, 0.12);
+      border-color: var(--correct);
+    }
+    .option-btn.wrong {
+      background: rgba(255, 23, 68, 0.12);
+      border-color: var(--danger);
+    }
+    .option-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--bg-elevated);
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .option-content { flex: 1; }
+    .option-text {
+      font-family: var(--font-geez);
+      font-size: 1rem;
+      color: var(--text);
+    }
+    .option-text-latin {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Answer Reveal Screen */
+    .reveal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .reveal-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .reveal-text {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    .reveal-explanation {
+      background: var(--bg);
+      border-left: 3px solid var(--accent);
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: left;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+    }
+
+    /* Summary Screen */
+    .summary-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .round-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .scores-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .score-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .score-name {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .score-value {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: var(--text);
+    }
+
+    /* Winner Screen */
+    .winner-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .winner-icon {
+      font-size: 4rem;
+      animation: bounce 1s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .winner-name {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .final-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+    .final-score-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .final-score-name {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    .final-score-value {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      color: var(--text);
+    }
+    .button-group {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 2rem;
+      flex-direction: column;
+    }
+    .button-group button { flex: 1; }
+    .btn-secondary {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.9rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: var(--bg-elevated);
+      border-color: var(--accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container { padding: 1rem; }
+      .heto-header { padding: 1.5rem 0 1rem; }
+      .timer-ring { width: 50px; height: 50px; }
+      .timer-text { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="btn-theme-toggle" aria-label="Toggle theme">
+    <span class="theme-icon-dark">☀️</span>
+    <span class="theme-icon-light">☾</span>
+  </button>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="heto-header">
+      <a href="index.html" class="heto-back">← Back to home</a>
+      <h1 class="heto-title">HETO<br><span lang="ti" style="font-family: var(--font-geez);">ሕቶ</span></h1>
+      <p class="heto-subtitle">The Question — Test your Tigrinya knowledge</p>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="screen-setup" class="screen active">
+      <div class="setup-box">
+        <label class="setup-label">Team 1 Name</label>
+        <input type="text" id="setup-team1" class="setup-input" placeholder="Enter team name" maxlength="24" required />
+
+        <label class="setup-label">Team 2 Name</label>
+        <input type="text" id="setup-team2" class="setup-input" placeholder="Enter team name" maxlength="24" required />
+
+        <label class="setup-label">Number of Rounds</label>
+        <select id="setup-rounds" class="setup-select" required>
+          <option value="">Select rounds</option>
+          <option value="3">3 Rounds</option>
+          <option value="5">5 Rounds</option>
+          <option value="7">7 Rounds</option>
+          <option value="10">10 Rounds</option>
+        </select>
+
+        <label class="setup-label">Difficulty</label>
+        <select id="setup-difficulty" class="setup-select" required>
+          <option value="">Select difficulty</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+
+        <label class="setup-label">Category</label>
+        <select id="setup-category" class="setup-select" required>
+          <option value="">All Categories</option>
+          <option value="Geography">🗺️ Geography</option>
+          <option value="History">📜 History</option>
+          <option value="Culture">🌿 Culture & Traditions</option>
+          <option value="Language">🔤 Language</option>
+          <option value="Music">🎵 Music & Art</option>
+          <option value="General">🧠 General Knowledge</option>
+        </select>
+
+        <button id="btn-start-game" class="setup-button">▶ Start Game</button>
+      </div>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="screen-question" class="screen">
+      <div class="question-container">
+        <div class="question-meta">
+          <span>
+            <span class="question-badge" id="q-category">Geography</span>
+          </span>
+          <div class="timer-ring">
+            <svg class="timer-svg" viewBox="0 0 100 100">
+              <circle class="timer-circle-bg" cx="50" cy="50" r="45" />
+              <circle class="timer-circle" id="timer-circle" cx="50" cy="50" r="45" />
+            </svg>
+            <div class="timer-text" id="timer-text">20</div>
+          </div>
+        </div>
+
+        <div class="question-text" lang="ti" id="q-text">Question text here</div>
+        <div class="question-text-latin" id="q-text-latin">Question in Latin</div>
+
+        <div class="options" id="options-container">
+          <!-- Options generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Answer Reveal Screen -->
+    <div id="screen-reveal" class="screen">
+      <div class="reveal-box">
+        <div class="reveal-icon" id="reveal-icon">✓</div>
+        <div class="reveal-text" id="reveal-text">Correct!</div>
+        <div id="reveal-explanation" class="reveal-explanation"></div>
+        <button id="btn-next-round" class="setup-button" style="margin-top: 2rem;">Next Question →</button>
+      </div>
+    </div>
+
+    <!-- Round Summary Screen -->
+    <div id="screen-summary" class="screen">
+      <div class="summary-box">
+        <p class="round-label" id="round-label">Round 1 of 5</p>
+        <div class="scores-display" id="summary-scores"></div>
+        <button id="btn-continue" class="setup-button">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Winner Screen -->
+    <div id="screen-winner" class="screen">
+      <div class="winner-box">
+        <div class="winner-icon">🏆</div>
+        <div class="winner-name" id="winner-name">Team 1 Wins!</div>
+        <div class="final-scores" id="final-scores"></div>
+        <div class="button-group">
+          <button id="btn-play-again" class="setup-button">Play Again</button>
+          <button id="btn-home" class="btn-secondary">Back to Home</button>
+          <button id="btn-leaderboard" class="btn-secondary">View Leaderboard</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.container -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+'use strict';
+
+// ── Configuration ─────────────────────────────────────
+const SUPABASE_URL = 'https://rzcrdngpybrsjlbenqep.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
+const HETO_CACHE_KEY = 'heto_questions_cache';
+const HETO_CACHE_TTL = 5 * 60 * 1000;
+
+// ── State ─────────────────────────────────────────────
+const gameState = {
+  screen: 'setup',
+  teams: ['', ''],
+  rounds: 5,
+  difficulty: 'medium',
+  category: '',
+  questions: [],
+  currentQ: 0,
+  scores: [0, 0],
+  currentTeam: 0,
+  totalPossible: 0,
+  selectedAnswer: null,
+  isAnswered: false,
+  startTime: 0,
+  timeLeft: 20,
+};
+
+let supabase = null;
+
+// ── Init ──────────────────────────────────────────────
+function init() {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  setupTheme();
+  setupEventListeners();
+}
+
+function setupTheme() {
+  const saved = localStorage.getItem('mayim_theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next === 'dark' ? null : next);
+    if (next === 'dark') document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('mayim_theme', next === 'dark' ? '' : next);
+  });
+}
+
+function setupEventListeners() {
+  document.getElementById('btn-start-game').addEventListener('click', startGame);
+  document.getElementById('btn-next-round').addEventListener('click', nextRound);
+  document.getElementById('btn-continue').addEventListener('click', continueRound);
+  document.getElementById('btn-play-again').addEventListener('click', resetGame);
+  document.getElementById('btn-home').addEventListener('click', () => window.location.href = 'index.html');
+  document.getElementById('btn-leaderboard').addEventListener('click', () => alert('Leaderboard coming soon'));
+}
+
+// ── Game Flow ─────────────────────────────────────────
+async function startGame() {
+  gameState.teams[0] = document.getElementById('setup-team1').value.trim();
+  gameState.teams[1] = document.getElementById('setup-team2').value.trim();
+  gameState.rounds = parseInt(document.getElementById('setup-rounds').value);
+  gameState.difficulty = document.getElementById('setup-difficulty').value;
+  gameState.category = document.getElementById('setup-category').value;
+
+  if (!gameState.teams[0] || !gameState.teams[1] || !gameState.rounds || !gameState.difficulty) {
+    alert('Please fill in all fields');
+    return;
+  }
+
+  gameState.scores = [0, 0];
+  gameState.currentQ = 0;
+  gameState.selectedAnswer = null;
+  gameState.isAnswered = false;
+
+  // Fetch questions
+  gameState.questions = await fetchHetoQuestions({
+    difficulty: gameState.difficulty,
+    category: gameState.category || null,
+  });
+
+  if (!gameState.questions || gameState.questions.length === 0) {
+    alert('No questions available for this selection');
+    return;
+  }
+
+  showScreen('question');
+  displayQuestion();
+}
+
+function displayQuestion() {
+  if (gameState.currentQ >= gameState.rounds || gameState.currentQ >= gameState.questions.length) {
+    showScreen('winner');
+    displayWinner();
+    return;
+  }
+
+  const q = gameState.questions[gameState.currentQ];
+  gameState.selectedAnswer = null;
+  gameState.isAnswered = false;
+
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('q-text-latin').textContent = q.question_latin;
+
+  const optionsDiv = document.getElementById('options-container');
+  optionsDiv.innerHTML = '';
+
+  if (q.options && Array.isArray(q.options)) {
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `
+        <div class="option-label">${opt.label}</div>
+        <div class="option-content">
+          <div class="option-text" lang="ti">${escapeHtml(opt.text)}</div>
+          <div class="option-text-latin">${escapeHtml(opt.latin)}</div>
+        </div>
+      `;
+      btn.addEventListener('click', () => selectAnswer(opt.label));
+      optionsDiv.appendChild(btn);
+    });
+  }
+
+  startTimer();
+}
+
+function selectAnswer(label) {
+  if (gameState.isAnswered) return;
+  gameState.isAnswered = true;
+  gameState.selectedAnswer = label;
+  gameState.timeLeft = Math.max(0, gameState.timeLeft);
+
+  const q = gameState.questions[gameState.currentQ];
+  const isCorrect = label === q.correct_option;
+
+  // Update score
+  if (isCorrect) {
+    const basePoints = 10;
+    let bonus = 0;
+    if (gameState.timeLeft > 15) bonus = 5;
+    else if (gameState.timeLeft > 10) bonus = 3;
+    else if (gameState.timeLeft > 5) bonus = 1;
+    gameState.scores[gameState.currentTeam] += basePoints + bonus;
+  }
+
+  showReveal(isCorrect, q);
+}
+
+function showReveal(isCorrect, q) {
+  showScreen('reveal');
+  const icon = document.getElementById('reveal-icon');
+  const text = document.getElementById('reveal-text');
+  const exp = document.getElementById('reveal-explanation');
+
+  if (isCorrect) {
+    icon.textContent = '✓';
+    text.textContent = 'Correct!';
+    text.style.color = '#43a047';
+  } else {
+    icon.textContent = '✗';
+    text.textContent = 'Wrong!';
+    text.style.color = '#ff1744';
+  }
+
+  exp.innerHTML = q.explanation ? `<strong>Explanation:</strong> ${escapeHtml(q.explanation)}` : '<strong>Explanation:</strong> No explanation provided';
+  gameState.timeLeft = 0;
+}
+
+function nextRound() {
+  gameState.currentQ++;
+  if (gameState.currentQ < gameState.rounds && gameState.currentQ < gameState.questions.length) {
+    showScreen('summary');
+    displaySummary();
+  } else {
+    showScreen('winner');
+    displayWinner();
+  }
+}
+
+function continueRound() {
+  showScreen('question');
+  displayQuestion();
+}
+
+function displaySummary() {
+  const roundNum = gameState.currentQ + 1;
+  document.getElementById('round-label').textContent = `Round ${roundNum} of ${gameState.rounds}`;
+
+  const scores = document.getElementById('summary-scores');
+  scores.innerHTML = `
+    <div class="score-card">
+      <div class="score-name">${escapeHtml(gameState.teams[0])}</div>
+      <div class="score-value">${gameState.scores[0]}</div>
+    </div>
+    <div class="score-card">
+      <div class="score-name">${escapeHtml(gameState.teams[1])}</div>
+      <div class="score-value">${gameState.scores[1]}</div>
+    </div>
+  `;
+}
+
+function displayWinner() {
+  const team1Score = gameState.scores[0];
+  const team2Score = gameState.scores[1];
+  const winner = team1Score > team2Score ? gameState.teams[0] : team2Score > team1Score ? gameState.teams[1] : 'Tie!';
+
+  document.getElementById('winner-name').textContent = winner === 'Tie!' ? "It's a Tie!" : `${winner} Wins!`;
+
+  const final = document.getElementById('final-scores');
+  final.innerHTML = `
+    <div class="final-score-card">
+      <div class="final-score-name">${escapeHtml(gameState.teams[0])}</div>
+      <div class="final-score-value">${team1Score}</div>
+    </div>
+    <div class="final-score-card">
+      <div class="final-score-name">${escapeHtml(gameState.teams[1])}</div>
+      <div class="final-score-value">${team2Score}</div>
+    </div>
+  `;
+}
+
+function resetGame() {
+  gameState.currentQ = 0;
+  gameState.scores = [0, 0];
+  gameState.selectedAnswer = null;
+  gameState.isAnswered = false;
+  showScreen('setup');
+}
+
+// ── Timer ─────────────────────────────────────────────
+function startTimer() {
+  gameState.startTime = Date.now();
+  gameState.timeLeft = 20;
+  updateTimer();
+}
+
+function updateTimer() {
+  if (gameState.isAnswered) return;
+
+  const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+  gameState.timeLeft = Math.max(0, 20 - elapsed);
+
+  const circumference = 2 * Math.PI * 45;
+  const offset = circumference * (1 - gameState.timeLeft / 20);
+  document.getElementById('timer-circle').style.strokeDashoffset = offset;
+  document.getElementById('timer-text').textContent = gameState.timeLeft;
+
+  if (gameState.timeLeft > 0) {
+    requestAnimationFrame(updateTimer);
+  } else {
+    const q = gameState.questions[gameState.currentQ];
+    showReveal(false, q);
+  }
+}
+
+// ── Data Fetching ─────────────────────────────────────
+async function fetchHetoQuestions(filters = {}) {
+  try {
+    const cached = localStorage.getItem(HETO_CACHE_KEY);
+    const cacheTime = localStorage.getItem(HETO_CACHE_KEY + '_time');
+    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < HETO_CACHE_TTL) {
+      let data = JSON.parse(cached);
+      data = applyFilters(data, filters);
+      return data.slice(0, 20);
+    }
+
+    let query = supabase.from('heto_questions').select('*');
+    if (filters.difficulty) query = query.eq('difficulty', filters.difficulty);
+    if (filters.category) query = query.eq('category', filters.category);
+
+    const { data, error } = await query.limit(100);
+    if (error) throw error;
+
+    localStorage.setItem(HETO_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(HETO_CACHE_KEY + '_time', Date.now().toString());
+
+    return (data || []).slice(0, 20);
+  } catch (err) {
+    console.warn('Failed to fetch questions:', err);
+    return [];
+  }
+}
+
+function applyFilters(data, filters) {
+  let result = data;
+  if (filters.difficulty) result = result.filter(q => q.difficulty === filters.difficulty);
+  if (filters.category) result = result.filter(q => q.category === filters.category);
+  return result;
+}
+
+// ── UI Helpers ────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  gameState.screen = name;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ── Start ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
