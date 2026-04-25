@@ -11,15 +11,15 @@
   <link rel="apple-touch-icon" href="assets/icon-192.png">
   <link rel="stylesheet" href="style.css?v=27" />
   <style>
+    /* ── Design tokens ──────────────────────────────────── */
     :root {
-      --riddle:       #00897b;
-      --riddle-dark:  #00695c;
-      --riddle-tint:  rgba(0,137,123,0.10);
-      --riddle-card:  rgba(0,137,123,0.06);
+      --riddle:      #00897b;
+      --riddle-dark: #00695c;
+      --riddle-tint: rgba(0,137,123,0.10);
+      --riddle-card: rgba(0,137,123,0.06);
     }
 
-    /* ── centering on desktop ─────────────────────────── */
-    body.game-body { background: var(--bg); min-height: 100dvh; }
+    /* ── Desktop centering (same as heto.html) ─────────── */
     @media (min-width: 768px) {
       body.game-body {
         display: flex; align-items: flex-start; justify-content: center;
@@ -27,372 +27,357 @@
       }
       .screen {
         max-width: 520px; width: 100%;
-        border-left: 1px solid var(--border-mid);
+        border-left:  1px solid var(--border-mid);
         border-right: 1px solid var(--border-mid);
         box-shadow: 0 0 40px rgba(0,0,0,.35);
         background: var(--bg);
       }
     }
 
-    /* ── Setup ─────────────────────────────────────────── */
-    #screen-setup { min-height:100dvh; display:flex; flex-direction:column; }
-
+    /* ── Setup hero ─────────────────────────────────────── */
     .setup-hero {
       background: linear-gradient(135deg, var(--riddle) 0%, var(--riddle-dark) 100%);
-      padding: 3rem 1.5rem 2.5rem; text-align: center;
+      padding: 3rem 1.5rem 2.5rem; text-align: center; flex-shrink: 0;
     }
-    .setup-hero .title {
+    .setup-hero .hero-title {
       font-family: var(--font-display);
-      font-size: clamp(2.2rem,9vw,3.4rem);
-      letter-spacing: .12em; color:#fff; margin:0;
+      font-size: clamp(2.2rem, 9vw, 3.4rem);
+      letter-spacing: .12em; color: #fff; margin: 0;
     }
-    .setup-hero .geez-title {
+    .setup-hero .hero-geez {
       font-family: var(--font-geez);
-      font-size: clamp(1.1rem,4.5vw,1.7rem);
-      color:rgba(255,255,255,.85); margin:.3rem 0 0;
+      font-size: clamp(1.1rem, 4.5vw, 1.7rem);
+      color: rgba(255,255,255,.85); margin: .3rem 0 0;
     }
-    .setup-hero .subtitle {
-      font-size:.72rem; letter-spacing:.1em; text-transform:uppercase;
-      color:rgba(255,255,255,.65); margin:.55rem 0 0;
+    .setup-hero .hero-sub {
+      font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+      color: rgba(255,255,255,.65); margin: .55rem 0 0;
     }
 
+    /* ── Setup body ─────────────────────────────────────── */
     .setup-body {
-      padding:1.5rem 1.25rem 2.5rem;
-      flex:1; display:flex; flex-direction:column; gap:1.4rem;
+      padding: 1.5rem 1.25rem 2.5rem; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 1.4rem;
     }
-
-    .setup-section-label {
-      font-size:.62rem; font-weight:700; letter-spacing:.12em;
-      text-transform:uppercase; color:var(--text-muted); margin:0 0 .55rem;
+    .section-label {
+      font-size: .62rem; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--text-muted); margin: 0 0 .55rem;
     }
 
     /* Team inputs */
-    .team-inputs { display:flex; gap:.7rem; }
-    .team-inputs input {
-      flex:1; background:var(--bg-card); border:1px solid var(--border-mid);
-      border-radius:10px; padding:.75rem 1rem; color:var(--text);
-      font-size:.95rem; outline:none; transition:border-color .15s;
+    .team-row { display: flex; gap: .7rem; }
+    .team-row input {
+      flex: 1; background: var(--bg-card); border: 1px solid var(--border-mid);
+      border-radius: 10px; padding: .75rem 1rem; color: var(--text);
+      font-size: .95rem; outline: none; transition: border-color .15s;
+      font-family: inherit;
     }
-    .team-inputs input:focus { border-color:var(--riddle); }
+    .team-row input:focus { border-color: var(--riddle); }
+
+    /* Difficulty pills */
+    .pill-group { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .pill {
+      padding: .38rem .85rem; border-radius: 99px;
+      border: 1.5px solid var(--border-mid); background: var(--bg-card);
+      color: var(--text-sub); font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+      font-family: inherit;
+    }
+    .pill.active { border-color: var(--riddle); background: var(--riddle-tint); color: var(--riddle); }
 
     /* Config rows */
     .config-row {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:.8rem 1rem; background:var(--bg-card);
-      border:1px solid var(--border-mid); border-radius:10px; gap:.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .8rem 1rem; background: var(--bg-card);
+      border: 1px solid var(--border-mid); border-radius: 10px; gap: .5rem;
     }
-    .config-row + .config-row { margin-top:.55rem; }
-    .config-info { flex:1; }
-    .config-label { font-size:.9rem; color:var(--text); font-weight:500; }
-    .config-hint  { font-size:.68rem; color:var(--text-muted); margin-top:.1rem; }
+    .config-row + .config-row { margin-top: .55rem; }
+    .config-info { flex: 1; }
+    .config-label { font-size: .9rem; color: var(--text); font-weight: 500; }
+    .config-hint  { font-size: .68rem; color: var(--text-muted); margin-top: .1rem; }
 
-    /* Stepper */
-    .stepper { display:flex; align-items:center; gap:.5rem; }
+    /* Steppers */
+    .stepper { display: flex; align-items: center; gap: .5rem; }
     .stepper-btn {
-      width:2rem; height:2rem; border-radius:50%;
-      border:1.5px solid var(--border-mid); background:var(--bg-elevated);
-      color:var(--text); font-size:1.1rem; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      transition:border-color .15s, background .15s; flex-shrink:0;
+      width: 2rem; height: 2rem; border-radius: 50%;
+      border: 1.5px solid var(--border-mid); background: var(--bg-elevated);
+      color: var(--text); font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, background .15s; flex-shrink: 0;
+      font-family: inherit;
     }
-    .stepper-btn:hover { border-color:var(--riddle); background:var(--riddle-tint); }
+    .stepper-btn:hover { border-color: var(--riddle); background: var(--riddle-tint); }
     .stepper-val {
-      min-width:2.2rem; text-align:center;
-      font-weight:700; font-size:.95rem; color:var(--text);
+      min-width: 2.2rem; text-align: center;
+      font-weight: 700; font-size: .95rem; color: var(--text);
     }
 
-    /* Difficulty / filter pills */
-    .pill-group { display:flex; gap:.45rem; flex-wrap:wrap; }
-    .pill {
-      padding:.38rem .85rem; border-radius:99px;
-      border:1.5px solid var(--border-mid); background:var(--bg-card);
-      color:var(--text-sub); font-size:.78rem; font-weight:600;
-      cursor:pointer; transition:border-color .15s, background .15s, color .15s;
-    }
-    .pill.active {
-      border-color:var(--riddle); background:var(--riddle-tint); color:var(--riddle);
-    }
+    /* Available riddles note */
+    #avail-msg { font-size: .75rem; color: var(--text-muted); text-align: center; }
 
     /* Start button */
     .btn-start {
-      margin-top:.25rem; width:100%; padding:1rem;
-      background:linear-gradient(135deg, var(--riddle), var(--riddle-dark));
-      color:#fff; border:none; border-radius:14px;
-      font-family:var(--font-display); font-size:1.1rem;
-      letter-spacing:.1em; cursor:pointer;
-      transition:opacity .15s, transform .1s;
+      width: 100%; padding: 1rem;
+      background: linear-gradient(135deg, var(--riddle), var(--riddle-dark));
+      color: #fff; border: none; border-radius: 14px;
+      font-family: var(--font-display); font-size: 1.1rem;
+      letter-spacing: .1em; cursor: pointer;
+      transition: opacity .15s, transform .1s;
     }
-    .btn-start:hover  { opacity:.92; }
-    .btn-start:active { transform:scale(.98); }
-    .btn-start:disabled { opacity:.45; cursor:default; }
+    .btn-start:hover  { opacity: .92; }
+    .btn-start:active { transform: scale(.98); }
+    .btn-start:disabled { opacity: .4; cursor: default; }
 
     .back-home {
-      display:block; text-align:center; color:var(--text-muted);
-      font-size:.82rem; text-decoration:none; padding:.5rem;
-      transition:color .15s;
+      display: block; text-align: center; color: var(--text-muted);
+      font-size: .82rem; text-decoration: none; padding: .5rem;
+      transition: color .15s;
     }
-    .back-home:hover { color:var(--text); }
+    .back-home:hover { color: var(--text); }
 
     /* ── Game screen ─────────────────────────────────────── */
-    #screen-riddle { min-height:100dvh; display:flex; flex-direction:column; }
-
     .riddle-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:.9rem 1rem .7rem; border-bottom:1px solid var(--border-low);
-      gap:.5rem; flex-shrink:0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 1rem .7rem; border-bottom: 1px solid var(--border-low);
+      gap: .5rem; flex-shrink: 0;
     }
     .btn-quit {
-      background:none; border:none; color:var(--text-muted);
-      font-size:.82rem; cursor:pointer; padding:.3rem .5rem;
-      border-radius:6px; transition:background .15s;
+      background: none; border: none; color: var(--text-muted);
+      font-size: .82rem; cursor: pointer; padding: .3rem .5rem;
+      border-radius: 6px; transition: background .15s; font-family: inherit;
     }
-    .btn-quit:hover { background:var(--bg-elevated); color:var(--text); }
+    .btn-quit:hover { background: var(--bg-elevated); color: var(--text); }
+
     .riddle-badge {
-      font-family:var(--font-geez); font-size:1.1rem;
-      color:var(--riddle); font-weight:600;
+      font-family: var(--font-geez); font-size: 1.1rem; color: var(--riddle); font-weight: 600;
     }
     .riddle-timer-num {
-      font-family:var(--font-display); font-size:1.6rem; font-weight:700;
-      color:var(--text-sub); min-width:2.5rem; text-align:right;
-      transition:color .3s;
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 700;
+      color: var(--text-sub); min-width: 2.5rem; text-align: right; transition: color .3s;
     }
-    .riddle-timer-num.danger { color:#e53935; }
-    .riddle-counter { font-size:.72rem; color:var(--text-muted); letter-spacing:.05em; }
+    .riddle-timer-num.danger { color: #e53935; }
+    .riddle-counter { font-size: .72rem; color: var(--text-muted); letter-spacing: .05em; }
 
-    .timer-bar { height:3px; background:var(--border-low); overflow:hidden; flex-shrink:0; }
+    .timer-bar { height: 3px; background: var(--border-low); overflow: hidden; flex-shrink: 0; }
     .timer-fill {
-      height:100%; background:var(--riddle);
-      transition:width 1s linear, background .3s; transform-origin:left;
+      height: 100%; background: var(--riddle);
+      transition: width 1s linear, background .3s; transform-origin: left;
     }
-    .timer-fill.danger { background:#e53935; }
+    .timer-fill.danger { background: #e53935; }
 
     /* Stage */
     .riddle-stage {
-      flex:1; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      padding:1.5rem 1.25rem 1rem; gap:.6rem; text-align:center;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 1.5rem 1.25rem 1rem; gap: .65rem; text-align: center;
+      overflow-y: auto;
     }
-    .active-team-label {
-      font-size:.72rem; font-weight:700; letter-spacing:.14em;
-      text-transform:uppercase; color:var(--riddle); min-height:1.1em;
+    .active-team-lbl {
+      font-size: .72rem; font-weight: 700; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--riddle); min-height: 1em;
     }
-    .eyebrow {
-      font-size:.62rem; letter-spacing:.12em;
-      text-transform:uppercase; color:var(--text-muted);
+    .stage-eyebrow {
+      font-size: .62rem; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--text-muted);
     }
-    .riddle-q-geez {
-      font-family:var(--font-geez);
-      font-size:clamp(1.2rem,5vw,1.65rem);
-      line-height:1.6; color:var(--text);
-      -webkit-font-smoothing:antialiased; margin:.3rem 0 0;
+    .q-geez {
+      font-family: var(--font-geez);
+      font-size: clamp(1.2rem, 5vw, 1.65rem);
+      line-height: 1.6; color: var(--text);
+      -webkit-font-smoothing: antialiased;
     }
-    .riddle-q-latin {
-      font-size:.82rem; color:var(--text-sub);
-      font-style:italic; line-height:1.5; margin-top:.2rem;
-    }
+    .q-latin { font-size: .82rem; color: var(--text-sub); font-style: italic; line-height: 1.5; }
 
     /* Judge peek */
     .judge-peek {
-      background:rgba(0,0,0,.05); border:1px dashed var(--border-mid);
-      border-radius:12px; padding:.7rem 1rem; width:100%; text-align:center;
-      animation:fadeUp .2s ease;
+      background: rgba(0,0,0,.05); border: 1px dashed var(--border-mid);
+      border-radius: 12px; padding: .7rem 1rem; width: 100%; text-align: center;
     }
-    .judge-peek .peek-label {
-      font-size:.62rem; letter-spacing:.1em; color:var(--text-muted);
-      text-transform:uppercase; margin-bottom:.3rem;
-    }
-    .judge-peek .peek-geez { font-family:var(--font-geez); font-size:1.1rem; color:var(--text); }
-    .judge-peek .peek-latin { font-size:.75rem; color:var(--text-sub); font-style:italic; }
+    .peek-lbl { font-size: .62rem; letter-spacing: .1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: .3rem; }
+    .peek-geez  { font-family: var(--font-geez); font-size: 1.1rem; color: var(--text); }
+    .peek-latin { font-size: .75rem; color: var(--text-sub); font-style: italic; }
 
     /* Answer panel */
     .answer-panel {
-      background:var(--riddle-card); border:1.5px solid var(--riddle);
-      border-radius:14px; padding:1rem 1.25rem; width:100%; text-align:center;
-      animation:fadeUp .25s ease;
+      background: var(--riddle-card); border: 1.5px solid var(--riddle);
+      border-radius: 14px; padding: 1rem 1.25rem; width: 100%; text-align: center;
     }
-    .answer-panel .ans-label {
-      font-size:.62rem; letter-spacing:.12em; text-transform:uppercase;
-      color:var(--riddle); margin-bottom:.4rem;
-    }
-    .answer-panel .ans-geez {
-      font-family:var(--font-geez); font-size:clamp(1.3rem,5.5vw,1.9rem);
-      color:var(--text); font-weight:600;
-    }
-    .answer-panel .ans-latin {
-      font-size:.82rem; color:var(--text-sub); font-style:italic; margin-top:.2rem;
-    }
-    .answer-panel .ans-hint {
-      font-size:.72rem; color:var(--text-muted); margin-top:.4rem; font-style:italic;
-    }
+    .ans-lbl   { font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--riddle); margin-bottom: .4rem; }
+    .ans-geez  { font-family: var(--font-geez); font-size: clamp(1.3rem, 5.5vw, 1.9rem); color: var(--text); font-weight: 600; }
+    .ans-latin { font-size: .82rem; color: var(--text-sub); font-style: italic; margin-top: .2rem; }
+    .ans-hint  { font-size: .72rem; color: var(--text-muted); margin-top: .4rem; font-style: italic; }
 
     .time-up-banner {
-      background:#e53935; color:#fff; text-align:center;
-      padding:.6rem 1rem; font-weight:700; font-size:.88rem;
-      letter-spacing:.05em; flex-shrink:0;
+      background: #e53935; color: #fff; text-align: center;
+      padding: .6rem 1rem; font-weight: 700; font-size: .88rem;
+      letter-spacing: .05em; flex-shrink: 0;
     }
 
-    /* Actions */
+    /* Action areas */
     .riddle-actions {
-      padding:.85rem 1rem 1.1rem; display:flex;
-      flex-direction:column; gap:.6rem; flex-shrink:0;
+      padding: .85rem 1rem 1.2rem; display: flex;
+      flex-direction: column; gap: .6rem; flex-shrink: 0;
     }
-    .actions-row { display:flex; gap:.6rem; }
+    .actions-row { display: flex; gap: .6rem; }
 
     .btn-peek {
-      flex:1; padding:.72rem .5rem; background:var(--bg-elevated);
-      border:1.5px solid var(--border-mid); border-radius:12px;
-      color:var(--text-sub); font-size:.82rem; cursor:pointer;
-      transition:border-color .15s, background .15s;
+      flex: 1; padding: .72rem .5rem; background: var(--bg-elevated);
+      border: 1.5px solid var(--border-mid); border-radius: 12px;
+      color: var(--text-sub); font-size: .82rem; cursor: pointer;
+      transition: border-color .15s, background .15s; font-family: inherit;
     }
-    .btn-peek:hover { border-color:var(--riddle); background:var(--riddle-tint); }
+    .btn-peek:hover { border-color: var(--riddle); background: var(--riddle-tint); }
 
-    .btn-timer {
-      flex:1; padding:.72rem .5rem; background:var(--bg-elevated);
-      border:1.5px solid var(--riddle); border-radius:12px;
-      color:var(--riddle); font-size:.88rem; font-weight:600;
-      cursor:pointer; transition:background .15s;
+    .btn-start-timer {
+      flex: 1; padding: .72rem .5rem; background: var(--bg-elevated);
+      border: 1.5px solid var(--riddle); border-radius: 12px;
+      color: var(--riddle); font-size: .88rem; font-weight: 600;
+      cursor: pointer; transition: background .15s; font-family: inherit;
     }
-    .btn-timer:hover { background:var(--riddle-tint); }
-    .btn-timer:disabled { opacity:.4; cursor:default; }
+    .btn-start-timer:hover { background: var(--riddle-tint); }
+    .btn-start-timer:disabled { opacity: .4; cursor: default; }
 
     .btn-reveal {
-      width:100%; padding:.9rem 1rem;
-      background:linear-gradient(135deg, var(--riddle), var(--riddle-dark));
-      border:none; border-radius:13px; color:#fff;
-      font-family:var(--font-display); font-size:1rem;
-      letter-spacing:.08em; cursor:pointer; transition:opacity .15s;
+      width: 100%; padding: .9rem 1rem;
+      background: linear-gradient(135deg, var(--riddle), var(--riddle-dark));
+      border: none; border-radius: 13px; color: #fff;
+      font-family: var(--font-display); font-size: 1rem;
+      letter-spacing: .08em; cursor: pointer; transition: opacity .15s;
     }
-    .btn-reveal:hover { opacity:.9; }
+    .btn-reveal:hover { opacity: .9; }
 
     .btn-wrong {
-      flex:1; padding:1rem .5rem;
-      background:rgba(229,57,53,.10); border:1.5px solid #e53935;
-      border-radius:13px; color:#e53935; font-weight:700;
-      font-size:1rem; cursor:pointer; transition:background .15s;
-      display:flex; align-items:center; justify-content:center; gap:.4rem;
+      flex: 1; padding: 1rem .5rem;
+      background: rgba(229,57,53,.10); border: 1.5px solid #e53935;
+      border-radius: 13px; color: #e53935; font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: background .15s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
     }
-    .btn-wrong:hover { background:rgba(229,57,53,.18); }
+    .btn-wrong:hover { background: rgba(229,57,53,.18); }
 
     .btn-correct {
-      flex:2; padding:1rem .5rem; background:var(--riddle-tint);
-      border:1.5px solid var(--riddle); border-radius:13px;
-      color:var(--riddle); font-weight:700; font-size:1rem;
-      cursor:pointer; transition:background .15s;
-      display:flex; align-items:center; justify-content:center; gap:.4rem;
+      flex: 2; padding: 1rem .5rem; background: var(--riddle-tint);
+      border: 1.5px solid var(--riddle); border-radius: 13px;
+      color: var(--riddle); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: background .15s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
     }
-    .btn-correct:hover { background:rgba(0,137,123,.18); }
+    .btn-correct:hover { background: rgba(0,137,123,.18); }
 
-    /* ── Score screen ───────────────────────────────────── */
-    #screen-score {
-      min-height:100dvh; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      padding:2rem 1.25rem; text-align:center; gap:1.5rem;
+    /* ── Score screen ────────────────────────────────────── */
+    .score-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1.25rem; gap: 1.5rem; text-align: center;
+      overflow-y: auto;
     }
     .score-title {
-      font-family:var(--font-display);
-      font-size:clamp(1.8rem,8vw,2.6rem); letter-spacing:.1em; color:var(--text);
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 8vw, 2.6rem); letter-spacing: .1em; color: var(--text);
     }
     .score-geez {
-      font-family:var(--font-geez);
-      font-size:clamp(.95rem,3.5vw,1.3rem); color:var(--text-sub); margin-top:-.5rem;
+      font-family: var(--font-geez);
+      font-size: clamp(.95rem, 3.5vw, 1.3rem); color: var(--text-sub); margin-top: -.5rem;
     }
-    .score-cards { display:flex; gap:1rem; width:100%; max-width:400px; }
+    .score-cards { display: flex; gap: 1rem; width: 100%; max-width: 400px; }
     .score-card {
-      flex:1; background:var(--bg-card); border:1.5px solid var(--border-mid);
-      border-radius:16px; padding:1.25rem .75rem; transition:border-color .3s;
+      flex: 1; background: var(--bg-card); border: 1.5px solid var(--border-mid);
+      border-radius: 16px; padding: 1.25rem .75rem; transition: border-color .3s;
     }
-    .score-card.winner { border-color:var(--riddle); background:var(--riddle-card); }
-    .score-card-name  { font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); }
-    .score-card-pts   { font-family:var(--font-display); font-size:3.5rem; line-height:1; color:var(--text); margin:.3rem 0; }
-    .score-card.winner .score-card-pts { color:var(--riddle); }
-    .score-card-sub   { font-size:.68rem; color:var(--text-muted); }
-    .winner-badge     { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--riddle); margin-top:.4rem; }
-    .tie-msg          { font-size:1rem; color:var(--text-sub); }
+    .score-card.winner { border-color: var(--riddle); background: var(--riddle-card); }
+    .score-card-name { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+    .score-card-pts  { font-family: var(--font-display); font-size: 3.5rem; line-height: 1; color: var(--text); margin: .3rem 0; }
+    .score-card.winner .score-card-pts { color: var(--riddle); }
+    .score-card-sub  { font-size: .68rem; color: var(--text-muted); }
+    .winner-badge    { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--riddle); margin-top: .4rem; }
+    .tie-msg         { font-size: 1rem; color: var(--text-sub); }
 
-    .score-actions { display:flex; gap:.75rem; width:100%; max-width:400px; }
+    .score-actions { display: flex; gap: .75rem; width: 100%; max-width: 400px; }
     .btn-again {
-      flex:2; padding:1rem;
-      background:linear-gradient(135deg, var(--riddle), var(--riddle-dark));
-      color:#fff; border:none; border-radius:13px;
-      font-family:var(--font-display); font-size:1rem;
-      letter-spacing:.08em; cursor:pointer; transition:opacity .15s;
+      flex: 2; padding: 1rem;
+      background: linear-gradient(135deg, var(--riddle), var(--riddle-dark));
+      color: #fff; border: none; border-radius: 13px;
+      font-family: var(--font-display); font-size: 1rem;
+      letter-spacing: .08em; cursor: pointer; transition: opacity .15s;
     }
-    .btn-again:hover { opacity:.9; }
+    .btn-again:hover { opacity: .9; }
     .btn-home {
-      flex:1; padding:1rem; background:var(--bg-elevated);
-      border:1.5px solid var(--border-mid); border-radius:13px;
-      color:var(--text-sub); font-size:.88rem; text-decoration:none;
-      display:flex; align-items:center; justify-content:center;
-      transition:border-color .15s;
+      flex: 1; padding: 1rem; background: var(--bg-elevated);
+      border: 1.5px solid var(--border-mid); border-radius: 13px;
+      color: var(--text-sub); font-size: .88rem; text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s;
     }
-    .btn-home:hover { border-color:var(--riddle); }
+    .btn-home:hover { border-color: var(--riddle); }
 
     /* ── Loading/Error ──────────────────────────────────── */
-    #screen-loading, #screen-error {
-      min-height:100dvh; display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      gap:1rem; text-align:center; padding:2rem;
+    .loading-wrap, .error-wrap {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem; padding: 2rem; text-align: center;
     }
     .spinner {
-      width:2.5rem; height:2.5rem; border:3px solid var(--border-mid);
-      border-top-color:var(--riddle); border-radius:50%;
-      animation:spin .7s linear infinite;
+      width: 2.5rem; height: 2.5rem;
+      border: 3px solid var(--border-low);
+      border-top-color: var(--riddle); border-radius: 50%;
+      animation: spin .7s linear infinite;
     }
-    @keyframes spin    { to { transform:rotate(360deg); } }
-    @keyframes fadeUp  { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-
-    .hidden { display:none !important; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="game-body">
 
   <!-- Loading -->
-  <section id="screen-loading" class="screen">
-    <div class="spinner"></div>
-    <p style="color:var(--text-muted);font-size:.88rem">Loading riddles…</p>
+  <section id="screen-loading" class="screen active">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p style="color:var(--text-muted);font-size:.88rem">Loading riddles…</p>
+    </div>
   </section>
 
   <!-- Error -->
-  <section id="screen-error" class="screen hidden">
-    <p style="font-size:2rem">⚠️</p>
-    <p id="error-msg" style="color:var(--text-sub);max-width:300px"></p>
-    <a href="index.html" style="color:var(--riddle)">← Back to home</a>
+  <section id="screen-error" class="screen">
+    <div class="error-wrap">
+      <p style="font-size:2rem">⚠️</p>
+      <p id="error-msg" style="color:var(--text-sub);max-width:300px"></p>
+      <a href="index.html" style="color:var(--riddle)">← Back to home</a>
+    </div>
   </section>
 
   <!-- ══ SETUP ══════════════════════════════════════════════ -->
-  <section id="screen-setup" class="screen hidden">
+  <section id="screen-setup" class="screen">
 
     <div class="setup-hero">
-      <h1 class="title">FIDLTELAY</h1>
-      <p class="geez-title" lang="ti">ፍልጠለይ</p>
-      <p class="subtitle">Tigrinya Riddles · Judge checks the answer</p>
+      <h1 class="hero-title">FILETELEY</h1>
+      <p class="hero-geez" lang="ti">ፍልጠለይ</p>
+      <p class="hero-sub">Tigrinya Riddles · Judge checks the answer</p>
     </div>
 
     <div class="setup-body">
 
       <!-- Team names -->
       <div>
-        <p class="setup-section-label">Team Names</p>
-        <div class="team-inputs">
+        <p class="section-label">Team Names</p>
+        <div class="team-row">
           <input type="text" id="input-team-a" placeholder="Team A" maxlength="18" />
           <input type="text" id="input-team-b" placeholder="Team B" maxlength="18" />
         </div>
       </div>
 
-      <!-- Difficulty filter -->
+      <!-- Difficulty -->
       <div>
-        <p class="setup-section-label">Difficulty</p>
+        <p class="section-label">Difficulty</p>
         <div class="pill-group">
           <button class="pill active" data-diff="all">All</button>
-          <button class="pill" data-diff="easy">Easy</button>
-          <button class="pill" data-diff="medium">Medium</button>
-          <button class="pill" data-diff="hard">Hard</button>
+          <button class="pill"        data-diff="easy">Easy</button>
+          <button class="pill"        data-diff="medium">Medium</button>
+          <button class="pill"        data-diff="hard">Hard</button>
         </div>
       </div>
 
-      <!-- Game config -->
+      <!-- Settings -->
       <div>
-        <p class="setup-section-label">Game Settings</p>
+        <p class="section-label">Game Settings</p>
 
         <div class="config-row">
           <div class="config-info">
@@ -400,9 +385,9 @@
             <div class="config-hint" id="hint-count">Alternates between teams each turn</div>
           </div>
           <div class="stepper">
-            <button class="stepper-btn" id="btn-count-minus" aria-label="Fewer">−</button>
-            <span class="stepper-val" id="val-count">10</span>
-            <button class="stepper-btn" id="btn-count-plus"  aria-label="More">+</button>
+            <button class="stepper-btn" id="btn-count-minus">−</button>
+            <span class="stepper-val"   id="val-count">10</span>
+            <button class="stepper-btn" id="btn-count-plus">+</button>
           </div>
         </div>
 
@@ -412,15 +397,14 @@
             <div class="config-hint" id="hint-time">Time allowed per riddle</div>
           </div>
           <div class="stepper">
-            <button class="stepper-btn" id="btn-time-minus" aria-label="Less">−</button>
-            <span class="stepper-val" id="val-time">30</span>
-            <button class="stepper-btn" id="btn-time-plus"  aria-label="More">+</button>
+            <button class="stepper-btn" id="btn-time-minus">−</button>
+            <span class="stepper-val"   id="val-time">30</span>
+            <button class="stepper-btn" id="btn-time-plus">+</button>
           </div>
         </div>
       </div>
 
-      <!-- Available riddles indicator -->
-      <p id="avail-msg" style="font-size:.75rem;color:var(--text-muted);text-align:center;margin:-.5rem 0"></p>
+      <p id="avail-msg"></p>
 
       <button id="btn-start" class="btn-start">▶ Start Game</button>
       <a href="index.html" class="back-home">← Back to Home</a>
@@ -429,10 +413,10 @@
   </section>
 
   <!-- ══ GAME ════════════════════════════════════════════════ -->
-  <section id="screen-riddle" class="screen hidden" role="main">
+  <section id="screen-riddle" class="screen" role="main">
 
     <div class="riddle-header">
-      <button class="btn-quit" id="btn-quit">✕ Quit</button>
+      <button id="btn-quit" class="btn-quit">✕ Quit</button>
       <span class="riddle-badge">ፍልጠለይ</span>
       <span id="timer-display" class="riddle-timer-num">—</span>
       <span id="riddle-counter" class="riddle-counter">1 / 10</span>
@@ -443,41 +427,41 @@
     </div>
 
     <div class="riddle-stage">
-      <span id="active-team" class="active-team-label"></span>
-      <span class="eyebrow">Solve the riddle</span>
-      <div id="q-geez"  class="riddle-q-geez"  lang="ti"></div>
-      <div id="q-latin" class="riddle-q-latin"></div>
+      <span id="active-team" class="active-team-lbl"></span>
+      <span class="stage-eyebrow">Solve the riddle</span>
 
-      <!-- Judge peek -->
-      <div id="judge-peek" class="judge-peek hidden">
-        <div class="peek-label">Judge Only 👁</div>
+      <div id="q-geez"  class="q-geez"  lang="ti"></div>
+      <div id="q-latin" class="q-latin"></div>
+
+      <!-- Judge peek (hidden until toggled) -->
+      <div id="judge-peek" class="judge-peek" style="display:none">
+        <div class="peek-lbl">Judge Only 👁</div>
         <div id="peek-geez"  class="peek-geez"  lang="ti"></div>
         <div id="peek-latin" class="peek-latin"></div>
       </div>
 
       <!-- Answer reveal -->
-      <div id="answer-panel" class="answer-panel hidden">
-        <div class="ans-label">Answer</div>
+      <div id="answer-panel" class="answer-panel" style="display:none">
+        <div class="ans-lbl">Answer</div>
         <div id="ans-geez"  class="ans-geez"  lang="ti"></div>
         <div id="ans-latin" class="ans-latin"></div>
-        <div id="ans-hint"  class="ans-hint  hidden"></div>
+        <div id="ans-hint"  class="ans-hint"></div>
       </div>
     </div>
 
-    <!-- Time-up -->
-    <div id="time-up" class="time-up-banner hidden">⏱ Time's Up — Reveal the Answer</div>
+    <div id="time-up" class="time-up-banner" style="display:none">⏱ Time's Up — Reveal the Answer</div>
 
     <!-- State A: pre-reveal -->
     <div id="actions-pre" class="riddle-actions">
       <div class="actions-row">
         <button id="btn-peek"  class="btn-peek">👁 See Answer (Judge)</button>
-        <button id="btn-timer" class="btn-timer">▶ Start Timer</button>
+        <button id="btn-timer" class="btn-start-timer">▶ Start Timer</button>
       </div>
       <button id="btn-reveal" class="btn-reveal">Reveal Answer ↓</button>
     </div>
 
     <!-- State B: judge decides -->
-    <div id="actions-judge" class="riddle-actions hidden">
+    <div id="actions-judge" class="riddle-actions" style="display:none">
       <div class="actions-row">
         <button id="btn-wrong"   class="btn-wrong">  <span>✕</span><span>Wrong</span></button>
         <button id="btn-correct" class="btn-correct"><span>✓</span><span>Correct</span></button>
@@ -487,301 +471,322 @@
   </section>
 
   <!-- ══ SCORE ═══════════════════════════════════════════════ -->
-  <section id="screen-score" class="screen hidden" role="main">
-    <div class="score-title">Game Over</div>
-    <div class="score-geez" lang="ti">ጸወታ ተዛዚሙ</div>
+  <section id="screen-score" class="screen" role="main">
+    <div class="score-wrap">
+      <div class="score-title">Game Over</div>
+      <div class="score-geez" lang="ti">ጸወታ ተዛዚሙ</div>
 
-    <div class="score-cards">
-      <div class="score-card" id="card-a">
-        <div class="score-card-name" id="name-a">Team A</div>
-        <div class="score-card-pts"  id="pts-a">0</div>
-        <div class="score-card-sub">pts</div>
-        <div class="winner-badge hidden" id="badge-a">🏆 Winner!</div>
+      <div class="score-cards">
+        <div class="score-card" id="card-a">
+          <div class="score-card-name" id="name-a">Team A</div>
+          <div class="score-card-pts"  id="pts-a">0</div>
+          <div class="score-card-sub">pts</div>
+          <div class="winner-badge"   id="badge-a" style="display:none">🏆 Winner!</div>
+        </div>
+        <div class="score-card" id="card-b">
+          <div class="score-card-name" id="name-b">Team B</div>
+          <div class="score-card-pts"  id="pts-b">0</div>
+          <div class="score-card-sub">pts</div>
+          <div class="winner-badge"   id="badge-b" style="display:none">🏆 Winner!</div>
+        </div>
       </div>
-      <div class="score-card" id="card-b">
-        <div class="score-card-name" id="name-b">Team B</div>
-        <div class="score-card-pts"  id="pts-b">0</div>
-        <div class="score-card-sub">pts</div>
-        <div class="winner-badge hidden" id="badge-b">🏆 Winner!</div>
+
+      <div id="tie-msg" class="tie-msg" style="display:none">🤝 It's a tie!</div>
+
+      <div class="score-actions">
+        <button id="btn-again" class="btn-again">▶ Play Again</button>
+        <a href="index.html" class="btn-home">Home</a>
       </div>
-    </div>
-
-    <div id="tie-msg" class="tie-msg hidden">🤝 It's a tie!</div>
-
-    <div class="score-actions">
-      <button id="btn-again" class="btn-again">▶ Play Again</button>
-      <a href="index.html" class="btn-home">Home</a>
     </div>
   </section>
 
   <script src="supabase.min.js"></script>
   <script>
-    // ── Supabase ─────────────────────────────────────────────
-    const _sb = window.supabase.createClient(
-      'https://rzcrdngpybrsjlbenqep.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE'
-    );
+  'use strict';
 
-    // ── State ────────────────────────────────────────────────
-    let allRiddles   = [];   // all loaded from DB
-    let poolRiddles  = [];   // filtered by difficulty
-    let gameRiddles  = [];   // shuffled slice for this game
-    let idx          = 0;    // current riddle index
-    let scores       = { a: 0, b: 0 };
-    let names        = { a: 'Team A', b: 'Team B' };
-    let totalCount   = 10;
-    let secsEach     = 30;
-    let chosenDiff   = 'all';
-    let firstTeam    = 'a';   // randomly chosen at game start
-    let timerInt     = null;
-    let timerSecs    = 0;
+  // ── Supabase ──────────────────────────────────────────────
+  const _sb = window.supabase.createClient(
+    'https://rzcrdngpybrsjlbenqep.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE'
+  );
 
-    // ── Screen helper ────────────────────────────────────────
-    const SCREENS = ['screen-loading','screen-error','screen-setup','screen-riddle','screen-score'];
-    function show(id) { SCREENS.forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id)); }
+  // ── State ─────────────────────────────────────────────────
+  let allRiddles  = [];
+  let poolRiddles = [];
+  let gameRiddles = [];
+  let idx         = 0;
+  let scores      = { a: 0, b: 0 };
+  let names       = { a: 'Team A', b: 'Team B' };
+  let totalCount  = 10;
+  let secsEach    = 30;
+  let chosenDiff  = 'all';
+  let firstTeam   = 'a';
+  let timerInt    = null;
+  let timerSecs   = 0;
+  let peekOpen    = false;
 
-    // ── Boot ─────────────────────────────────────────────────
-    async function boot() {
-      show('screen-loading');
-      try {
-        const { data, error } = await _sb
-          .from('riddles').select('*').order('created_at');
-        if (error) throw error;
-        allRiddles = data || [];
-        if (!allRiddles.length) throw new Error('No riddles found in the database.');
-        applyDiffFilter();
-        show('screen-setup');
-      } catch(e) {
-        document.getElementById('error-msg').textContent = e.message || String(e);
-        show('screen-error');
-      }
+  // ── Screen switch (uses .active like heto.html) ───────────
+  function showScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+  }
+
+  // ── Boot ──────────────────────────────────────────────────
+  async function boot() {
+    showScreen('loading');
+    try {
+      const { data, error } = await _sb.from('riddles').select('*').order('created_at');
+      if (error) throw error;
+      allRiddles = data || [];
+      if (!allRiddles.length) throw new Error('No riddles in the database yet. Add some in the admin panel.');
+      applyFilter();
+      showScreen('setup');
+    } catch (e) {
+      document.getElementById('error-msg').textContent = e.message || String(e);
+      showScreen('error');
     }
+  }
 
-    // ── Difficulty pills ─────────────────────────────────────
-    document.querySelectorAll('.pill[data-diff]').forEach(p => {
-      p.addEventListener('click', () => {
-        document.querySelectorAll('.pill[data-diff]').forEach(x => x.classList.remove('active'));
-        p.classList.add('active');
-        chosenDiff = p.dataset.diff;
-        applyDiffFilter();
-      });
+  // ── Difficulty filter ─────────────────────────────────────
+  document.querySelectorAll('.pill[data-diff]').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.pill[data-diff]').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      chosenDiff = p.dataset.diff;
+      applyFilter();
     });
+  });
 
-    function applyDiffFilter() {
-      poolRiddles = chosenDiff === 'all'
-        ? allRiddles
-        : allRiddles.filter(r => r.difficulty === chosenDiff);
+  function applyFilter() {
+    poolRiddles = chosenDiff === 'all'
+      ? allRiddles
+      : allRiddles.filter(r => r.difficulty === chosenDiff);
 
-      const avail = poolRiddles.length;
-      const msg   = document.getElementById('avail-msg');
+    const avail = poolRiddles.length;
+    const msg   = document.getElementById('avail-msg');
 
-      if (avail === 0) {
-        msg.textContent = '⚠ No riddles for this difficulty — choose another.';
-        msg.style.color = '#e53935';
-        document.getElementById('btn-start').disabled = true;
-      } else {
-        msg.textContent = `${avail} riddle${avail === 1 ? '' : 's'} available`;
-        msg.style.color = 'var(--text-muted)';
-        document.getElementById('btn-start').disabled = false;
-      }
-
+    if (avail === 0) {
+      msg.textContent = '⚠ No riddles for this difficulty.';
+      msg.style.color = '#e53935';
+      document.getElementById('btn-start').disabled = true;
+    } else {
+      msg.textContent = avail + ' riddle' + (avail === 1 ? '' : 's') + ' available';
+      msg.style.color = 'var(--text-muted)';
+      document.getElementById('btn-start').disabled = false;
       // Clamp count to available
       if (totalCount > avail) {
         totalCount = avail;
         document.getElementById('val-count').textContent = totalCount;
       }
+    }
+    updateHints();
+  }
+
+  function updateHints() {
+    const perTeam = Math.ceil(totalCount / 2);
+    const mins    = Math.max(1, Math.round(totalCount * secsEach / 60));
+    document.getElementById('hint-count').textContent = perTeam + ' per team · ~' + mins + ' min total';
+    document.getElementById('hint-time').textContent  = secsEach + 's · ' + totalCount + ' riddles total';
+  }
+
+  // ── Steppers ──────────────────────────────────────────────
+  document.getElementById('btn-count-minus').addEventListener('click', () => {
+    if (totalCount > 2) {
+      totalCount--;
+      document.getElementById('val-count').textContent = totalCount;
       updateHints();
     }
-
-    // ── Steppers ─────────────────────────────────────────────
-    function updateHints() {
-      document.getElementById('hint-count').textContent =
-        `${Math.ceil(totalCount/2)} per team · ~${Math.round(totalCount*secsEach/60)} min total`;
+  });
+  document.getElementById('btn-count-plus').addEventListener('click', () => {
+    if (totalCount < Math.min(30, poolRiddles.length)) {
+      totalCount++;
+      document.getElementById('val-count').textContent = totalCount;
+      updateHints();
     }
-
-    document.getElementById('btn-count-minus').addEventListener('click', () => {
-      if (totalCount > 2) { totalCount--; document.getElementById('val-count').textContent = totalCount; updateHints(); }
-    });
-    document.getElementById('btn-count-plus').addEventListener('click', () => {
-      if (totalCount < Math.min(30, poolRiddles.length)) { totalCount++; document.getElementById('val-count').textContent = totalCount; updateHints(); }
-    });
-    document.getElementById('btn-time-minus').addEventListener('click', () => {
-      if (secsEach > 10) { secsEach -= 5; document.getElementById('val-time').textContent = secsEach; updateHints(); }
-    });
-    document.getElementById('btn-time-plus').addEventListener('click', () => {
-      if (secsEach < 90) { secsEach += 5; document.getElementById('val-time').textContent = secsEach; updateHints(); }
-    });
-
-    // ── Start game ───────────────────────────────────────────
-    document.getElementById('btn-start').addEventListener('click', () => {
-      names.a = document.getElementById('input-team-a').value.trim() || 'Team A';
-      names.b = document.getElementById('input-team-b').value.trim() || 'Team B';
-
-      // Random first team
-      firstTeam = Math.random() < 0.5 ? 'a' : 'b';
-
-      gameRiddles = shuffle([...poolRiddles]).slice(0, totalCount);
-      scores = { a: 0, b: 0 };
-      idx = 0;
-
-      show('screen-riddle');
-      renderRiddle();
-    });
-
-    // ── Quit ─────────────────────────────────────────────────
-    document.getElementById('btn-quit').addEventListener('click', () => {
-      stopTimer(); show('screen-setup');
-    });
-
-    // ── Riddle rendering ─────────────────────────────────────
-    function currentTeam() {
-      // firstTeam flips each riddle
-      return (idx % 2 === 0) ? firstTeam : (firstTeam === 'a' ? 'b' : 'a');
+  });
+  document.getElementById('btn-time-minus').addEventListener('click', () => {
+    if (secsEach > 10) {
+      secsEach -= 5;
+      document.getElementById('val-time').textContent = secsEach;
+      updateHints();
     }
+  });
+  document.getElementById('btn-time-plus').addEventListener('click', () => {
+    if (secsEach < 90) {
+      secsEach += 5;
+      document.getElementById('val-time').textContent = secsEach;
+      updateHints();
+    }
+  });
 
-    function renderRiddle() {
+  // ── Start game ────────────────────────────────────────────
+  document.getElementById('btn-start').addEventListener('click', () => {
+    names.a = document.getElementById('input-team-a').value.trim() || 'Team A';
+    names.b = document.getElementById('input-team-b').value.trim() || 'Team B';
+
+    // Random first team
+    firstTeam   = Math.random() < 0.5 ? 'a' : 'b';
+    gameRiddles = shuffle([...poolRiddles]).slice(0, totalCount);
+    scores      = { a: 0, b: 0 };
+    idx         = 0;
+
+    showScreen('riddle');
+    renderRiddle();
+  });
+
+  // ── Quit ──────────────────────────────────────────────────
+  document.getElementById('btn-quit').addEventListener('click', () => {
+    stopTimer();
+    showScreen('setup');
+  });
+
+  // ── Current team (alternates, respects random firstTeam) ──
+  function currentTeam() {
+    return (idx % 2 === 0) ? firstTeam : (firstTeam === 'a' ? 'b' : 'a');
+  }
+
+  // ── Render riddle ─────────────────────────────────────────
+  function renderRiddle() {
+    stopTimer();
+    peekOpen = false;
+
+    const r    = gameRiddles[idx];
+    const team = currentTeam();
+
+    // Header
+    document.getElementById('active-team').textContent    = names[team].toUpperCase();
+    document.getElementById('riddle-counter').textContent = (idx + 1) + ' / ' + totalCount;
+
+    // Question
+    document.getElementById('q-geez').textContent  = r.question;
+    document.getElementById('q-latin').textContent = r.question_latin;
+
+    // Peek content
+    document.getElementById('peek-geez').textContent  = r.answer;
+    document.getElementById('peek-latin').textContent = r.answer_latin;
+    document.getElementById('judge-peek').style.display = 'none';
+    document.getElementById('btn-peek').textContent = '👁 See Answer (Judge)';
+
+    // Answer panel
+    document.getElementById('ans-geez').textContent  = r.answer;
+    document.getElementById('ans-latin').textContent = r.answer_latin;
+    document.getElementById('ans-hint').textContent  = r.hint ? '💡 ' + r.hint : '';
+    document.getElementById('answer-panel').style.display = 'none';
+
+    // Time-up
+    document.getElementById('time-up').style.display = 'none';
+
+    // Timer UI
+    const display = document.getElementById('timer-display');
+    const fill    = document.getElementById('timer-fill');
+    display.textContent = secsEach;
+    display.classList.remove('danger');
+    fill.style.transition = 'none';
+    fill.style.width = '100%';
+    fill.classList.remove('danger');
+
+    document.getElementById('btn-timer').disabled = false;
+
+    // Action panels
+    document.getElementById('actions-pre').style.display   = '';
+    document.getElementById('actions-judge').style.display = 'none';
+  }
+
+  // ── Judge peek toggle ─────────────────────────────────────
+  document.getElementById('btn-peek').addEventListener('click', () => {
+    peekOpen = !peekOpen;
+    document.getElementById('judge-peek').style.display = peekOpen ? '' : 'none';
+    document.getElementById('btn-peek').textContent = peekOpen ? '🙈 Hide Answer' : '👁 See Answer (Judge)';
+  });
+
+  // ── Timer ─────────────────────────────────────────────────
+  document.getElementById('btn-timer').addEventListener('click', () => {
+    if (timerInt) return;
+    document.getElementById('btn-timer').disabled = true;
+    timerSecs = secsEach;
+    document.getElementById('timer-fill').style.transition = 'width 1s linear';
+    tick();
+    timerInt = setInterval(tick, 1000);
+  });
+
+  function tick() {
+    const fill    = document.getElementById('timer-fill');
+    const display = document.getElementById('timer-display');
+    const pct     = (timerSecs / secsEach) * 100;
+    const danger  = timerSecs <= Math.ceil(secsEach * 0.25);
+
+    display.textContent = timerSecs;
+    display.classList.toggle('danger', danger);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('danger', danger);
+
+    if (timerSecs <= 0) {
       stopTimer();
-      document.getElementById('btn-timer').disabled = false;
-      document.getElementById('btn-peek').textContent = '👁 See Answer (Judge)';
-
-      const r    = gameRiddles[idx];
-      const team = currentTeam();
-
-      // Header
-      document.getElementById('active-team').textContent    = names[team].toUpperCase();
-      document.getElementById('riddle-counter').textContent = `${idx+1} / ${totalCount}`;
-
-      // Question
-      document.getElementById('q-geez').textContent  = r.question;
-      document.getElementById('q-latin').textContent = r.question_latin;
-
-      // Peek content
-      document.getElementById('peek-geez').textContent  = r.answer;
-      document.getElementById('peek-latin').textContent = r.answer_latin;
-      document.getElementById('judge-peek').classList.add('hidden');
-
-      // Answer content
-      document.getElementById('ans-geez').textContent  = r.answer;
-      document.getElementById('ans-latin').textContent = r.answer_latin;
-      const hintEl = document.getElementById('ans-hint');
-      if (r.hint) { hintEl.textContent = '💡 ' + r.hint; hintEl.classList.remove('hidden'); }
-      else        { hintEl.classList.add('hidden'); }
-      document.getElementById('answer-panel').classList.add('hidden');
-
-      // Timer UI
-      document.getElementById('time-up').classList.add('hidden');
-      document.getElementById('timer-display').textContent = secsEach;
-      document.getElementById('timer-display').classList.remove('danger');
-      const fill = document.getElementById('timer-fill');
-      fill.style.transition = 'none';
-      fill.style.width = '100%';
-      fill.classList.remove('danger');
-
-      // Actions
-      document.getElementById('actions-pre').classList.remove('hidden');
-      document.getElementById('actions-judge').classList.add('hidden');
+      document.getElementById('time-up').style.display = '';
+      return;
     }
+    timerSecs--;
+  }
 
-    // ── Judge peek toggle ─────────────────────────────────────
-    let peekOpen = false;
-    document.getElementById('btn-peek').addEventListener('click', () => {
-      peekOpen = !peekOpen;
-      document.getElementById('judge-peek').classList.toggle('hidden', !peekOpen);
-      document.getElementById('btn-peek').textContent = peekOpen ? '🙈 Hide Answer' : '👁 See Answer (Judge)';
-    });
+  function stopTimer() {
+    clearInterval(timerInt);
+    timerInt = null;
+  }
 
-    // ── Timer ─────────────────────────────────────────────────
-    document.getElementById('btn-timer').addEventListener('click', startTimer);
+  // ── Reveal answer ─────────────────────────────────────────
+  document.getElementById('btn-reveal').addEventListener('click', () => {
+    stopTimer();
+    document.getElementById('judge-peek').style.display = 'none';
+    document.getElementById('answer-panel').style.display = '';
+    document.getElementById('time-up').style.display = 'none';
+    document.getElementById('actions-pre').style.display   = 'none';
+    document.getElementById('actions-judge').style.display = '';
+  });
 
-    function startTimer() {
-      if (timerInt) return;
-      document.getElementById('btn-timer').disabled = true;
-      timerSecs = secsEach;
-      const fill = document.getElementById('timer-fill');
-      fill.style.transition = 'width 1s linear';
-      tick();
-      timerInt = setInterval(tick, 1000);
+  // ── Judge decision ────────────────────────────────────────
+  document.getElementById('btn-correct').addEventListener('click', () => decide(true));
+  document.getElementById('btn-wrong').addEventListener('click',   () => decide(false));
+
+  function decide(correct) {
+    if (correct) scores[currentTeam()]++;
+    idx++;
+    if (idx >= totalCount) showScore();
+    else renderRiddle();
+  }
+
+  // ── Score ─────────────────────────────────────────────────
+  function showScore() {
+    document.getElementById('name-a').textContent = names.a;
+    document.getElementById('name-b').textContent = names.b;
+    document.getElementById('pts-a').textContent  = scores.a;
+    document.getElementById('pts-b').textContent  = scores.b;
+
+    document.getElementById('card-a').classList.remove('winner');
+    document.getElementById('card-b').classList.remove('winner');
+    document.getElementById('badge-a').style.display = 'none';
+    document.getElementById('badge-b').style.display = 'none';
+    document.getElementById('tie-msg').style.display = 'none';
+
+    if      (scores.a > scores.b) { document.getElementById('card-a').classList.add('winner'); document.getElementById('badge-a').style.display = ''; }
+    else if (scores.b > scores.a) { document.getElementById('card-b').classList.add('winner'); document.getElementById('badge-b').style.display = ''; }
+    else                          { document.getElementById('tie-msg').style.display = ''; }
+
+    showScreen('score');
+  }
+
+  document.getElementById('btn-again').addEventListener('click', () => showScreen('setup'));
+
+  // ── Shuffle ───────────────────────────────────────────────
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
     }
+    return a;
+  }
 
-    function tick() {
-      const fill    = document.getElementById('timer-fill');
-      const display = document.getElementById('timer-display');
-      const pct     = (timerSecs / secsEach) * 100;
-      const danger  = timerSecs <= Math.ceil(secsEach * 0.25);
-
-      display.textContent = timerSecs;
-      display.classList.toggle('danger', danger);
-      fill.style.width = pct + '%';
-      fill.classList.toggle('danger', danger);
-
-      if (timerSecs <= 0) {
-        stopTimer();
-        document.getElementById('time-up').classList.remove('hidden');
-        return;
-      }
-      timerSecs--;
-    }
-
-    function stopTimer() {
-      clearInterval(timerInt);
-      timerInt = null;
-    }
-
-    // ── Reveal ────────────────────────────────────────────────
-    document.getElementById('btn-reveal').addEventListener('click', () => {
-      stopTimer();
-      peekOpen = false;
-      document.getElementById('judge-peek').classList.add('hidden');
-      document.getElementById('answer-panel').classList.remove('hidden');
-      document.getElementById('time-up').classList.add('hidden');
-      document.getElementById('actions-pre').classList.add('hidden');
-      document.getElementById('actions-judge').classList.remove('hidden');
-    });
-
-    // ── Judge decision ────────────────────────────────────────
-    document.getElementById('btn-correct').addEventListener('click', () => decide(true));
-    document.getElementById('btn-wrong').addEventListener('click',   () => decide(false));
-
-    function decide(correct) {
-      if (correct) scores[currentTeam()]++;
-      idx++;
-      if (idx >= totalCount) showScore();
-      else renderRiddle();
-    }
-
-    // ── Score screen ──────────────────────────────────────────
-    function showScore() {
-      document.getElementById('name-a').textContent = names.a;
-      document.getElementById('name-b').textContent = names.b;
-      document.getElementById('pts-a').textContent  = scores.a;
-      document.getElementById('pts-b').textContent  = scores.b;
-
-      ['a','b'].forEach(t => {
-        document.getElementById(`card-${t}`).classList.remove('winner');
-        document.getElementById(`badge-${t}`).classList.add('hidden');
-      });
-      document.getElementById('tie-msg').classList.add('hidden');
-
-      if      (scores.a > scores.b) { document.getElementById('card-a').classList.add('winner'); document.getElementById('badge-a').classList.remove('hidden'); }
-      else if (scores.b > scores.a) { document.getElementById('card-b').classList.add('winner'); document.getElementById('badge-b').classList.remove('hidden'); }
-      else                          { document.getElementById('tie-msg').classList.remove('hidden'); }
-
-      show('screen-score');
-    }
-
-    document.getElementById('btn-again').addEventListener('click', () => show('screen-setup'));
-
-    // ── Shuffle util ──────────────────────────────────────────
-    function shuffle(a) {
-      for (let i = a.length-1; i > 0; i--) {
-        const j = Math.floor(Math.random()*(i+1));
-        [a[i],a[j]] = [a[j],a[i]];
-      }
-      return a;
-    }
-
-    // ── Init ─────────────────────────────────────────────────
-    boot();
+  // ── Init ──────────────────────────────────────────────────
+  boot();
   </script>
 </body>
 </html>
