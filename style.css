@@ -392,6 +392,9 @@ button {
 /* ── Pinned button footer ─────────────────────────────── */
 .button-footer {
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   padding: 1.25rem 2rem;
   padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   display: flex;
@@ -430,14 +433,18 @@ button {
    SCREEN 1 — Setup
 ══════════════════════════════════════════════════════ */
 #screen-setup {
+  /* Single unified scroll — hero + body scroll together */
   align-items: stretch;
   justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Brand hero */
 .setup-hero {
+  /* Part of normal flow — scrolls with the page */
   flex-shrink: 0;
-  padding: 1.5rem 2rem 1.25rem;
+  padding: 1.25rem 2rem 1rem;
   border-bottom: 2px solid var(--text);
   text-align: center;
   background: var(--bg);
@@ -447,17 +454,17 @@ button {
 }
 .setup-hero .game-title {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-size: clamp(2.2rem, 8vw, 4.5rem);
   letter-spacing: 0.14em;
   color: var(--text);
   line-height: 1;
 }
 .setup-hero .geez-title {
   font-family: var(--font-geez);
-  font-size: clamp(1.6rem, 5vw, 2.5rem);
+  font-size: clamp(1.2rem, 4vw, 2rem);
   color: var(--text);
-  line-height: 1.6;   /* Ge'ez needs extra breathing room */
-  margin-top: 0.15rem;
+  line-height: 1.6;
+  margin-top: 0.1rem;
 }
 .setup-hero .game-subtitle {
   font-size: 0.6rem;
@@ -541,8 +548,8 @@ button {
 
 /* ── Setup body ───────────────────────────────────────── */
 .setup-body {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 0 auto;   /* grows but does NOT scroll independently */
+  overflow-y: visible;
   padding: 0 2rem 1rem;
   display: flex;
   flex-direction: column;
@@ -1512,9 +1519,9 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
 
 /* ── Portrait phones: tighten vertical rhythm ─────────── */
 @media (max-width: 480px) {
-  .setup-hero               { padding: 1rem 1.25rem 0.85rem; }
-  .setup-hero .game-title   { font-size: clamp(2.4rem, 11vw, 4rem); }
-  .setup-hero .geez-title   { font-size: clamp(1.3rem, 6vw, 2rem); }
+  .setup-hero               { padding: 0.75rem 1.25rem 0.65rem; }
+  .setup-hero .game-title   { font-size: clamp(1.8rem, 9vw, 3rem); }
+  .setup-hero .geez-title   { font-size: clamp(1rem, 5vw, 1.6rem); }
   .setup-body               { padding: 0 1.25rem 1rem; }
   .setup-section-label      { padding-top: 0.7rem; }
   .config-row               { padding: 0.4rem 0; }
@@ -2022,7 +2029,7 @@ details[open] > .faq-q::after {
 
 /* ── Tablet (768 px +) ────────────────────────────────── */
 @media (min-width: 768px) {
-  .setup-hero .game-title   { font-size: clamp(3rem, 8vw, 5.5rem); }
+  .setup-hero .game-title   { font-size: clamp(2.5rem, 6vw, 4rem); }
   .word-lists               { grid-template-columns: 1fr 1fr; }
   .btn-skip, .btn-start-timer, .btn-correct { min-height: 90px; }
 }
@@ -2376,6 +2383,23 @@ details[open] > .faq-q::after {
   margin-bottom: 0.5rem;
 }
 .pack-cards { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* Sub-section divider labels inside pack-cards */
+.pack-section-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.75rem 0 0.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+}
+.pack-section-label:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
 
 .pack-card {
   display: flex;

@@ -599,8 +599,60 @@
     document.getElementById('screen-' + name).classList.add('active');
   }
 
+  // ── Toast notification ────────────────────────────────────
+  function showToast(msg, type = 'info') {
+    let toast = document.getElementById('hinqle-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'hinqle-toast';
+      toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--bg-elevated);border:1px solid var(--border-mid);color:var(--text);padding:0.75rem 1.25rem;border-radius:8px;font-size:0.85rem;z-index:999;max-width:90vw;text-align:center;transition:opacity 0.3s;box-shadow:0 4px 16px rgba(0,0,0,0.3)';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.borderColor = type === 'success' ? '#43a047' : type === 'error' ? '#e53935' : 'var(--border-mid)';
+    toast.style.opacity = '1';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+  }
+
+  // ── Payment return handler ────────────────────────────────
+  function handlePaymentReturn() {
+    const params  = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    const slug    = params.get('slug');
+    if (!payment) return;
+
+    window.history.replaceState({}, '', window.location.pathname);
+
+    if (payment === 'cancelled') {
+      showToast('Payment cancelled — no charge was made.', 'info');
+      return;
+    }
+
+    if (payment === 'success' && slug) {
+      showToast('Payment confirmed! Activating your pass…', 'success');
+      const delays = [1500, 4000, 9000];
+      let attempt = 0;
+      const check = async () => {
+        const ok = await hasHinqleAccess();
+        if (ok) {
+          showToast('✓ Hinqle Pass activated — all tiers unlocked!', 'success');
+          // Refresh tier tiles by hiding the unlock prompt
+          document.getElementById('hinqle-unlock-prompt')?.style.setProperty('display', 'none');
+          document.getElementById('btn-start')?.removeAttribute('disabled');
+          // Re-apply filter so tiers update
+          applyFilter();
+        } else if (attempt < delays.length) {
+          setTimeout(check, delays[attempt++]);
+        }
+      };
+      setTimeout(check, delays[attempt++]);
+    }
+  }
+
   // ── Boot ──────────────────────────────────────────────────
   async function boot() {
+    handlePaymentReturn(); // handle ?payment=success from Stripe
     showScreen('loading');
     try {
       const { data, error } = await _sb.from('riddles').select('*').order('created_at');

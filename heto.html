@@ -494,15 +494,64 @@ const DIFFICULTIES = ['easy', 'medium', 'hard'];
 const ROUND_OPTIONS = [3, 5, 7, 10];
 
 function init() {
-  console.log('[HITO] Initializing...');
   _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log('[HITO] Supabase client created');
   setupTheme();
-  console.log('[HITO] Theme setup complete');
   wireEvents();
-  console.log('[HITO] Events wired');
   setupModeSelector();
-  console.log('[HITO] Mode selector setup complete');
+  handlePaymentReturn(); // handle ?payment=success redirect from Stripe
+}
+
+// ── Payment return handler ────────────────────────────────────────────────
+function handlePaymentReturn() {
+  const params  = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  const slug    = params.get('slug');
+  if (!payment) return;
+
+  // Clean URL immediately
+  window.history.replaceState({}, '', window.location.pathname);
+
+  if (payment === 'cancelled') {
+    showToast('Payment cancelled — no charge was made.', 'info');
+    return;
+  }
+
+  if (payment === 'success' && slug) {
+    showToast('Payment confirmed! Activating your pass…', 'success');
+    // Re-check access with backoff (webhook may still be processing)
+    const delays = [1500, 4000, 9000];
+    let attempt = 0;
+    const check = async () => {
+      const ok = await hasHitoAccess('medium'); // medium = any paid tier
+      if (ok) {
+        showToast('✓ HITO Game Pass activated — enjoy all tiers!', 'success');
+        // Update tile UI
+        document.querySelectorAll('.hito-tier-tile').forEach(t => {
+          t.classList.remove('locked');
+        });
+        document.getElementById('hito-unlock-prompt').style.display = 'none';
+        document.getElementById('btn-start-game').disabled = false;
+      } else if (attempt < delays.length) {
+        setTimeout(check, delays[attempt++]);
+      }
+    };
+    setTimeout(check, delays[attempt++]);
+  }
+}
+
+function showToast(msg, type = 'info') {
+  let toast = document.getElementById('hito-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'hito-toast';
+    toast.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--bg-elevated);border:1px solid var(--border-mid);color:var(--text);padding:0.75rem 1.25rem;border-radius:8px;font-size:0.85rem;z-index:999;max-width:90vw;text-align:center;transition:opacity 0.3s;box-shadow:0 4px 16px rgba(0,0,0,0.3)';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.borderColor = type === 'success' ? '#43a047' : type === 'error' ? '#e53935' : 'var(--border-mid)';
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 4000);
 }
 
 function setupTheme() {

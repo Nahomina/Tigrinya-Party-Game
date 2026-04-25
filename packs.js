@@ -1,4 +1,4 @@
-// packs.js — Pack / Tier catalogue  (v6)
+// packs.js — Pack / Tier catalogue  (v7)
 // Slugs match the database — do NOT rename them.
 // Premium content unlocked via Stripe payment only.
 // Counts are exact — pulled from DB 2026-04-19.

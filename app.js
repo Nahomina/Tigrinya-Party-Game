@@ -1609,8 +1609,8 @@ async function fetchPackContent(slug) {
 // ── Stripe: start checkout flow for a locked tier ─────────
 async function startPaymentFlow(slug) {
   if (!_currentUser) {
-    _pendingPaymentSlug = slug;   // remember after login
-    openAuthModal('signup');
+    _pendingPaymentSlug = slug;   // resume after login
+    openAuthModal('login');       // send to login (not signup) for returning buyers
     return;
   }
 
@@ -1888,45 +1888,40 @@ function renderPackCards() {
   const container = document.getElementById('pack-cards');
   if (!container || typeof PACK_CATALOGUE === 'undefined') return;
 
-  container.textContent = ''; // Clear safely
+  container.textContent = '';
 
-  PACK_CATALOGUE.forEach(pack => {
-    const unlocked = isPackUnlocked(pack.slug);
+  // ── Helper: build a single card ────────────────────────────────────────
+  function buildCard({ slug, accentColor, nameEn, description, meta, isFree, price }) {
+    const unlocked = isPackUnlocked(slug);
 
-    // Create card element
     const card = document.createElement('div');
     card.className = 'pack-card';
-    card.style.setProperty('--pack-accent', pack.accentColor);
+    card.style.setProperty('--pack-accent', accentColor);
 
-    // Info section
     const info = document.createElement('div');
     info.className = 'pack-card-info';
 
     const nameP = document.createElement('p');
     nameP.className = 'pack-card-name';
-    nameP.textContent = pack.nameEn;
+    nameP.textContent = nameEn;
     info.appendChild(nameP);
 
     const descP = document.createElement('p');
     descP.className = 'pack-card-desc';
-    descP.textContent = pack.description;
+    descP.textContent = description;
     info.appendChild(descP);
 
     const metaP = document.createElement('p');
     metaP.className = 'pack-card-meta';
-    const wordTotal = pack.sequenceOrder > 1
-      ? `+${pack.wordCount} words`
-      : `${pack.wordCount} words`;
-    metaP.textContent = `${pack.tierLabel} · ${wordTotal} · ${pack.proverbCount} proverbs`;
+    metaP.textContent = meta;
     info.appendChild(metaP);
 
     card.appendChild(info);
 
-    // Action section
     const action = document.createElement('div');
     action.className = 'pack-card-action';
 
-    if (pack.isFree) {
+    if (isFree) {
       const badge = document.createElement('span');
       badge.className = 'pack-badge-free';
       badge.textContent = 'FREE';
@@ -1939,15 +1934,55 @@ function renderPackCards() {
     } else {
       const btn = document.createElement('button');
       btn.className = 'pack-unlock-btn';
-      btn.dataset.slug = pack.slug;
-      btn.textContent = `£${pack.priceGbp.toFixed(2)} — Unlock`;
-      btn.addEventListener('click', () => startPaymentFlow(pack.slug));
+      btn.dataset.slug = slug;
+      btn.textContent = `£${price.toFixed(2)} — Unlock`;
+      btn.addEventListener('click', () => startPaymentFlow(slug));
       action.appendChild(btn);
     }
 
     card.appendChild(action);
-    container.appendChild(card);
+    return card;
+  }
+
+  // ── Section label helper ────────────────────────────────────────────────
+  function sectionLabel(text) {
+    const p = document.createElement('p');
+    p.className = 'pack-section-label';
+    p.textContent = text;
+    return p;
+  }
+
+  // ── 1. MAYIM & MISLA word tier packs ───────────────────────────────────
+  container.appendChild(sectionLabel('MAYIM & MISLA — WORD TIERS'));
+  PACK_CATALOGUE.forEach(pack => {
+    const wordTotal = pack.sequenceOrder > 1 ? `+${pack.wordCount} words` : `${pack.wordCount} words`;
+    container.appendChild(buildCard({
+      slug:        pack.slug,
+      accentColor: pack.accentColor,
+      nameEn:      pack.nameEn,
+      description: pack.description,
+      meta:        `${pack.tierLabel} · ${wordTotal} · ${pack.proverbCount} proverbs`,
+      isFree:      pack.isFree,
+      price:       pack.priceGbp,
+    }));
   });
+
+  // ── 2. Game Passes ─────────────────────────────────────────────────────
+  if (typeof GAME_PASS_CATALOGUE !== 'undefined') {
+    container.appendChild(sectionLabel('GAME PASSES'));
+    GAME_PASS_CATALOGUE.forEach(pass => {
+      const isAllGames = pass.slug === 'all-games';
+      container.appendChild(buildCard({
+        slug:        pass.slug,
+        accentColor: pass.accentColor,
+        nameEn:      pass.nameEn,
+        description: pass.description,
+        meta:        isAllGames ? 'All 4 games · every tier · forever' : `One game · all tiers · one-time`,
+        isFree:      false,
+        price:       pass.priceGbp,
+      }));
+    });
+  }
 }
 
 // ── Tier selector in game setup ───────────────────────────
