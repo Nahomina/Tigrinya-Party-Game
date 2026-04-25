@@ -2454,6 +2454,14 @@ details[open] > .faq-q::after {
   transition: background 0.2s;
 }
 .pack-unlock-btn:hover { background: rgba(230,57,70,0.08); }
+/* Bundle redirect button — muted, no border */
+.pack-unlock-btn--bundle {
+  border-color: var(--border-mid);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.pack-unlock-btn--bundle:hover { background: var(--bg-elevated); color: var(--text); border-color: var(--red); }
 
 /* ── Unlock modal ────────────────────────────────────────── */
 .unlock-modal {

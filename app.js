@@ -1891,7 +1891,7 @@ function renderPackCards() {
   container.textContent = '';
 
   // ── Helper: build a single card ────────────────────────────────────────
-  function buildCard({ slug, accentColor, nameEn, description, meta, isFree, price }) {
+  function buildCard({ slug, accentColor, nameEn, description, meta, isFree, price, bundleSlug = null }) {
     const unlocked = isPackUnlocked(slug);
 
     const card = document.createElement('div');
@@ -1931,6 +1931,17 @@ function renderPackCards() {
       badge.className = 'pack-badge-unlocked';
       badge.textContent = '✓ Unlocked';
       action.appendChild(badge);
+    } else if (bundleSlug) {
+      // Not sold individually — redirect to bundle pass
+      const passEntry = (typeof GAME_PASS_CATALOGUE !== 'undefined')
+        ? GAME_PASS_CATALOGUE.find(p => p.slug === bundleSlug) : null;
+      const btn = document.createElement('button');
+      btn.className = 'pack-unlock-btn pack-unlock-btn--bundle';
+      btn.textContent = passEntry
+        ? `Included in ${passEntry.nameEn} · £${passEntry.priceGbp.toFixed(2)}`
+        : 'Get with Game Pass →';
+      btn.addEventListener('click', () => startPaymentFlow(bundleSlug));
+      action.appendChild(btn);
     } else {
       const btn = document.createElement('button');
       btn.className = 'pack-unlock-btn';
@@ -1964,6 +1975,7 @@ function renderPackCards() {
       meta:        `${pack.tierLabel} · ${wordTotal} · ${pack.proverbCount} proverbs`,
       isFree:      pack.isFree,
       price:       pack.priceGbp,
+      bundleSlug:  pack.soldIndividually === false ? (pack.bundleSlug ?? null) : null,
     }));
   });
 

@@ -45,8 +45,10 @@ const PACK_CATALOGUE = [
     wordCount:    9,
     proverbCount: 15,
 
-    priceGbp: 1.99,
-    isFree:   false,
+    priceGbp:          1.99,
+    isFree:            false,
+    soldIndividually:  false,   // bundled into mayim-pass — not sold alone
+    bundleSlug:        'mayim-pass',
 
     wordProfile:    "+9 words · weddings, family & kinship",
     proverbProfile: "+15 proverbs · cultural references",
@@ -68,8 +70,10 @@ const PACK_CATALOGUE = [
     wordCount:    9,
     proverbCount: 10,
 
-    priceGbp: 4.99,
-    isFree:   false,
+    priceGbp:         4.99,
+    isFree:           false,
+    soldIndividually: false,
+    bundleSlug:       'mayim-pass',
 
     wordProfile:    '+9 words · geography & homeland',
     proverbProfile: '+10 proverbs · idioms & deeper meaning',
@@ -91,8 +95,10 @@ const PACK_CATALOGUE = [
     wordCount:    5,
     proverbCount: 11,
 
-    priceGbp: 9.99,
-    isFree:   false,
+    priceGbp:         9.99,
+    isFree:           false,
+    soldIndividually: false,
+    bundleSlug:       'mayim-pass',
 
     wordProfile:    '+5 words · rare & advanced vocab',
     proverbProfile: '+11 proverbs · advanced metaphors & wisdom',
