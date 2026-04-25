@@ -1,4 +1,4 @@
-// packs.js — Pack / Tier catalogue  (v5)
+// packs.js — Pack / Tier catalogue  (v6)
 // Slugs match the database — do NOT rename them.
 // Premium content unlocked via Stripe payment only.
 // Counts are exact — pulled from DB 2026-04-19.
@@ -96,5 +96,60 @@ const PACK_CATALOGUE = [
 
     wordProfile:    '+5 words · rare & advanced vocab',
     proverbProfile: '+11 proverbs · advanced metaphors & wisdom',
+  },
+];
+
+// ── Game Pass Catalogue ──────────────────────────────────────────────────────
+// One pass unlocks ALL paid tiers for a single game. Better value than buying
+// individual packs. All-games bundle covers every game forever.
+const GAME_PASS_CATALOGUE = [
+  {
+    slug:        'mayim-pass',
+    game:        'mayim',           // also covers misla (shared packs)
+    nameEn:      'MAYIM & MISLA Pass',
+    nameGeez:    'ማይም ፓስ',
+    nameLatin:   'Mayim Pass',
+    icon:        '🔴',
+    accentColor: '#e53935',
+    description: "Unlock every tier for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez & Shimagile.",
+    priceGbp:    4.99,
+    // Buying this cascades: qola + gobez + shimagile
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'],
+  },
+  {
+    slug:        'hito-pass',
+    game:        'hito',
+    nameEn:      'HITO Pass',
+    nameGeez:    'ሕቶ ፓስ',
+    nameLatin:   'Hito Pass',
+    icon:        '🟠',
+    accentColor: '#f4511e',
+    description: "Unlock all difficulty tiers for HITO trivia — Qol'a (medium) and Gobez (hard) questions.",
+    priceGbp:    4.99,
+    cascadeSlugs: [],
+  },
+  {
+    slug:        'hinqle-pass',
+    game:        'hinqle',
+    nameEn:      'Hinqle Hinqilitey Pass',
+    nameGeez:    'ሕንቅሊተይ ፓስ',
+    nameLatin:   'Hinqle Pass',
+    icon:        '🟢',
+    accentColor: '#00897b',
+    description: "Unlock all difficulty tiers for Hinqle Hinqilitey — Qol'a and Gobez riddles.",
+    priceGbp:    4.99,
+    cascadeSlugs: [],
+  },
+  {
+    slug:        'all-games',
+    game:        'all',
+    nameEn:      'All Games — Forever',
+    nameGeez:    'ኩሉ ጸወታ',
+    nameLatin:   'All Games',
+    icon:        '⭐',
+    accentColor: '#ffd600',
+    description: 'All 4 games, every tier, forever. The best value — one purchase, nothing locked.',
+    priceGbp:    12.99,
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'], // + hito-pass + hinqle-pass handled in webhook
   },
 ];

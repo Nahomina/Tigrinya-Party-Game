@@ -162,22 +162,38 @@
         </div>
       </div>
 
-      <!-- DIFFICULTY & CATEGORY (BOTH MODES) -->
-      <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty & Category</div>
+      <!-- DIFFICULTY TIER (BOTH MODES) -->
+      <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty Tier</div>
 
-      <div class="config-row">
-        <div class="config-row-label">
-          <span class="spec-label">Difficulty</span>
-          <span class="config-hint">Question complexity</span>
-        </div>
-        <select id="difficulty-dropdown" class="dropdown-select">
-          <option value="easy">Easy</option>
-          <option value="medium" selected>Medium</option>
-          <option value="hard">Hard</option>
-        </select>
+      <div class="hito-tier-grid">
+        <button class="hito-tier-tile" data-diff="easy" data-free="true">
+          <span class="tier-emoji">🟢</span>
+          <span class="tier-name">Gasha</span>
+          <span class="tier-sub">Easy · Free</span>
+        </button>
+        <button class="hito-tier-tile" data-diff="medium" data-free="false">
+          <span class="tier-emoji">🔵</span>
+          <span class="tier-name">Qol'a</span>
+          <span class="tier-sub">Medium · 🔒</span>
+        </button>
+        <button class="hito-tier-tile" data-diff="hard" data-free="false">
+          <span class="tier-emoji">🟣</span>
+          <span class="tier-name">Gobez</span>
+          <span class="tier-sub">Hard · 🔒</span>
+        </button>
       </div>
 
-      <div class="config-row">
+      <!-- HITO unlock prompt (shown when paid tier selected without access) -->
+      <div id="hito-unlock-prompt" class="hito-unlock-prompt" style="display:none">
+        <p class="unlock-prompt-msg">🔒 This tier requires the <strong>HITO Game Pass</strong></p>
+        <div class="unlock-prompt-prices">
+          <button class="unlock-btn-game" id="btn-buy-hito-pass">Get HITO Pass — £4.99</button>
+          <button class="unlock-btn-bundle" id="btn-buy-all-games-hito">All Games — £12.99</button>
+        </div>
+        <p class="unlock-prompt-sub">One-time payment · Gasha tier always free</p>
+      </div>
+
+      <div class="config-row" style="margin-top:0.75rem">
         <div class="config-row-label">
           <span class="spec-label">Category</span>
           <span class="config-hint">Question topic</span>
@@ -456,7 +472,7 @@ let _supabase = null;
 let gameState = {
   screen: 'setup',
   mode: 'solo', // 'solo' or 'team'
-  difficulty: 'medium',
+  difficulty: 'easy',
   category: 'all',
   questions: [],
   currentQ: 0,
@@ -551,11 +567,66 @@ function updateModeUI() {
   }
 }
 
+// ── HITO game pass access check ───────────────────────────────────────────
+// Returns true if user has hito-pass OR all-games OR is on free Gasha tier.
+async function hasHitoAccess(difficulty) {
+  if (difficulty === 'easy') return true; // Gasha always free
+  if (!_supabase) return false;
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    if (!session) return false;
+
+    // Fetch user's unlocked pack slugs from DB
+    const { data } = await _supabase
+      .from('user_pack_unlocks')
+      .select('packs(slug)')
+      .eq('user_id', session.user.id);
+
+    const slugs = (data || []).map(r => r.packs?.slug).filter(Boolean);
+    return slugs.includes('hito-pass') || slugs.includes('all-games');
+  } catch { return false; }
+}
+
 function wireEvents() {
-  // Difficulty dropdown
-  document.getElementById('difficulty-dropdown').addEventListener('change', (e) => {
-    gameState.difficulty = e.target.value;
+  // ── Tier tiles ──────────────────────────────────────────────────────────
+  const tiles = document.querySelectorAll('.hito-tier-tile');
+  // Set Gasha active by default
+  tiles[0]?.classList.add('active');
+
+  tiles.forEach(tile => {
+    tile.addEventListener('click', async () => {
+      const diff = tile.dataset.diff;
+      const isFree = tile.dataset.free === 'true';
+
+      // Optimistically select
+      tiles.forEach(t => t.classList.remove('active'));
+      tile.classList.add('active');
+      gameState.difficulty = diff;
+
+      const prompt = document.getElementById('hito-unlock-prompt');
+
+      if (!isFree) {
+        const hasAccess = await hasHitoAccess(diff);
+        if (!hasAccess) {
+          prompt.style.display = '';
+          document.getElementById('btn-start-game').disabled = true;
+          // Mark locked tiles visually
+          tile.classList.add('locked');
+        } else {
+          prompt.style.display = 'none';
+          document.getElementById('btn-start-game').disabled = false;
+          tile.classList.remove('locked');
+        }
+      } else {
+        prompt.style.display = 'none';
+        document.getElementById('btn-start-game').disabled = false;
+      }
+    });
   });
+
+  // Unlock buttons
+  document.getElementById('btn-buy-hito-pass')?.addEventListener('click', () => startPaymentFlow('hito-pass'));
+  document.getElementById('btn-buy-all-games-hito')?.addEventListener('click', () => startPaymentFlow('all-games'));
 
   // Category dropdown
   document.getElementById('category-dropdown').addEventListener('change', (e) => {
@@ -592,9 +663,11 @@ function wireEvents() {
 
   // Solo mode winner
   document.getElementById('btn-play-again').addEventListener('click', () => {
-    gameState.difficulty = 'medium';
+    gameState.difficulty = 'easy';
     gameState.category = 'all';
-    document.getElementById('difficulty-dropdown').value = 'medium';
+    document.querySelectorAll('.hito-tier-tile').forEach((t,i) => t.classList.toggle('active', i === 0));
+    document.getElementById('hito-unlock-prompt').style.display = 'none';
+    document.getElementById('btn-start-game').disabled = false;
     document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
   });
@@ -605,9 +678,11 @@ function wireEvents() {
   document.getElementById('btn-team-correct')?.addEventListener('click', () => recordTeamAnswer(true));
   document.getElementById('btn-team-skip')?.addEventListener('click', () => recordTeamAnswer(false));
   document.getElementById('btn-team-play-again')?.addEventListener('click', () => {
-    gameState.difficulty = 'medium';
+    gameState.difficulty = 'easy';
     gameState.category = 'all';
-    document.getElementById('difficulty-dropdown').value = 'medium';
+    document.querySelectorAll('.hito-tier-tile').forEach((t,i) => t.classList.toggle('active', i === 0));
+    document.getElementById('hito-unlock-prompt').style.display = 'none';
+    document.getElementById('btn-start-game').disabled = false;
     document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
   });
@@ -1675,6 +1750,48 @@ body.game-body {
   transform: translateY(0);
   background: #0d47a1;
 }
+
+/* ═══ HITO TIER TILES ═══ */
+.hito-tier-grid {
+  display: flex; gap: 0.5rem; margin-top: 0.5rem;
+}
+.hito-tier-tile {
+  flex: 1; padding: 0.65rem 0.4rem; border-radius: 12px;
+  border: 1.5px solid var(--border-mid); background: var(--bg-card);
+  text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  font-family: inherit;
+}
+.hito-tier-tile .tier-emoji { font-size: 1.1rem; }
+.hito-tier-tile .tier-name  { font-size: 0.75rem; font-weight: 700; color: var(--text-sub); letter-spacing: 0.04em; }
+.hito-tier-tile .tier-sub   { font-size: 0.6rem; color: var(--text-muted); }
+.hito-tier-tile.active      { border-color: #f4511e; background: rgba(244,81,30,0.08); }
+.hito-tier-tile.active .tier-name { color: #f4511e; }
+.hito-tier-tile.locked      { opacity: 0.65; }
+
+/* HITO unlock prompt */
+.hito-unlock-prompt {
+  margin-top: 0.75rem; padding: 1rem;
+  background: rgba(244,81,30,0.06); border: 1.5px solid rgba(244,81,30,0.3);
+  border-radius: 12px; text-align: center;
+}
+.unlock-prompt-msg { font-size: 0.85rem; color: var(--text); margin: 0 0 0.75rem; }
+.unlock-prompt-prices { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+.unlock-btn-game {
+  padding: 0.6rem 1rem; background: #f4511e; color: #fff;
+  border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.15s; font-family: inherit;
+}
+.unlock-btn-game:hover { opacity: 0.88; }
+.unlock-btn-bundle {
+  padding: 0.6rem 1rem; background: transparent; color: var(--text-sub);
+  border: 1.5px solid var(--border-mid); border-radius: 10px;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  transition: border-color 0.15s; font-family: inherit;
+}
+.unlock-btn-bundle:hover { border-color: #f4511e; color: var(--text); }
+.unlock-prompt-sub { font-size: 0.68rem; color: var(--text-muted); margin: 0.5rem 0 0; }
 
 /* ═══ DESKTOP CENTERED LAYOUT ═══ */
 @media (min-width: 768px) {

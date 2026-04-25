@@ -458,6 +458,16 @@
         </div>
       </div>
 
+      <!-- Unlock prompt — shown when paid tier selected without access -->
+      <div id="hinqle-unlock-prompt" style="display:none;padding:1rem;background:rgba(0,137,123,0.07);border:1.5px solid rgba(0,137,123,0.3);border-radius:12px;text-align:center">
+        <p style="font-size:.85rem;color:var(--text);margin:0 0 .7rem">🔒 This tier requires the <strong>Hinqle Game Pass</strong></p>
+        <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+          <button id="btn-buy-hinqle-pass" style="padding:.6rem 1rem;background:var(--riddle);color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer">Get Hinqle Pass — £4.99</button>
+          <button id="btn-buy-all-games-hinqle" style="padding:.6rem 1rem;background:transparent;color:var(--text-sub);border:1.5px solid var(--border-mid);border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">All Games — £12.99</button>
+        </div>
+        <p style="font-size:.68rem;color:var(--text-muted);margin:.5rem 0 0">One-time · Gasha tier always free</p>
+      </div>
+
       <p id="avail-msg"></p>
 
       <button id="btn-start" class="btn-start">▶ Start Game</button>
@@ -605,15 +615,64 @@
     }
   }
 
+  // ── Hinqle game pass access check ────────────────────────
+  async function hasHinqleAccess() {
+    try {
+      const { data: { session } } = await _sb.auth.getSession();
+      if (!session) return false;
+      const { data } = await _sb
+        .from('user_pack_unlocks')
+        .select('packs(slug)')
+        .eq('user_id', session.user.id);
+      const slugs = (data || []).map(r => r.packs?.slug).filter(Boolean);
+      return slugs.includes('hinqle-pass') || slugs.includes('all-games');
+    } catch { return false; }
+  }
+
+  async function startPaymentFlow(slug) {
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) {
+      alert('Please sign in first to purchase a game pass.');
+      return;
+    }
+    const res = await fetch(
+      'https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ pack_slug: slug }),
+      }
+    );
+    const json = await res.json();
+    if (json.url) window.location.href = json.url;
+    else alert('Could not start checkout: ' + (json.error || 'Unknown error'));
+  }
+
   // ── Tier tile selection ───────────────────────────────────
   document.querySelectorAll('.tier-tile[data-diff]').forEach(tile => {
-    tile.addEventListener('click', () => {
+    tile.addEventListener('click', async () => {
       document.querySelectorAll('.tier-tile[data-diff]').forEach(x => x.classList.remove('active'));
       tile.classList.add('active');
       chosenDiff = tile.dataset.diff;
+
+      // Gate non-free tiers
+      const prompt = document.getElementById('hinqle-unlock-prompt');
+      if (chosenDiff !== 'all' && chosenDiff !== 'easy') {
+        const access = await hasHinqleAccess();
+        prompt.style.display = access ? 'none' : '';
+        document.getElementById('btn-start').disabled = !access || poolRiddles.length === 0;
+      } else {
+        prompt.style.display = 'none';
+        document.getElementById('btn-start').disabled = false;
+      }
+
       applyFilter();
     });
   });
+
+  // Unlock buttons
+  document.getElementById('btn-buy-hinqle-pass')?.addEventListener('click', () => startPaymentFlow('hinqle-pass'));
+  document.getElementById('btn-buy-all-games-hinqle')?.addEventListener('click', () => startPaymentFlow('all-games'));
 
   function applyFilter() {
     poolRiddles = chosenDiff === 'all'

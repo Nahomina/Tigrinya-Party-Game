@@ -6,10 +6,31 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
+// ── Cascade map: buying X also unlocks these slugs ────────────────────────
+// Game passes unlock all tiers for their game.
+// All-games bundle unlocks every game pass + every tier pack.
+const CASCADE: Record<string, string[]> = {
+  // Legacy per-tier cascades (kept for existing customers)
+  shimagile:    ['qola', 'gobez'],
+  gobez:        ['qola'],
+  qola:         [],
+  expert:       ['qola', 'gobez'],      // legacy slug alias
+  advanced:     ['qola'],               // legacy slug alias
+  intermediate: [],                     // legacy slug alias
+
+  // Game passes
+  'mayim-pass':  ['qola', 'gobez', 'shimagile'],   // unlocks all MAYIM/MISLA tiers
+  'hito-pass':   [],                               // standalone — checked by slug
+  'hinqle-pass': [],                               // standalone — checked by slug
+
+  // All-games bundle — cascades EVERYTHING
+  'all-games':   ['qola', 'gobez', 'shimagile', 'mayim-pass', 'hito-pass', 'hinqle-pass'],
+};
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  // ── Verify Stripe signature ───────────────────────────────
+  // ── Verify Stripe signature ───────────────────────────────────────────────
   const sig     = req.headers.get('stripe-signature');
   const rawBody = await req.text();
   const secret  = Deno.env.get('STRIPE_WEBHOOK_SECRET');
@@ -25,38 +46,42 @@ Deno.serve(async (req) => {
     return new Response(`Webhook Error: ${msg}`, { status: 400 });
   }
 
-  // ── Handle checkout completion ────────────────────────────
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
+  if (event.type !== 'checkout.session.completed') {
+    return new Response(JSON.stringify({ received: true }), { status: 200 });
+  }
 
-    // Only handle paid sessions
-    if (session.payment_status !== 'paid') {
-      return new Response(JSON.stringify({ received: true }), { status: 200 });
-    }
+  const session = event.data.object as Stripe.Checkout.Session;
+  if (session.payment_status !== 'paid') {
+    return new Response(JSON.stringify({ received: true }), { status: 200 });
+  }
 
-    const pack_slug = session.metadata?.pack_slug;
-    const user_id   = session.metadata?.user_id ?? session.client_reference_id;
+  const pack_slug = session.metadata?.pack_slug;
+  const user_id   = session.metadata?.user_id ?? session.client_reference_id;
 
-    if (!pack_slug || !user_id) {
-      console.error('Missing metadata — session:', session.id);
-      return new Response('Missing metadata', { status: 400 });
-    }
+  if (!pack_slug || !user_id) {
+    console.error('Missing metadata — session:', session.id);
+    return new Response('Missing metadata', { status: 400 });
+  }
 
-    const sb = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
+  const sb = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
 
-    // Resolve pack_id from slug
+  // ── Unlock the purchased pack + all cascade slugs ─────────────────────────
+  const slugsToUnlock = [pack_slug, ...(CASCADE[pack_slug] ?? [])];
+
+  for (const slug of slugsToUnlock) {
+    // Resolve pack_id from slug (game passes are now real packs in DB)
     const { data: pack, error: packErr } = await sb
-      .from('packs').select('id').eq('slug', pack_slug).single();
+      .from('packs').select('id').eq('slug', slug).single();
 
     if (packErr || !pack) {
-      console.error('Pack not found:', pack_slug);
-      return new Response('Pack not found', { status: 400 });
+      console.warn(`Pack not found for slug: ${slug} — skipping`);
+      continue;
     }
 
-    // Idempotency check — don't double-unlock
+    // Idempotency check
     const { data: existing } = await sb
       .from('user_pack_unlocks')
       .select('id')
@@ -65,56 +90,19 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!existing) {
+      const method = slug === pack_slug ? 'stripe' : 'cascade';
       const { error: insertErr } = await sb.from('user_pack_unlocks').insert({
         user_id,
-        pack_id:          pack.id,
-        stripe_session_id: session.id,
-        payment_method:   'stripe',
-        unlocked_at:      new Date().toISOString(),
+        pack_id:           pack.id,
+        stripe_session_id: slug === pack_slug ? session.id : null,
+        payment_method:    method,
+        unlocked_at:       new Date().toISOString(),
       });
 
       if (insertErr) {
-        console.error('Failed to record unlock:', insertErr);
-        return new Response('DB error', { status: 500 });
-      }
-      console.log(`✓ Unlocked ${pack_slug} for user ${user_id}`);
-    }
-
-    // ── Cascade: higher tiers auto-unlock all lower paid tiers ──
-    // Tier order: qola (L2) → gobez (L3) → shimagile (L4)
-    // Buying Shimagile = get Qol'a + Gobez free.
-    // Buying Gobez = get Qol'a free.
-    const CASCADE: Record<string, string[]> = {
-      shimagile:    ['qola', 'gobez'],
-      gobez:        ['qola'],
-      qola:         [],
-      // legacy slug names (in case any existing webhook events reference them)
-      expert:       ['qola', 'gobez'],
-      advanced:     ['qola'],
-      intermediate: [],
-    };
-    const slugsToGrant = CASCADE[pack_slug] ?? [];
-
-    for (const slug of slugsToGrant) {
-      const { data: lowerPack } = await sb
-        .from('packs').select('id').eq('slug', slug).single();
-      if (!lowerPack) continue;
-
-      const { data: alreadyHas } = await sb
-        .from('user_pack_unlocks')
-        .select('id')
-        .eq('user_id', user_id)
-        .eq('pack_id', lowerPack.id)
-        .maybeSingle();
-
-      if (!alreadyHas) {
-        await sb.from('user_pack_unlocks').insert({
-          user_id,
-          pack_id:        lowerPack.id,
-          payment_method: 'cascade',       // marks as automatically granted
-          unlocked_at:    new Date().toISOString(),
-        });
-        console.log(`✓ Cascade-unlocked ${slug} for user ${user_id} (bought ${pack_slug})`);
+        console.error(`Failed to record unlock for ${slug}:`, insertErr);
+      } else {
+        console.log(`✓ ${method === 'stripe' ? 'Unlocked' : 'Cascade-unlocked'} "${slug}" for user ${user_id}`);
       }
     }
   }
