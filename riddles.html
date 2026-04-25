@@ -64,26 +64,35 @@
       text-transform: uppercase; color: var(--text-muted); margin: 0 0 .55rem;
     }
 
-    /* Team inputs */
-    .team-row { display: flex; gap: .7rem; }
-    .team-row input {
+    /* Team inputs — stacked vertically */
+    .team-col { display: flex; flex-direction: column; gap: .55rem; }
+    .team-input-wrap { display: flex; align-items: center; gap: .65rem; }
+    .team-input-label {
+      font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted); min-width: 3.5rem;
+    }
+    .team-col input {
       flex: 1; background: var(--bg-card); border: 1px solid var(--border-mid);
       border-radius: 10px; padding: .75rem 1rem; color: var(--text);
       font-size: .95rem; outline: none; transition: border-color .15s;
-      font-family: inherit;
+      font-family: inherit; width: 100%;
     }
-    .team-row input:focus { border-color: var(--riddle); }
+    .team-col input:focus { border-color: var(--riddle); }
 
-    /* Difficulty pills */
-    .pill-group { display: flex; gap: .45rem; flex-wrap: wrap; }
-    .pill {
-      padding: .38rem .85rem; border-radius: 99px;
+    /* Tier tiles */
+    .tier-group { display: flex; gap: .55rem; }
+    .tier-tile {
+      flex: 1; padding: .65rem .4rem; border-radius: 12px;
       border: 1.5px solid var(--border-mid); background: var(--bg-card);
-      color: var(--text-sub); font-size: .78rem; font-weight: 600;
-      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+      text-align: center; cursor: pointer;
+      transition: border-color .15s, background .15s;
       font-family: inherit;
     }
-    .pill.active { border-color: var(--riddle); background: var(--riddle-tint); color: var(--riddle); }
+    .tier-tile .t-emoji { font-size: 1.15rem; display: block; margin-bottom: .2rem; }
+    .tier-tile .t-name  { font-size: .72rem; font-weight: 700; color: var(--text-sub); letter-spacing: .04em; display: block; }
+    .tier-tile .t-sub   { font-size: .6rem;  color: var(--text-muted); display: block; margin-top: .1rem; }
+    .tier-tile.active { border-color: var(--riddle); background: var(--riddle-tint); }
+    .tier-tile.active .t-name { color: var(--riddle); }
 
     /* Config rows */
     .config-row {
@@ -355,23 +364,45 @@
 
     <div class="setup-body">
 
-      <!-- Team names -->
+      <!-- Team names — stacked -->
       <div>
         <p class="section-label">Team Names</p>
-        <div class="team-row">
-          <input type="text" id="input-team-a" placeholder="Team A" maxlength="18" />
-          <input type="text" id="input-team-b" placeholder="Team B" maxlength="18" />
+        <div class="team-col">
+          <div class="team-input-wrap">
+            <span class="team-input-label">Team A</span>
+            <input type="text" id="input-team-a" placeholder="Enter team name…" maxlength="18" />
+          </div>
+          <div class="team-input-wrap">
+            <span class="team-input-label">Team B</span>
+            <input type="text" id="input-team-b" placeholder="Enter team name…" maxlength="18" />
+          </div>
         </div>
       </div>
 
-      <!-- Difficulty -->
+      <!-- Difficulty tier -->
       <div>
-        <p class="section-label">Difficulty</p>
-        <div class="pill-group">
-          <button class="pill active" data-diff="all">All</button>
-          <button class="pill"        data-diff="easy">Easy</button>
-          <button class="pill"        data-diff="medium">Medium</button>
-          <button class="pill"        data-diff="hard">Hard</button>
+        <p class="section-label">Difficulty Tier</p>
+        <div class="tier-group">
+          <button class="tier-tile active" data-diff="all">
+            <span class="t-emoji">🌟</span>
+            <span class="t-name">All</span>
+            <span class="t-sub">Mixed</span>
+          </button>
+          <button class="tier-tile" data-diff="easy">
+            <span class="t-emoji">🟢</span>
+            <span class="t-name">Gasha</span>
+            <span class="t-sub">Easy</span>
+          </button>
+          <button class="tier-tile" data-diff="medium">
+            <span class="t-emoji">🔵</span>
+            <span class="t-name">Qol'a</span>
+            <span class="t-sub">Medium</span>
+          </button>
+          <button class="tier-tile" data-diff="hard">
+            <span class="t-emoji">🟣</span>
+            <span class="t-name">Gobez</span>
+            <span class="t-sub">Hard</span>
+          </button>
         </div>
       </div>
 
@@ -381,12 +412,24 @@
 
         <div class="config-row">
           <div class="config-info">
-            <div class="config-label">Riddles per game</div>
-            <div class="config-hint" id="hint-count">Alternates between teams each turn</div>
+            <div class="config-label">Rounds</div>
+            <div class="config-hint" id="hint-rounds">Riddles per team per round</div>
+          </div>
+          <div class="stepper">
+            <button class="stepper-btn" id="btn-rounds-minus">−</button>
+            <span class="stepper-val"   id="val-rounds">3</span>
+            <button class="stepper-btn" id="btn-rounds-plus">+</button>
+          </div>
+        </div>
+
+        <div class="config-row">
+          <div class="config-info">
+            <div class="config-label">Riddles per round</div>
+            <div class="config-hint" id="hint-count">Per team, per round</div>
           </div>
           <div class="stepper">
             <button class="stepper-btn" id="btn-count-minus">−</button>
-            <span class="stepper-val"   id="val-count">10</span>
+            <span class="stepper-val"   id="val-count">5</span>
             <button class="stepper-btn" id="btn-count-plus">+</button>
           </div>
         </div>
@@ -511,19 +554,23 @@
   );
 
   // ── State ─────────────────────────────────────────────────
-  let allRiddles  = [];
-  let poolRiddles = [];
-  let gameRiddles = [];
-  let idx         = 0;
-  let scores      = { a: 0, b: 0 };
-  let names       = { a: 'Team A', b: 'Team B' };
-  let totalCount  = 10;
-  let secsEach    = 30;
-  let chosenDiff  = 'all';
-  let firstTeam   = 'a';
-  let timerInt    = null;
-  let timerSecs   = 0;
-  let peekOpen    = false;
+  let allRiddles    = [];
+  let poolRiddles   = [];
+  let gameRiddles   = [];
+  let idx           = 0;
+  let scores        = { a: 0, b: 0 };
+  let names         = { a: 'Team A', b: 'Team B' };
+  let perRound      = 5;   // riddles per team per round
+  let numRounds     = 3;   // total rounds
+  let secsEach      = 30;
+  let chosenDiff    = 'all';
+  let firstTeam     = 'a';
+  let timerInt      = null;
+  let timerSecs     = 0;
+  let peekOpen      = false;
+
+  // derived
+  function totalCount() { return perRound * numRounds * 2; } // both teams × rounds × per-round
 
   // ── Screen switch (uses .active like heto.html) ───────────
   function showScreen(name) {
@@ -547,12 +594,12 @@
     }
   }
 
-  // ── Difficulty filter ─────────────────────────────────────
-  document.querySelectorAll('.pill[data-diff]').forEach(p => {
-    p.addEventListener('click', () => {
-      document.querySelectorAll('.pill[data-diff]').forEach(x => x.classList.remove('active'));
-      p.classList.add('active');
-      chosenDiff = p.dataset.diff;
+  // ── Tier tile selection ───────────────────────────────────
+  document.querySelectorAll('.tier-tile[data-diff]').forEach(tile => {
+    tile.addEventListener('click', () => {
+      document.querySelectorAll('.tier-tile[data-diff]').forEach(x => x.classList.remove('active'));
+      tile.classList.add('active');
+      chosenDiff = tile.dataset.diff;
       applyFilter();
     });
   });
@@ -564,59 +611,67 @@
 
     const avail = poolRiddles.length;
     const msg   = document.getElementById('avail-msg');
+    const needed = totalCount();
 
     if (avail === 0) {
-      msg.textContent = '⚠ No riddles for this difficulty.';
+      msg.textContent = '⚠ No riddles for this tier. Choose another.';
       msg.style.color = '#e53935';
+      document.getElementById('btn-start').disabled = true;
+    } else if (avail < needed) {
+      msg.textContent = '⚠ Only ' + avail + ' riddles available — reduce rounds or riddles per round.';
+      msg.style.color = '#e65100';
       document.getElementById('btn-start').disabled = true;
     } else {
       msg.textContent = avail + ' riddle' + (avail === 1 ? '' : 's') + ' available';
       msg.style.color = 'var(--text-muted)';
       document.getElementById('btn-start').disabled = false;
-      // Clamp count to available
-      if (totalCount > avail) {
-        totalCount = avail;
-        document.getElementById('val-count').textContent = totalCount;
-      }
     }
     updateHints();
   }
 
   function updateHints() {
-    const perTeam = Math.ceil(totalCount / 2);
-    const mins    = Math.max(1, Math.round(totalCount * secsEach / 60));
-    document.getElementById('hint-count').textContent = perTeam + ' per team · ~' + mins + ' min total';
-    document.getElementById('hint-time').textContent  = secsEach + 's · ' + totalCount + ' riddles total';
+    const total = totalCount();
+    const mins  = Math.max(1, Math.round(total * secsEach / 60));
+    document.getElementById('hint-rounds').textContent =
+      numRounds + ' round' + (numRounds === 1 ? '' : 's') + ' · ' + (numRounds * perRound) + ' riddles per team';
+    document.getElementById('hint-count').textContent =
+      perRound + ' riddle' + (perRound === 1 ? '' : 's') + ' per team each round';
+    document.getElementById('hint-time').textContent =
+      '~' + mins + ' min total · ' + total + ' riddles';
+    // Also revalidate available
+    const avail  = poolRiddles.length;
+    const needed = totalCount();
+    const btn    = document.getElementById('btn-start');
+    const msg    = document.getElementById('avail-msg');
+    if (avail === 0) {
+      msg.textContent = '⚠ No riddles for this tier.'; msg.style.color = '#e53935'; btn.disabled = true;
+    } else if (avail < needed) {
+      msg.textContent = '⚠ Only ' + avail + ' available — need ' + needed + '. Reduce rounds or per-round.';
+      msg.style.color = '#e65100'; btn.disabled = true;
+    } else {
+      msg.textContent = avail + ' riddle' + (avail === 1 ? '' : 's') + ' available';
+      msg.style.color = 'var(--text-muted)'; btn.disabled = false;
+    }
   }
 
   // ── Steppers ──────────────────────────────────────────────
+  document.getElementById('btn-rounds-minus').addEventListener('click', () => {
+    if (numRounds > 1) { numRounds--; document.getElementById('val-rounds').textContent = numRounds; updateHints(); }
+  });
+  document.getElementById('btn-rounds-plus').addEventListener('click', () => {
+    if (numRounds < 10) { numRounds++; document.getElementById('val-rounds').textContent = numRounds; updateHints(); }
+  });
   document.getElementById('btn-count-minus').addEventListener('click', () => {
-    if (totalCount > 2) {
-      totalCount--;
-      document.getElementById('val-count').textContent = totalCount;
-      updateHints();
-    }
+    if (perRound > 1) { perRound--; document.getElementById('val-count').textContent = perRound; updateHints(); }
   });
   document.getElementById('btn-count-plus').addEventListener('click', () => {
-    if (totalCount < Math.min(30, poolRiddles.length)) {
-      totalCount++;
-      document.getElementById('val-count').textContent = totalCount;
-      updateHints();
-    }
+    if (perRound < 15) { perRound++; document.getElementById('val-count').textContent = perRound; updateHints(); }
   });
   document.getElementById('btn-time-minus').addEventListener('click', () => {
-    if (secsEach > 10) {
-      secsEach -= 5;
-      document.getElementById('val-time').textContent = secsEach;
-      updateHints();
-    }
+    if (secsEach > 10) { secsEach -= 5; document.getElementById('val-time').textContent = secsEach; updateHints(); }
   });
   document.getElementById('btn-time-plus').addEventListener('click', () => {
-    if (secsEach < 90) {
-      secsEach += 5;
-      document.getElementById('val-time').textContent = secsEach;
-      updateHints();
-    }
+    if (secsEach < 90) { secsEach += 5; document.getElementById('val-time').textContent = secsEach; updateHints(); }
   });
 
   // ── Start game ────────────────────────────────────────────
@@ -626,7 +681,7 @@
 
     // Random first team
     firstTeam   = Math.random() < 0.5 ? 'a' : 'b';
-    gameRiddles = shuffle([...poolRiddles]).slice(0, totalCount);
+    gameRiddles = shuffle([...poolRiddles]).slice(0, totalCount());
     scores      = { a: 0, b: 0 };
     idx         = 0;
 
@@ -655,7 +710,9 @@
 
     // Header
     document.getElementById('active-team').textContent    = names[team].toUpperCase();
-    document.getElementById('riddle-counter').textContent = (idx + 1) + ' / ' + totalCount;
+    const round = Math.floor(idx / (perRound * 2)) + 1;
+    document.getElementById('riddle-counter').textContent =
+      'R' + round + '/' + numRounds + '  ·  ' + (idx + 1) + '/' + totalCount();
 
     // Question
     document.getElementById('q-geez').textContent  = r.question;
@@ -750,7 +807,7 @@
   function decide(correct) {
     if (correct) scores[currentTeam()]++;
     idx++;
-    if (idx >= totalCount) showScore();
+    if (idx >= totalCount()) showScore();
     else renderRiddle();
   }
 
