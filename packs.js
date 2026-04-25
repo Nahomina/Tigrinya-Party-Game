@@ -112,7 +112,7 @@ const GAME_PASS_CATALOGUE = [
     icon:        '🔴',
     accentColor: '#e53935',
     description: "Unlock every tier for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez & Shimagile.",
-    priceGbp:    4.99,
+    priceGbp:    6.99,
     // Buying this cascades: qola + gobez + shimagile
     cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },

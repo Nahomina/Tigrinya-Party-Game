@@ -2384,24 +2384,68 @@ function updateAuthUI(isLoggedIn) {
   const indicator = document.getElementById('auth-indicator');
   if (!indicator) return;
 
+  // Remove existing dropdown if present
+  document.getElementById('profile-dropdown')?.remove();
+
   if (isLoggedIn && _currentUser) {
-    // Show email as profile link + logout button
-    const profileLink = document.createElement('a');
-    profileLink.href = 'profile.html';
-    profileLink.className = 'auth-profile-link';
-    profileLink.textContent = _currentUser.email;
+    // ── Avatar button that toggles a dropdown ──────────────────
+    const initials = (_currentUser.email || '?').slice(0, 2).toUpperCase();
 
-    const logoutBtn = document.createElement('button');
-    logoutBtn.className = 'logout-btn';
-    logoutBtn.textContent = 'Log Out';
-    logoutBtn.addEventListener('click', handleLogout);
+    indicator.innerHTML = `
+      <button class="profile-avatar-btn" id="profile-avatar-btn" aria-label="Account menu" aria-expanded="false">
+        <span class="profile-avatar-initials">${initials}</span>
+        <svg class="profile-avatar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>`;
 
-    indicator.textContent = '';
-    indicator.appendChild(profileLink);
-    indicator.appendChild(document.createTextNode(' · '));
-    indicator.appendChild(logoutBtn);
+    const dropdown = document.createElement('div');
+    dropdown.id = 'profile-dropdown';
+    dropdown.className = 'profile-dropdown hidden';
+    dropdown.setAttribute('role', 'menu');
+    dropdown.innerHTML = `
+      <div class="profile-dropdown-email">${_currentUser.email}</div>
+      <a href="profile.html" class="profile-dropdown-item" role="menuitem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        My Profile
+      </a>
+      <button class="profile-dropdown-item profile-dropdown-logout" role="menuitem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log Out
+      </button>`;
+    document.body.appendChild(dropdown);
+
+    // Position dropdown under the indicator
+    function positionDropdown() {
+      const rect = indicator.getBoundingClientRect();
+      dropdown.style.top  = (rect.bottom + 8) + 'px';
+      dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+    }
+
+    // Toggle on avatar click
+    document.getElementById('profile-avatar-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = !dropdown.classList.contains('hidden');
+      dropdown.classList.toggle('hidden', open);
+      document.getElementById('profile-avatar-btn')?.setAttribute('aria-expanded', String(!open));
+      if (!open) positionDropdown();
+    });
+
+    // Logout
+    dropdown.querySelector('.profile-dropdown-logout').addEventListener('click', () => {
+      dropdown.classList.add('hidden');
+      handleLogout();
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!indicator.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+        document.getElementById('profile-avatar-btn')?.setAttribute('aria-expanded', 'false');
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+
   } else {
-    indicator.textContent = '';
+    indicator.innerHTML = '';
     const loginBtn = document.createElement('button');
     loginBtn.className = 'auth-login-prompt-btn';
     loginBtn.textContent = 'Log in to unlock packs';

@@ -2687,20 +2687,96 @@ details[open] > .faq-q::after {
   position: fixed;
   top: 1rem;
   right: 1rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  background: var(--bg-elevated);
-  padding: 0.55rem 0.9rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
   z-index: 400;
-  transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  max-width: 300px;
-  word-break: break-word;
 }
+
+/* ── Profile avatar button ──────────────────────────────────── */
+.profile-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-mid);
+  border-radius: 100px;
+  padding: 5px 10px 5px 5px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.profile-avatar-btn:hover {
+  border-color: var(--red);
+  background: var(--bg-card);
+}
+.profile-avatar-initials {
+  width: 28px;
+  height: 28px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.profile-avatar-chevron {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.profile-avatar-btn[aria-expanded="true"] .profile-avatar-chevron {
+  transform: rotate(180deg);
+}
+
+/* ── Profile dropdown ───────────────────────────────────────── */
+.profile-dropdown {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--border-mid);
+  border-radius: 10px;
+  min-width: 210px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 500;
+  overflow: hidden;
+  animation: dropdownIn 0.15s cubic-bezier(0.22,1,0.36,1);
+}
+.profile-dropdown.hidden { display: none; }
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+.profile-dropdown-email {
+  padding: 10px 14px 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+.profile-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.profile-dropdown-item:hover { background: var(--bg-elevated); }
+.profile-dropdown-item svg { color: var(--text-muted); flex-shrink: 0; }
+.profile-dropdown-logout { color: var(--red); }
+.profile-dropdown-logout svg { color: var(--red); }
 
 .auth-profile-link {
   color: var(--text);
