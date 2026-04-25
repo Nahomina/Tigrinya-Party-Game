@@ -7,25 +7,17 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 });
 
 // ── Price ID map ───────────────────────────────────────────────────────────
-// Set STRIPE_PRICE_<SLUG_UPPER> env vars in Supabase dashboard to override.
-// Format: STRIPE_PRICE_MAYIM_PASS, STRIPE_PRICE_ALL_GAMES, etc.
 const PRICE_IDS: Record<string, string> = {
-  // ── Legacy per-tier packs (kept for existing customers) ─────────────────
+  // ── Legacy per-tier packs ────────────────────────────────────────────────
   qola:      Deno.env.get('STRIPE_PRICE_QOLA')      ?? 'price_1TNLrDFP5Lu45Y0rsGi5Kc5p',
   gobez:     Deno.env.get('STRIPE_PRICE_GOBEZ')     ?? 'price_1TNLs6FP5Lu45Y0rJmxwQrua',
   shimagile: Deno.env.get('STRIPE_PRICE_SHIMAGILE') ?? 'price_1TNLsdFP5Lu45Y0rQcimAvV4',
 
-  // ── Game Passes (£4.99 each) — set these in Stripe dashboard ────────────
-  // Create 4 products in Stripe → Products → Add product:
-  //   "MAYIM & MISLA Game Pass"         £4.99 one-time
-  //   "HITO Game Pass"                  £4.99 one-time
-  //   "Hinqle Hinqilitey Game Pass"     £4.99 one-time
-  //   "All Games — Forever"             £12.99 one-time
-  // Then paste the Price IDs in Supabase → Settings → Edge Functions → Secrets
-  'mayim-pass':  Deno.env.get('STRIPE_PRICE_MAYIM_PASS')  ?? '',
-  'hito-pass':   Deno.env.get('STRIPE_PRICE_HITO_PASS')   ?? '',
-  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS') ?? '',
-  'all-games':   Deno.env.get('STRIPE_PRICE_ALL_GAMES')   ?? '',
+  // ── Game Passes ──────────────────────────────────────────────────────────
+  'mayim-pass':  Deno.env.get('STRIPE_PRICE_MAYIM_PASS')  ?? 'price_1TQAE2FP5Lu45Y0rQQRvEdBk',
+  'hito-pass':   Deno.env.get('STRIPE_PRICE_HITO_PASS')   ?? 'price_1TQAF6FP5Lu45Y0rHhQu5XoK',
+  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS') ?? 'price_1TQAG9FP5Lu45Y0rU75wxdWQ',
+  'all-games':   Deno.env.get('STRIPE_PRICE_ALL_GAMES')   ?? 'price_1TQAHPFP5Lu45Y0r3EjRKeO5',
 };
 
 const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://habeshagame.com';
