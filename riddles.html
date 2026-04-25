@@ -38,7 +38,17 @@
     .setup-hero {
       background: linear-gradient(135deg, var(--riddle) 0%, var(--riddle-dark) 100%);
       padding: 3rem 1.5rem 2.5rem; text-align: center; flex-shrink: 0;
+      position: relative;
     }
+    .hero-back-btn {
+      position: absolute; top: 1rem; left: 1rem;
+      color: rgba(255,255,255,0.85); font-size: .82rem;
+      font-weight: 600; text-decoration: none; letter-spacing: .04em;
+      padding: .35rem .7rem; border-radius: 8px;
+      background: rgba(0,0,0,.15);
+      transition: background .15s, color .15s;
+    }
+    .hero-back-btn:hover { background: rgba(0,0,0,.28); color: #fff; }
     .setup-hero .hero-title {
       font-family: var(--font-display);
       font-size: clamp(2.2rem, 9vw, 3.4rem);
@@ -357,6 +367,7 @@
   <section id="screen-setup" class="screen">
 
     <div class="setup-hero">
+      <a href="index.html" class="hero-back-btn" aria-label="Back to home">← Home</a>
       <h1 class="hero-title" style="font-size:clamp(1.6rem,7vw,2.6rem);letter-spacing:0.07em">HINQLE HINQILITEY</h1>
       <p class="hero-geez" lang="ti">ሕንቅል ሕንቅሊተይ</p>
       <p class="hero-sub">Tigrinya Riddles · Judge checks the answer</p>
