@@ -41,6 +41,7 @@
         <button class="admin-tab active" data-tab="words">📝 Words</button>
         <button class="admin-tab"        data-tab="proverbs">🗣 Proverbs</button>
         <button class="admin-tab" data-tab="heto">❓ Heto</button>
+        <button class="admin-tab" data-tab="riddles">🧩 Riddles</button>
         <button class="admin-tab" data-tab="grants">🔑 Grants</button>
       </div>
 
@@ -290,6 +291,81 @@
       </div><!-- /#tab-heto -->
 
       <!-- ════════════════════════════════════════════════
+           TAB: RIDDLES (ፍልጠለይ)
+      ════════════════════════════════════════════════ -->
+      <div id="tab-riddles" class="tab-panel hidden">
+
+        <!-- Stats -->
+        <div class="admin-stats">
+          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-riddles-total" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Easy</span><span id="stat-riddles-easy" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Medium</span><span id="stat-riddles-medium" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Hard</span><span id="stat-riddles-hard" class="stat-value">0</span></div>
+        </div>
+
+        <!-- Add Riddle Form -->
+        <div class="admin-section">
+          <h2>➕ Add Riddle</h2>
+          <form id="form-add-riddle" class="word-form word-form--proverb">
+            <input type="text" id="input-riddle-question"       placeholder="Riddle question (Tigrinya Ge'ez)" required lang="ti" />
+            <input type="text" id="input-riddle-question-latin" placeholder="Riddle question (Latin romanization)" required />
+            <input type="text" id="input-riddle-answer"         placeholder="Answer (Tigrinya Ge'ez)" required lang="ti" />
+            <input type="text" id="input-riddle-answer-latin"   placeholder="Answer (Latin romanization)" required />
+            <input type="text" id="input-riddle-hint"           placeholder="Hint for the judge (optional)" />
+            <select id="input-riddle-category" required>
+              <option value="">Category</option>
+              <option value="General">🧠 General</option>
+              <option value="Nature">🌿 Nature</option>
+              <option value="Daily Life">🏠 Daily Life</option>
+              <option value="Culture">🌍 Culture</option>
+              <option value="Animals">🐾 Animals</option>
+              <option value="Food">🍲 Food</option>
+            </select>
+            <select id="input-riddle-difficulty" required>
+              <option value="">Difficulty</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button type="submit" class="btn btn-success">Add Riddle</button>
+          </form>
+        </div>
+
+        <!-- Riddles List -->
+        <div class="admin-section">
+          <h2>📋 All Riddles</h2>
+          <div class="filter-controls">
+            <input type="text" id="search-riddles" placeholder="Search riddle or answer…" class="search-input" />
+            <select id="filter-riddle-category" class="filter-select">
+              <option value="">All Categories</option>
+              <option value="General">General</option>
+              <option value="Nature">Nature</option>
+              <option value="Daily Life">Daily Life</option>
+              <option value="Culture">Culture</option>
+              <option value="Animals">Animals</option>
+              <option value="Food">Food</option>
+            </select>
+            <select id="filter-riddle-difficulty" class="filter-select">
+              <option value="">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="riddles-table" class="admin-table">
+              <thead>
+                <tr>
+                  <th>Question</th><th>Answer</th><th>Category</th><th>Difficulty</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="riddles-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /#tab-riddles -->
+
+      <!-- ════════════════════════════════════════════════
            TAB: GRANTS (manual pack access)
       ════════════════════════════════════════════════ -->
       <div id="tab-grants" class="tab-panel hidden">
@@ -440,6 +516,38 @@
     </div>
   </div>
 
+  <!-- ── Edit Riddle Modal ─────────────────────────────────── -->
+  <div id="edit-riddle-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Edit Riddle</h3>
+      <form id="form-edit-riddle" class="word-form word-form--proverb">
+        <input type="hidden" id="edit-riddle-id" />
+        <input type="text" id="edit-riddle-question"       placeholder="Riddle question (Tigrinya Ge'ez)" required lang="ti" />
+        <input type="text" id="edit-riddle-question-latin" placeholder="Riddle question (Latin)" required />
+        <input type="text" id="edit-riddle-answer"         placeholder="Answer (Tigrinya Ge'ez)" required lang="ti" />
+        <input type="text" id="edit-riddle-answer-latin"   placeholder="Answer (Latin)" required />
+        <input type="text" id="edit-riddle-hint"           placeholder="Hint (optional)" />
+        <select id="edit-riddle-category" required>
+          <option value="General">General</option>
+          <option value="Nature">Nature</option>
+          <option value="Daily Life">Daily Life</option>
+          <option value="Culture">Culture</option>
+          <option value="Animals">Animals</option>
+          <option value="Food">Food</option>
+        </select>
+        <select id="edit-riddle-difficulty" required>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-edit-riddle" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ── Delete Confirmation Modal ──────────────────────── -->
   <div id="confirm-modal" class="modal hidden">
     <div class="modal-content">
@@ -456,6 +564,6 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="supabase.min.js"></script>
-  <script src="admin.js?v=9"></script>
+  <script src="admin.js?v=10"></script>
 </body>
 </html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f11" />
+  <title>ፍልጠለይ — Tigrinya Riddles Game</title>
+  <meta name="description" content="ፍልጠለይ — Tigrinya riddle game. The judge reads the riddle and checks the answer." />
+  <link rel="canonical" href="https://habeshagame.com/riddles.html" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="stylesheet" href="style.css?v=27" />
+  <style>
+    /* ── Riddles-specific design tokens ────────────────── */
+    :root {
+      --riddle-primary:   #00897b;
+      --riddle-hover:     #00695c;
+      --riddle-bg-tint:   rgba(0, 137, 123, 0.10);
+      --riddle-bg-card:   rgba(0, 137, 123, 0.06);
+    }
+
+    /* ── Game body centering (matches heto.html) ─────── */
+    body.game-body {
+      background: var(--bg);
+      min-height: 100dvh;
+    }
+    @media (min-width: 768px) {
+      body.game-body {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        background: var(--bg-elevated);
+      }
+      .screen {
+        max-width: 520px;
+        width: 100%;
+        border-left:  1px solid var(--border-mid);
+        border-right: 1px solid var(--border-mid);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+        background: var(--bg);
+      }
+    }
+
+    /* ── Setup Screen ───────────────────────────────────── */
+    #screen-setup {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+    .setup-hero {
+      background: linear-gradient(135deg, var(--riddle-primary) 0%, var(--riddle-hover) 100%);
+      padding: 3rem 1.5rem 2.5rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .setup-hero .title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 10vw, 3.6rem);
+      letter-spacing: 0.12em;
+      color: #fff;
+      margin: 0;
+    }
+    .setup-hero .geez-title {
+      font-family: var(--font-geez);
+      font-size: clamp(1.2rem, 5vw, 1.8rem);
+      color: rgba(255,255,255,0.85);
+      margin: 0.35rem 0 0;
+    }
+    .setup-hero .subtitle {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin: 0.6rem 0 0;
+    }
+
+    .setup-body {
+      padding: 1.5rem 1.25rem 2rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .setup-section-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 0.6rem;
+    }
+    .setup-teams {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .setup-teams input {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .setup-teams input:focus { border-color: var(--riddle-primary); }
+
+    /* Steppers */
+    .stepper-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-mid);
+      border-radius: 10px;
+      gap: 0.5rem;
+    }
+    .stepper-info { flex: 1; }
+    .stepper-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .stepper-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+    .stepper-controls { display: flex; align-items: center; gap: 0.5rem; }
+    .stepper-btn {
+      width: 2rem; height: 2rem;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-mid);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .stepper-btn:hover { border-color: var(--riddle-primary); background: var(--riddle-bg-tint); }
+    .stepper-val {
+      min-width: 2rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    /* Start button */
+    .btn-start-game {
+      margin-top: 0.5rem;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--riddle-primary), var(--riddle-hover));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-start-game:hover  { opacity: 0.92; }
+    .btn-start-game:active { transform: scale(0.98); }
+
+    .btn-back-home {
+      display: block;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      transition: color 0.15s;
+    }
+    .btn-back-home:hover { color: var(--text); }
+
+    /* ── Riddle Game Screen ──────────────────────────────── */
+    #screen-riddle {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .riddle-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1rem 0.7rem;
+      border-bottom: 1px solid var(--border-low);
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    .btn-quit-riddle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .btn-quit-riddle:hover { background: var(--bg-elevated); color: var(--text); }
+    .riddle-mode-badge {
+      font-family: var(--font-geez);
+      font-size: 1.1rem;
+      color: var(--riddle-primary);
+      font-weight: 600;
+    }
+    .riddle-timer-num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      min-width: 2.5rem;
+      text-align: right;
+      transition: color 0.3s;
+    }
+    .riddle-timer-num.danger { color: var(--danger, #e53935); }
+    .riddle-counter {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* Timer bar */
+    .riddle-timer-bar {
+      height: 3px;
+      background: var(--border-low);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .riddle-timer-fill {
+      height: 100%;
+      background: var(--riddle-primary);
+      transition: width 1s linear, background 0.3s;
+      transform-origin: left;
+    }
+    .riddle-timer-fill.danger { background: var(--danger, #e53935); }
+
+    /* Stage */
+    .riddle-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1.25rem 1rem;
+      gap: 0.6rem;
+      text-align: center;
+    }
+    .riddle-active-team {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--riddle-primary);
+      min-height: 1.2em;
+    }
+    .label-eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .riddle-question-text {
+      font-family: var(--font-geez);
+      font-size: clamp(1.25rem, 5vw, 1.7rem);
+      line-height: 1.55;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      margin: 0.4rem 0 0;
+    }
+    .riddle-question-latin {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-style: italic;
+      line-height: 1.5;
+      margin-top: 0.25rem;
+    }
+
+    /* Answer reveal panel */
+    .riddle-answer-panel {
+      background: var(--riddle-bg-card);
+      border: 1.5px solid var(--riddle-primary);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      width: 100%;
+      text-align: center;
+      animation: fadeSlideIn 0.25s ease;
+    }
+    .riddle-answer-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--riddle-primary);
+      margin-bottom: 0.4rem;
+    }
+    .riddle-answer-geez {
+      font-family: var(--font-geez);
+      font-size: clamp(1.3rem, 5.5vw, 1.9rem);
+      color: var(--text);
+      font-weight: 600;
+    }
+    .riddle-answer-latin {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-style: italic;
+      margin-top: 0.2rem;
+    }
+    .riddle-answer-hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      font-style: italic;
+    }
+
+    /* Judge peek */
+    .riddle-judge-peek {
+      background: rgba(0,0,0,0.06);
+      border: 1px dashed var(--border-mid);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      text-align: center;
+      animation: fadeSlideIn 0.2s ease;
+    }
+    .riddle-judge-peek .peek-eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+    .riddle-judge-peek .peek-geez {
+      font-family: var(--font-geez);
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+    .riddle-judge-peek .peek-latin {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      font-style: italic;
+    }
+
+    /* Time-up banner */
+    .riddle-time-up {
+      background: var(--danger, #e53935);
+      color: #fff;
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    /* Action bars */
+    .riddle-actions {
+      padding: 0.85rem 1rem 1.1rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .riddle-actions-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    /* Peek button */
+    .btn-riddle-peek {
+      flex: 1;
+      padding: 0.75rem 0.5rem;
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--border-mid);
+      border-radius: 12px;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-riddle-peek:hover { border-color: var(--riddle-primary); background: var(--riddle-bg-tint); }
+
+    /* Start timer button */
+    .btn-riddle-start {
+      flex: 1;
+      padding: 0.75rem 0.5rem;
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--riddle-primary);
+      border-radius: 12px;
+      color: var(--riddle-primary);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-riddle-start:hover { background: var(--riddle-bg-tint); }
+
+    /* Reveal answer button */
+    .btn-reveal-answer {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      background: linear-gradient(135deg, var(--riddle-primary), var(--riddle-hover));
+      border: none;
+      border-radius: 13px;
+      color: #fff;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-reveal-answer:hover { opacity: 0.9; }
+
+    /* Judge decision buttons */
+    .btn-riddle-wrong {
+      flex: 1;
+      padding: 1rem 0.5rem;
+      background: rgba(229, 57, 53, 0.10);
+      border: 1.5px solid #e53935;
+      border-radius: 13px;
+      color: #e53935;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .btn-riddle-wrong:hover { background: rgba(229, 57, 53, 0.18); }
+
+    .btn-riddle-correct {
+      flex: 2;
+      padding: 1rem 0.5rem;
+      background: var(--riddle-bg-tint);
+      border: 1.5px solid var(--riddle-primary);
+      border-radius: 13px;
+      color: var(--riddle-primary);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .btn-riddle-correct:hover { background: rgba(0,137,123,0.18); }
+
+    /* ── Score screen ────────────────────────────────────── */
+    #screen-score {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.25rem;
+      text-align: center;
+      gap: 1.5rem;
+    }
+    .score-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 8vw, 2.6rem);
+      letter-spacing: 0.1em;
+      color: var(--text);
+    }
+    .score-geez {
+      font-family: var(--font-geez);
+      font-size: clamp(1rem, 4vw, 1.4rem);
+      color: var(--text-sub);
+      margin-top: -0.5rem;
+    }
+    .score-cards {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    .score-card {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-mid);
+      border-radius: 16px;
+      padding: 1.25rem 0.75rem;
+      transition: border-color 0.3s;
+    }
+    .score-card.winner {
+      border-color: var(--riddle-primary);
+      background: var(--riddle-bg-card);
+    }
+    .score-card-name {
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .score-card-points {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      line-height: 1;
+      color: var(--text);
+      margin: 0.3rem 0;
+    }
+    .score-card.winner .score-card-points { color: var(--riddle-primary); }
+    .score-card-label { font-size: 0.7rem; color: var(--text-muted); }
+    .score-winner-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--riddle-primary);
+      margin-top: 0.4rem;
+    }
+    .score-tie-msg {
+      font-size: 1rem;
+      color: var(--text-sub);
+    }
+    .score-actions {
+      display: flex;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 400px;
+    }
+    .btn-play-again {
+      flex: 2;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--riddle-primary), var(--riddle-hover));
+      color: #fff;
+      border: none;
+      border-radius: 13px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-play-again:hover { opacity: 0.9; }
+    .btn-go-home {
+      flex: 1;
+      padding: 1rem;
+      background: var(--bg-elevated);
+      border: 1.5px solid var(--border-mid);
+      border-radius: 13px;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s;
+    }
+    .btn-go-home:hover { border-color: var(--riddle-primary); }
+
+    /* ── Loading / Error screens ────────────────────────── */
+    #screen-loading, #screen-error {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    .loading-spinner {
+      width: 2.5rem; height: 2.5rem;
+      border: 3px solid var(--border-mid);
+      border-top-color: var(--riddle-primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="game-body">
+
+  <!-- ── Loading ──────────────────────────────────────────── -->
+  <section id="screen-loading" class="screen" role="status">
+    <div class="loading-spinner"></div>
+    <p style="color:var(--text-muted);font-size:0.9rem">Loading riddles…</p>
+  </section>
+
+  <!-- ── Error ────────────────────────────────────────────── -->
+  <section id="screen-error" class="screen hidden">
+    <p style="font-size:2rem">⚠️</p>
+    <p id="error-msg" style="color:var(--text-sub)">Could not load riddles.</p>
+    <a href="index.html" style="color:var(--riddle-primary)">← Back to home</a>
+  </section>
+
+  <!-- ── Setup ────────────────────────────────────────────── -->
+  <section id="screen-setup" class="screen hidden">
+
+    <div class="setup-hero">
+      <h1 class="title">FIDLTELAY</h1>
+      <p class="geez-title" lang="ti">ፍልጠለይ</p>
+      <p class="subtitle">Tigrinya Riddles · Judge checks answers</p>
+    </div>
+
+    <div class="setup-body">
+
+      <div>
+        <p class="setup-section-title">Team Names</p>
+        <div class="setup-teams">
+          <input type="text" id="input-team-a" placeholder="Team A" maxlength="18" />
+          <input type="text" id="input-team-b" placeholder="Team B" maxlength="18" />
+        </div>
+      </div>
+
+      <div>
+        <p class="setup-section-title">Game Settings</p>
+
+        <div class="stepper-row">
+          <div class="stepper-info">
+            <div class="stepper-label">Riddles per game</div>
+            <div class="stepper-hint" id="hint-riddles">Alternates between teams</div>
+          </div>
+          <div class="stepper-controls">
+            <button class="stepper-btn" id="btn-riddles-minus" aria-label="Fewer riddles">−</button>
+            <span class="stepper-val" id="riddles-display">10</span>
+            <button class="stepper-btn" id="btn-riddles-plus" aria-label="More riddles">+</button>
+          </div>
+        </div>
+
+        <div class="stepper-row" style="margin-top:0.6rem">
+          <div class="stepper-info">
+            <div class="stepper-label">Seconds per riddle</div>
+            <div class="stepper-hint" id="hint-time">Time for each riddle</div>
+          </div>
+          <div class="stepper-controls">
+            <button class="stepper-btn" id="btn-time-minus" aria-label="Less time">−</button>
+            <span class="stepper-val" id="time-display">30</span>
+            <button class="stepper-btn" id="btn-time-plus" aria-label="More time">+</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="btn-start-game">▶ Start Game</button>
+      <a href="index.html" class="btn-back-home">← Back to Home</a>
+
+    </div>
+  </section>
+
+  <!-- ── Riddle Game ───────────────────────────────────────── -->
+  <section id="screen-riddle" class="screen hidden" role="main">
+
+    <div class="riddle-header">
+      <button class="btn-quit-riddle" id="btn-quit-riddle" aria-label="Quit game">✕ Quit</button>
+      <span class="riddle-mode-badge">ፍልጠለይ</span>
+      <span id="riddle-timer-display" class="riddle-timer-num" aria-live="polite">—</span>
+      <span id="riddle-counter" class="riddle-counter">1 / 10</span>
+    </div>
+
+    <div class="riddle-timer-bar">
+      <div id="riddle-timer-fill" class="riddle-timer-fill"></div>
+    </div>
+
+    <div class="riddle-stage">
+      <span id="riddle-active-team" class="riddle-active-team"></span>
+      <span class="label-eyebrow">Solve the riddle</span>
+      <div id="riddle-question-text" class="riddle-question-text" lang="ti"></div>
+      <div id="riddle-question-latin" class="riddle-question-latin"></div>
+
+      <!-- Judge peek (pre-reveal) -->
+      <div id="riddle-judge-peek" class="riddle-judge-peek hidden">
+        <div class="peek-eyebrow">Judge Only 👁</div>
+        <div id="peek-geez" class="peek-geez" lang="ti"></div>
+        <div id="peek-latin" class="peek-latin"></div>
+      </div>
+
+      <!-- Answer reveal panel (post-reveal) -->
+      <div id="riddle-answer-panel" class="riddle-answer-panel hidden">
+        <div class="riddle-answer-label">Answer</div>
+        <div id="answer-geez" class="riddle-answer-geez" lang="ti"></div>
+        <div id="answer-latin" class="riddle-answer-latin"></div>
+        <div id="answer-hint" class="riddle-answer-hint hidden"></div>
+      </div>
+    </div>
+
+    <!-- Time-up banner -->
+    <div id="riddle-time-up" class="riddle-time-up hidden" aria-live="assertive">
+      ⏱ Time's Up — Show Answer
+    </div>
+
+    <!-- State A: before reveal -->
+    <div id="riddle-actions-show" class="riddle-actions">
+      <div class="riddle-actions-row">
+        <button id="btn-riddle-peek" class="btn-riddle-peek">👁 See Answer (Judge)</button>
+        <button id="btn-riddle-start" class="btn-riddle-start">▶ Start Timer</button>
+      </div>
+      <button id="btn-reveal-answer" class="btn-reveal-answer">Reveal Answer ↓</button>
+    </div>
+
+    <!-- State B: judge decides -->
+    <div id="riddle-actions-judge" class="riddle-actions hidden">
+      <div class="riddle-actions-row">
+        <button id="btn-riddle-wrong" class="btn-riddle-wrong">
+          <span>✕</span><span>Wrong</span>
+        </button>
+        <button id="btn-riddle-correct" class="btn-riddle-correct">
+          <span>✓</span><span>Correct</span>
+        </button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Score Screen ──────────────────────────────────────── -->
+  <section id="screen-score" class="screen hidden" role="main">
+    <div class="score-title">Game Over</div>
+    <div class="score-geez" lang="ti">ጸወታ ተዛዚሙ</div>
+
+    <div class="score-cards">
+      <div class="score-card" id="score-card-a">
+        <div class="score-card-name" id="score-name-a">Team A</div>
+        <div class="score-card-points" id="score-pts-a">0</div>
+        <div class="score-card-label">pts</div>
+        <div class="score-winner-badge hidden" id="score-badge-a">🏆 Winner!</div>
+      </div>
+      <div class="score-card" id="score-card-b">
+        <div class="score-card-name" id="score-name-b">Team B</div>
+        <div class="score-card-points" id="score-pts-b">0</div>
+        <div class="score-card-label">pts</div>
+        <div class="score-winner-badge hidden" id="score-badge-b">🏆 Winner!</div>
+      </div>
+    </div>
+
+    <div id="score-tie-msg" class="score-tie-msg hidden">🤝 It's a tie!</div>
+
+    <div class="score-actions">
+      <button id="btn-play-again" class="btn-play-again">▶ Play Again</button>
+      <a href="index.html" class="btn-go-home">Home</a>
+    </div>
+  </section>
+
+  <script src="supabase.min.js"></script>
+  <script>
+    // ── Supabase init ────────────────────────────────────────
+    const SUPABASE_URL = 'https://fcknrwzjxhuvijxnfvid.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZja25yd3pqeGh1dmlqeG5mdmlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MzM5NTAsImV4cCI6MjA2MTAwOTk1MH0.IiIMXLt0FGKv7yZTvzAMnzI7T5cEYHvfFgC3sAqwFxE';
+    const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ── State ────────────────────────────────────────────────
+    let allRiddles   = [];
+    let gameRiddles  = [];
+    let riddleIndex  = 0;
+    let scores       = { a: 0, b: 0 };
+    let teamNames    = { a: 'Team A', b: 'Team B' };
+    let totalRiddles = 10;
+    let secsPerRiddle = 30;
+    let timerInterval = null;
+    let timerRemaining = 0;
+    let peekVisible  = false;
+    let answerRevealed = false;
+
+    // ── Screens ───────────────────────────────────────────────
+    function show(id) {
+      ['screen-loading','screen-error','screen-setup','screen-riddle','screen-score']
+        .forEach(s => document.getElementById(s).classList.toggle('hidden', s !== id));
+    }
+
+    // ── Load riddles from Supabase ───────────────────────────
+    async function loadRiddles() {
+      try {
+        const { data, error } = await _sb
+          .from('riddles')
+          .select('*')
+          .is('pack_id', null)   // free riddles only (for now)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        allRiddles = data || [];
+
+        if (allRiddles.length === 0) {
+          document.getElementById('error-msg').textContent = 'No riddles found. Add some in the admin panel.';
+          show('screen-error');
+          return;
+        }
+
+        // Clamp totalRiddles to available
+        totalRiddles = Math.min(totalRiddles, allRiddles.length);
+        document.getElementById('riddles-display').textContent = totalRiddles;
+
+        show('screen-setup');
+      } catch (err) {
+        console.error('Failed to load riddles:', err);
+        document.getElementById('error-msg').textContent = 'Could not load riddles: ' + (err.message || err);
+        show('screen-error');
+      }
+    }
+
+    // ── Setup steppers ────────────────────────────────────────
+    const RIDDLE_MIN = 2, RIDDLE_MAX = 30;
+    const TIME_MIN   = 10, TIME_MAX  = 90, TIME_STEP = 5;
+
+    function updateRiddleDisplay() {
+      document.getElementById('riddles-display').textContent = totalRiddles;
+      const perTeam = Math.ceil(totalRiddles / 2);
+      document.getElementById('hint-riddles').textContent =
+        `${perTeam} per team · ${totalRiddles * secsPerRiddle}s total`;
+    }
+    function updateTimeDisplay() {
+      document.getElementById('time-display').textContent = secsPerRiddle;
+      const perTeam = Math.ceil(totalRiddles / 2);
+      document.getElementById('hint-time').textContent =
+        `~${Math.round(totalRiddles * secsPerRiddle / 60)} min total`;
+    }
+
+    document.getElementById('btn-riddles-minus').addEventListener('click', () => {
+      if (totalRiddles > RIDDLE_MIN) { totalRiddles--; updateRiddleDisplay(); }
+    });
+    document.getElementById('btn-riddles-plus').addEventListener('click', () => {
+      if (totalRiddles < Math.min(RIDDLE_MAX, allRiddles.length)) { totalRiddles++; updateRiddleDisplay(); }
+    });
+    document.getElementById('btn-time-minus').addEventListener('click', () => {
+      if (secsPerRiddle > TIME_MIN) { secsPerRiddle -= TIME_STEP; updateTimeDisplay(); }
+    });
+    document.getElementById('btn-time-plus').addEventListener('click', () => {
+      if (secsPerRiddle < TIME_MAX) { secsPerRiddle += TIME_STEP; updateTimeDisplay(); }
+    });
+
+    // ── Start game ────────────────────────────────────────────
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+      teamNames.a = document.getElementById('input-team-a').value.trim() || 'Team A';
+      teamNames.b = document.getElementById('input-team-b').value.trim() || 'Team B';
+
+      // Shuffle and slice
+      gameRiddles = shuffle([...allRiddles]).slice(0, totalRiddles);
+      scores = { a: 0, b: 0 };
+      riddleIndex = 0;
+
+      show('screen-riddle');
+      renderRiddle();
+    });
+
+    document.getElementById('btn-quit-riddle').addEventListener('click', () => {
+      stopTimer();
+      show('screen-setup');
+    });
+
+    // ── Render current riddle ─────────────────────────────────
+    function currentTeam() { return riddleIndex % 2 === 0 ? 'a' : 'b'; }
+
+    function renderRiddle() {
+      stopTimer();
+      peekVisible = false;
+      answerRevealed = false;
+
+      const r = gameRiddles[riddleIndex];
+      const team = currentTeam();
+
+      document.getElementById('riddle-active-team').textContent =
+        (team === 'a' ? teamNames.a : teamNames.b).toUpperCase();
+      document.getElementById('riddle-counter').textContent =
+        `${riddleIndex + 1} / ${totalRiddles}`;
+
+      document.getElementById('riddle-question-text').textContent  = r.question;
+      document.getElementById('riddle-question-latin').textContent = r.question_latin;
+
+      // Peek panel
+      document.getElementById('peek-geez').textContent  = r.answer;
+      document.getElementById('peek-latin').textContent = r.answer_latin;
+      document.getElementById('riddle-judge-peek').classList.add('hidden');
+
+      // Answer panel
+      document.getElementById('answer-geez').textContent  = r.answer;
+      document.getElementById('answer-latin').textContent = r.answer_latin;
+      const hintEl = document.getElementById('answer-hint');
+      if (r.hint) {
+        hintEl.textContent = '💡 ' + r.hint;
+        hintEl.classList.remove('hidden');
+      } else {
+        hintEl.classList.add('hidden');
+      }
+      document.getElementById('riddle-answer-panel').classList.add('hidden');
+
+      // Timer UI reset
+      document.getElementById('riddle-time-up').classList.add('hidden');
+      document.getElementById('riddle-timer-display').textContent = secsPerRiddle;
+      document.getElementById('riddle-timer-display').classList.remove('danger');
+      const fill = document.getElementById('riddle-timer-fill');
+      fill.style.width = '100%';
+      fill.classList.remove('danger');
+
+      // Actions
+      document.getElementById('riddle-actions-show').classList.remove('hidden');
+      document.getElementById('riddle-actions-judge').classList.add('hidden');
+    }
+
+    // ── Judge peek ────────────────────────────────────────────
+    document.getElementById('btn-riddle-peek').addEventListener('click', () => {
+      peekVisible = !peekVisible;
+      document.getElementById('riddle-judge-peek').classList.toggle('hidden', !peekVisible);
+      document.getElementById('btn-riddle-peek').textContent =
+        peekVisible ? '🙈 Hide Answer' : '👁 See Answer (Judge)';
+    });
+
+    // ── Timer ─────────────────────────────────────────────────
+    document.getElementById('btn-riddle-start').addEventListener('click', startTimer);
+
+    function startTimer() {
+      if (timerInterval) return;
+      document.getElementById('btn-riddle-start').disabled = true;
+      timerRemaining = secsPerRiddle;
+      tick();
+      timerInterval = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      const fill    = document.getElementById('riddle-timer-fill');
+      const display = document.getElementById('riddle-timer-display');
+      const pct     = (timerRemaining / secsPerRiddle) * 100;
+
+      display.textContent = timerRemaining;
+      fill.style.width = pct + '%';
+
+      const danger = timerRemaining <= Math.ceil(secsPerRiddle * 0.25);
+      display.classList.toggle('danger', danger);
+      fill.classList.toggle('danger', danger);
+
+      if (timerRemaining <= 0) {
+        stopTimer();
+        document.getElementById('riddle-time-up').classList.remove('hidden');
+      } else {
+        timerRemaining--;
+      }
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
+    // ── Reveal answer ─────────────────────────────────────────
+    document.getElementById('btn-reveal-answer').addEventListener('click', revealAnswer);
+
+    function revealAnswer() {
+      stopTimer();
+      answerRevealed = true;
+
+      document.getElementById('riddle-judge-peek').classList.add('hidden');
+      document.getElementById('riddle-answer-panel').classList.remove('hidden');
+      document.getElementById('riddle-time-up').classList.add('hidden');
+
+      document.getElementById('riddle-actions-show').classList.add('hidden');
+      document.getElementById('riddle-actions-judge').classList.remove('hidden');
+    }
+
+    // ── Judge decisions ───────────────────────────────────────
+    document.getElementById('btn-riddle-correct').addEventListener('click', () => judgeDecision(true));
+    document.getElementById('btn-riddle-wrong').addEventListener('click',   () => judgeDecision(false));
+
+    function judgeDecision(correct) {
+      if (correct) scores[currentTeam()]++;
+      nextRiddle();
+    }
+
+    function nextRiddle() {
+      riddleIndex++;
+      if (riddleIndex >= totalRiddles) {
+        showScore();
+      } else {
+        renderRiddle();
+      }
+    }
+
+    // ── Score screen ──────────────────────────────────────────
+    function showScore() {
+      document.getElementById('score-name-a').textContent = teamNames.a;
+      document.getElementById('score-name-b').textContent = teamNames.b;
+      document.getElementById('score-pts-a').textContent  = scores.a;
+      document.getElementById('score-pts-b').textContent  = scores.b;
+
+      const cardA  = document.getElementById('score-card-a');
+      const cardB  = document.getElementById('score-card-b');
+      const badgeA = document.getElementById('score-badge-a');
+      const badgeB = document.getElementById('score-badge-b');
+      const tieMsg = document.getElementById('score-tie-msg');
+
+      cardA.classList.remove('winner');
+      cardB.classList.remove('winner');
+      badgeA.classList.add('hidden');
+      badgeB.classList.add('hidden');
+      tieMsg.classList.add('hidden');
+
+      if (scores.a > scores.b) {
+        cardA.classList.add('winner');
+        badgeA.classList.remove('hidden');
+      } else if (scores.b > scores.a) {
+        cardB.classList.add('winner');
+        badgeB.classList.remove('hidden');
+      } else {
+        tieMsg.classList.remove('hidden');
+      }
+
+      show('screen-score');
+    }
+
+    document.getElementById('btn-play-again').addEventListener('click', () => {
+      show('screen-setup');
+    });
+
+    // ── Shuffle ───────────────────────────────────────────────
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // ── Boot ─────────────────────────────────────────────────
+    loadRiddles();
+  </script>
+</body>
+</html>

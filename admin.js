@@ -15,8 +15,9 @@ let currentUser  = null;
 let allWords     = [];
 let allProverbs  = [];
 let allHeto      = [];   // Heto questions
+let allRiddles   = [];   // Riddles (ፍልጠለይ)
 let allPacks     = [];   // [{id, slug, tier_label, sequence_order, name_en}]
-let pendingDeleteType = null; // 'word' | 'proverb' | 'heto'
+let pendingDeleteType = null; // 'word' | 'proverb' | 'heto' | 'riddle'
 let pendingDeleteId   = null;
 let pendingDeleteName = null;
 
@@ -64,6 +65,7 @@ async function onSignedIn() {
     loadAllWords().catch(e => console.error('loadAllWords failed:', e)),
     loadAllProverbs().catch(e => console.error('loadAllProverbs failed:', e)),
     loadAllHeto().catch(e => console.error('loadAllHeto failed:', e)),
+    loadAllRiddles().catch(e => console.error('loadAllRiddles failed:', e)),
     loadAllGrants().catch(e => console.error('loadAllGrants failed:', e)),
   ]);
 }
@@ -654,6 +656,132 @@ function filterHeto() {
   renderHetoTable(list);
 }
 
+// ── RIDDLES CRUD (ፍልጠለይ) ────────────────────────────────────
+async function loadAllRiddles() {
+  const { data, error } = await _sb.from('riddles').select('*').order('created_at', { ascending: true });
+  if (error) { console.error('loadAllRiddles:', error); return; }
+  allRiddles = data || [];
+  renderRiddlesTable(allRiddles);
+  updateRiddlesStats();
+}
+
+async function createRiddle() {
+  const question       = document.getElementById('input-riddle-question').value.trim();
+  const question_latin = document.getElementById('input-riddle-question-latin').value.trim();
+  const answer         = document.getElementById('input-riddle-answer').value.trim();
+  const answer_latin   = document.getElementById('input-riddle-answer-latin').value.trim();
+  const hint           = document.getElementById('input-riddle-hint').value.trim() || null;
+  const category       = document.getElementById('input-riddle-category').value;
+  const difficulty     = document.getElementById('input-riddle-difficulty').value;
+
+  if (!question || !question_latin || !answer || !answer_latin || !category || !difficulty) {
+    showToast('Fill in all required fields', 'error'); return;
+  }
+
+  const { error } = await _sb.from('riddles').insert([{
+    question, question_latin, answer, answer_latin, hint, category, difficulty
+  }]);
+
+  if (error) { showToast('Error adding riddle: ' + error.message, 'error'); return; }
+  showToast('Riddle added ✓', 'success');
+  document.getElementById('form-add-riddle').reset();
+  await loadAllRiddles();
+}
+
+async function updateRiddle(id) {
+  const question       = document.getElementById('edit-riddle-question').value.trim();
+  const question_latin = document.getElementById('edit-riddle-question-latin').value.trim();
+  const answer         = document.getElementById('edit-riddle-answer').value.trim();
+  const answer_latin   = document.getElementById('edit-riddle-answer-latin').value.trim();
+  const hint           = document.getElementById('edit-riddle-hint').value.trim() || null;
+  const category       = document.getElementById('edit-riddle-category').value;
+  const difficulty     = document.getElementById('edit-riddle-difficulty').value;
+
+  const { error } = await _sb.from('riddles').update({
+    question, question_latin, answer, answer_latin, hint, category, difficulty
+  }).eq('id', id);
+
+  if (error) { showToast('Error updating riddle: ' + error.message, 'error'); return; }
+  showToast('Riddle updated ✓', 'success');
+  closeModal('edit-riddle-modal');
+  await loadAllRiddles();
+}
+
+async function deleteRiddle(id) {
+  const { error } = await _sb.from('riddles').delete().eq('id', id);
+  if (error) { showToast('Error deleting riddle: ' + error.message, 'error'); return; }
+  showToast('Riddle deleted', 'info');
+  await loadAllRiddles();
+}
+
+function updateRiddlesStats() {
+  document.getElementById('stat-riddles-total').textContent  = allRiddles.length;
+  document.getElementById('stat-riddles-easy').textContent   = allRiddles.filter(r => r.difficulty === 'easy').length;
+  document.getElementById('stat-riddles-medium').textContent = allRiddles.filter(r => r.difficulty === 'medium').length;
+  document.getElementById('stat-riddles-hard').textContent   = allRiddles.filter(r => r.difficulty === 'hard').length;
+}
+
+function renderRiddlesTable(riddles) {
+  const tbody = document.getElementById('riddles-tbody');
+  tbody.innerHTML = '';
+
+  if (riddles.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No riddles found</td></tr>';
+    return;
+  }
+
+  riddles.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span lang="ti">${escHtml(r.question)}</span><br><small style="color:var(--muted)">${escHtml(r.question_latin)}</small></td>
+      <td><span lang="ti">${escHtml(r.answer)}</span><br><small style="color:var(--muted)">${escHtml(r.answer_latin)}</small></td>
+      <td>${escHtml(r.category)}</td>
+      <td><span class="badge badge-${r.difficulty}">${r.difficulty}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-sm btn-primary" data-id="${r.id}" data-action="edit-riddle">Edit</button>
+          <button class="btn btn-sm btn-danger"  data-id="${r.id}" data-action="delete-riddle">Del</button>
+        </div>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('[data-action="edit-riddle"]').forEach(btn =>
+    btn.addEventListener('click', () => openEditRiddleModal(btn.dataset.id)));
+  tbody.querySelectorAll('[data-action="delete-riddle"]').forEach(btn =>
+    btn.addEventListener('click', () => openConfirmModal('riddle', btn.dataset.id, 'this riddle')));
+}
+
+function openEditRiddleModal(id) {
+  const r = allRiddles.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('edit-riddle-id').value             = r.id;
+  document.getElementById('edit-riddle-question').value       = r.question;
+  document.getElementById('edit-riddle-question-latin').value = r.question_latin;
+  document.getElementById('edit-riddle-answer').value         = r.answer;
+  document.getElementById('edit-riddle-answer-latin').value   = r.answer_latin;
+  document.getElementById('edit-riddle-hint').value           = r.hint || '';
+  document.getElementById('edit-riddle-category').value       = r.category;
+  document.getElementById('edit-riddle-difficulty').value     = r.difficulty;
+  openModal('edit-riddle-modal');
+}
+
+function filterRiddles() {
+  const search     = document.getElementById('search-riddles').value.toLowerCase();
+  const category   = document.getElementById('filter-riddle-category').value;
+  const difficulty = document.getElementById('filter-riddle-difficulty').value;
+
+  let list = allRiddles;
+  if (search)     list = list.filter(r =>
+    r.question.toLowerCase().includes(search) ||
+    r.question_latin.toLowerCase().includes(search) ||
+    r.answer.toLowerCase().includes(search));
+  if (category)   list = list.filter(r => r.category   === category);
+  if (difficulty) list = list.filter(r => r.difficulty === difficulty);
+
+  renderRiddlesTable(list);
+}
+
 // ── Delete confirm (shared) ───────────────────────────────
 function openConfirmModal(type, id, name) {
   pendingDeleteType = type;
@@ -770,6 +898,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (pendingDeleteType === 'word')    deleteWord(pendingDeleteId);
     if (pendingDeleteType === 'proverb') deleteProverb(pendingDeleteId);
     if (pendingDeleteType === 'heto')    deleteHeto(pendingDeleteId);
+    if (pendingDeleteType === 'riddle')  deleteRiddle(pendingDeleteId);
   });
   document.getElementById('btn-cancel-confirm').addEventListener('click', () => closeModal('confirm-modal'));
 
@@ -800,6 +929,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('search-heto').addEventListener('input', filterHeto);
   document.getElementById('filter-heto-category').addEventListener('change', filterHeto);
   document.getElementById('filter-heto-difficulty').addEventListener('change', filterHeto);
+
+  // ── Add riddle
+  document.getElementById('form-add-riddle').addEventListener('submit', e => {
+    e.preventDefault();
+    createRiddle();
+  });
+
+  // ── Edit riddle submit
+  document.getElementById('form-edit-riddle').addEventListener('submit', e => {
+    e.preventDefault();
+    updateRiddle(document.getElementById('edit-riddle-id').value);
+  });
+  document.getElementById('btn-cancel-edit-riddle').addEventListener('click', () => closeModal('edit-riddle-modal'));
+
+  // ── Riddle filters
+  document.getElementById('search-riddles').addEventListener('input', filterRiddles);
+  document.getElementById('filter-riddle-category').addEventListener('change', filterRiddles);
+  document.getElementById('filter-riddle-difficulty').addEventListener('change', filterRiddles);
 
   // ── Grant access form
   document.getElementById('form-grant')?.addEventListener('submit', e => {
