@@ -1550,7 +1550,19 @@ function getActiveTierPacks() {
 }
 
 function getMergedWords() {
-  const unlocked  = getUnlockedPacks();
+  const unlocked   = getUnlockedPacks();
+  const activeTier = getActiveTierSlug();
+
+  // Shimagile is exclusive — only its own words, no cumulative bleed from lower tiers.
+  // Mirrors the same logic in getMergedProverbs() for a consistent tier experience.
+  if (activeTier === 'shimagile') {
+    const data = unlocked['shimagile'];
+    if (data && Array.isArray(data.words) && data.words.length > 0) return data.words;
+    // Fallback: shimagile not unlocked — show gasha words so the game still runs
+    return [...gameWords];
+  }
+
+  // For all other tiers: cumulative pool (gasha + every unlocked tier up to selected)
   const tierPacks = getActiveTierPacks();
   let all = [...gameWords]; // gasha words always included
 

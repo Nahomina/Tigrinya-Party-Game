@@ -107,7 +107,6 @@ function populatePackSelects() {
   const selects = [
     'input-pack', 'edit-word-pack',
     'input-proverb-pack', 'edit-proverb-pack',
-    'input-heto-pack', 'edit-heto-pack',
     'filter-tier', 'filter-proverb-tier',
     'grant-pack',
   ];
@@ -465,8 +464,6 @@ async function createHeto() {
   const explanation = document.getElementById('input-heto-explanation').value.trim();
   const category = document.getElementById('input-heto-category').value;
   const difficulty = document.getElementById('input-heto-difficulty').value;
-  const pack_id = document.getElementById('input-heto-pack').value || null;
-
   // Get selected correct answer
   const correct = document.querySelector('input[name="heto-correct"]:checked')?.value;
 
@@ -501,7 +498,6 @@ async function createHeto() {
     explanation: explanation || null,
     category,
     difficulty,
-    pack_id,
   }]);
 
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
@@ -516,8 +512,6 @@ async function updateHeto(id) {
   const explanation = document.getElementById('edit-heto-explanation').value.trim();
   const category = document.getElementById('edit-heto-category').value;
   const difficulty = document.getElementById('edit-heto-difficulty').value;
-  const pack_id = document.getElementById('edit-heto-pack').value || null;
-
   const correct = document.querySelector('input[name="edit-heto-correct"]:checked')?.value;
 
   const optionA = document.getElementById('edit-heto-option-a').value.trim();
@@ -549,7 +543,6 @@ async function updateHeto(id) {
     explanation: explanation || null,
     category,
     difficulty,
-    pack_id,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
 

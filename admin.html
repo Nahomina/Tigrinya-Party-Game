@@ -52,7 +52,7 @@
 
         <!-- Stats -->
         <div class="admin-stats">
-          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-total" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Total Words</span><span id="stat-total" class="stat-value">0</span></div>
           <div class="stat-card stat-card--green"><span class="stat-label">🟢 Gasha</span><span id="stat-starter" class="stat-value">0</span></div>
           <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Qol'a</span><span id="stat-intermediate" class="stat-value">0</span></div>
           <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Gobez</span><span id="stat-advanced" class="stat-value">0</span></div>
@@ -247,11 +247,6 @@
               <option value="hard">Hard</option>
             </select>
 
-            <select id="input-heto-pack">
-              <option value="">Pack (optional)</option>
-              <!-- Populated by JS -->
-            </select>
-
             <button type="submit" class="btn btn-success">Add Question</button>
           </form>
         </div>
@@ -263,12 +258,12 @@
             <input type="text" id="search-heto" placeholder="Search question text…" class="search-input" />
             <select id="filter-heto-category" class="filter-select">
               <option value="">All Categories</option>
-              <option value="Geography">Geography</option>
-              <option value="History">History</option>
-              <option value="Culture">Culture & Traditions</option>
-              <option value="Language">Language</option>
-              <option value="Music">Music & Art</option>
-              <option value="General">General Knowledge</option>
+              <option value="Geography">🗺️ Geography</option>
+              <option value="History">📜 History</option>
+              <option value="Culture">🌿 Culture & Traditions</option>
+              <option value="Language">🔤 Language</option>
+              <option value="Music">🎵 Music & Art</option>
+              <option value="General">🧠 General Knowledge</option>
             </select>
             <select id="filter-heto-difficulty" class="filter-select">
               <option value="">All Difficulties</option>
@@ -281,7 +276,7 @@
             <table id="heto-table" class="admin-table">
               <thead>
                 <tr>
-                  <th>Question</th><th>Answer</th><th>Category</th><th>Difficulty</th><th>Actions</th>
+                  <th>Question (Tigrinya)</th><th>Correct</th><th>Category</th><th>Difficulty</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="heto-tbody"></tbody>
@@ -501,11 +496,6 @@
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
-        </select>
-
-        <select id="edit-heto-pack">
-          <option value="">No Pack</option>
-          <!-- Populated by JS -->
         </select>
 
         <div class="modal-actions">
