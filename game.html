@@ -27,7 +27,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=26" />
+  <link rel="stylesheet" href="style.css?v=27" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -525,6 +525,18 @@
     </div>
 
   </section>
+
+  <!-- ── Between-turn transition overlay (Misla) ───────────────── -->
+  <div id="turn-transition-overlay" class="turn-transition-overlay hidden" role="dialog" aria-modal="true">
+    <div class="turn-transition-box">
+      <p class="turn-transition-eyebrow">Next Up</p>
+      <h2 class="turn-transition-team" id="turn-transition-team-name"></h2>
+      <div class="turn-transition-scores" id="turn-transition-scores"></div>
+      <button id="btn-turn-transition-ready" class="btn-primary turn-transition-btn">
+        ▶ Ready — Start Turn
+      </button>
+    </div>
+  </div>
 
 
   <!-- ── Unlock modal ──────────────────────────────────────── -->

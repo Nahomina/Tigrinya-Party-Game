@@ -4,212 +4,215 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0f0f11" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>My Profile — Tigrinya Games</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=26" />
+  <link rel="stylesheet" href="style.css?v=28" />
   <style>
+    /* ── Layout ──────────────────────────────────────────── */
     .profile-page {
-      min-height: 100vh;
+      min-height: 100dvh;
       background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 0 16px 48px;
+      padding: 0 1rem 4rem;
     }
-
-    /* ── Top nav ── */
-    .profile-nav {
+    .profile-inner {
       width: 100%;
       max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* ── Nav bar ─────────────────────────────────────────── */
+    .profile-nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px 0 12px;
+      padding: 1.25rem 0 1rem;
     }
     .profile-back-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font: 500 14px var(--font-ui);
-      cursor: pointer;
-      padding: 8px 0;
-      text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      background: none; border: none;
+      color: var(--text-muted); font: 500 0.85rem var(--font-ui);
+      cursor: pointer; padding: 6px 0; text-decoration: none;
       transition: color .2s;
     }
     .profile-back-btn:hover { color: var(--text); }
-    .profile-back-btn svg { flex-shrink: 0; }
+    .profile-nav-title {
+      font: 700 0.65rem var(--font-ui);
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
 
-    /* ── Avatar card ── */
+    /* ── Avatar card ─────────────────────────────────────── */
     .profile-card {
-      width: 100%;
-      max-width: 480px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 32px 24px 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      margin-top: 8px;
+      padding: 2rem 1.5rem 1.75rem;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
     }
     .profile-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       background: var(--red);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font: 700 32px var(--font-display);
-      color: #fff;
-      letter-spacing: 0;
-      user-select: none;
+      display: flex; align-items: center; justify-content: center;
+      font: 700 2rem var(--font-display);
+      color: #fff; user-select: none;
+      margin-bottom: 0.4rem;
     }
     .profile-email {
-      font: 500 15px var(--font-ui);
-      color: var(--text);
-      word-break: break-all;
-      text-align: center;
+      font: 600 0.95rem var(--font-ui);
+      color: var(--text); word-break: break-all; text-align: center;
     }
     .profile-joined {
-      font: 400 12px var(--font-ui);
-      color: var(--text-muted);
+      font: 400 0.75rem var(--font-ui); color: var(--text-muted);
     }
-    .profile-badge {
-      display: inline-block;
-      background: var(--red-subtle);
+    .profile-member-badge {
+      margin-top: 0.25rem;
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(229,57,53,.1);
       color: var(--red);
       border: 1px solid rgba(229,57,53,.25);
-      border-radius: 6px;
-      font: 600 11px var(--font-ui);
-      padding: 3px 10px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
+      border-radius: 20px;
+      font: 700 0.6rem var(--font-ui);
+      padding: 0.25rem 0.7rem;
+      text-transform: uppercase; letter-spacing: .08em;
     }
 
-    /* ── Section ── */
+    /* ── Section wrapper ─────────────────────────────────── */
     .profile-section {
-      width: 100%;
-      max-width: 480px;
-      margin-top: 24px;
+      margin-bottom: 0.75rem;
     }
     .profile-section-title {
-      font: 700 11px var(--font-ui);
+      font: 700 0.6rem var(--font-ui);
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .1em;
-      margin: 0 0 10px;
-    }
-    .profile-pack-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .profile-pack-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .profile-pack-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      background: var(--correct-bg);
-      border: 1px solid rgba(67,160,71,.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-    .profile-pack-name {
-      font: 600 14px var(--font-ui);
-      color: var(--text);
-    }
-    .profile-pack-type {
-      font: 400 12px var(--font-ui);
-      color: var(--text-muted);
-    }
-    .profile-no-packs {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font: 400 14px var(--font-ui);
-      line-height: 1.5;
-    }
-    .profile-no-packs a {
-      color: var(--red);
-      text-decoration: none;
-      font-weight: 600;
+      text-transform: uppercase; letter-spacing: .14em;
+      margin: 0 0 0.6rem;
     }
 
-    /* ── Actions ── */
-    .profile-actions {
-      width: 100%;
-      max-width: 480px;
-      margin-top: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    /* ── Pass list ───────────────────────────────────────── */
+    .profile-pass-list {
+      list-style: none; margin: 0; padding: 0;
+      display: flex; flex-direction: column; gap: 0.5rem;
     }
-    .btn-logout {
-      width: 100%;
-      padding: 14px;
-      background: transparent;
-      border: 1px solid var(--border-mid);
+    .profile-pass-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--correct);
       border-radius: 10px;
-      color: var(--text-muted);
-      font: 600 15px var(--font-ui);
-      cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s;
+      padding: 0.85rem 1rem;
+      display: flex; align-items: center; gap: 0.75rem;
     }
-    .btn-logout:hover {
-      border-color: var(--red);
-      color: var(--red);
-      background: var(--red-subtle);
+    .profile-pass-icon {
+      font-size: 1.4rem; flex-shrink: 0; line-height: 1;
     }
+    .profile-pass-name {
+      font: 600 0.88rem var(--font-ui); color: var(--text);
+    }
+    .profile-pass-meta {
+      font: 400 0.72rem var(--font-ui); color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+    .profile-pass-tick {
+      margin-left: auto; flex-shrink: 0;
+      font: 700 0.72rem var(--font-ui); color: var(--correct);
+      background: rgba(67,160,71,.1);
+      border: 1px solid rgba(67,160,71,.25);
+      border-radius: 20px; padding: 0.2rem 0.55rem;
+    }
+    .profile-empty {
+      background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 1.25rem 1rem; text-align: center;
+      color: var(--text-muted); font: 400 0.82rem/1.6 var(--font-ui);
+    }
+    .profile-empty a { color: var(--red); text-decoration: none; font-weight: 600; }
+    .profile-empty a:hover { text-decoration: underline; }
 
-    /* ── Loading / Error states ── */
+    /* ── Action rows ─────────────────────────────────────── */
+    .profile-action-list {
+      list-style: none; margin: 0; padding: 0;
+      display: flex; flex-direction: column; gap: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden;
+    }
+    .profile-action-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; text-decoration: none;
+      transition: background .15s;
+      background: none; border-left: none; border-right: none; border-top: none;
+      border-radius: 0; width: 100%; text-align: left;
+      font: 500 0.88rem var(--font-ui); color: var(--text);
+    }
+    .profile-action-item:last-child { border-bottom: none; }
+    .profile-action-item:hover { background: var(--bg-elevated); }
+    .profile-action-icon {
+      width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .profile-action-icon--gray  { background: var(--bg-elevated); }
+    .profile-action-icon--red   { background: rgba(229,57,53,.1); }
+    .profile-action-label { flex: 1; }
+    .profile-action-sub {
+      display: block; font: 400 0.7rem var(--font-ui);
+      color: var(--text-muted); margin-top: 0.1rem;
+    }
+    .profile-action-chevron { color: var(--text-muted); font-size: 0.9rem; }
+    .profile-action-item--danger { color: var(--red); }
+    .profile-action-item--danger .profile-action-chevron { color: rgba(229,57,53,.5); }
+
+    /* ── Inline feedback messages ────────────────────────── */
+    .profile-msg {
+      font: 400 0.78rem var(--font-ui); text-align: center;
+      padding: 0.6rem 1rem; border-radius: 8px; margin-top: 0.5rem;
+      display: none;
+    }
+    .profile-msg.show { display: block; }
+    .profile-msg--ok  { background: rgba(67,160,71,.1); color: var(--correct); border: 1px solid rgba(67,160,71,.25); }
+    .profile-msg--err { background: rgba(229,57,53,.1); color: var(--red);     border: 1px solid rgba(229,57,53,.25); }
+
+    /* ── Loading ─────────────────────────────────────────── */
     .profile-loading {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
-      color: var(--text-muted);
-      font: 400 15px var(--font-ui);
+      min-height: 100dvh; display: flex;
+      align-items: center; justify-content: center;
+      background: var(--bg); color: var(--text-muted);
+      font: 400 0.88rem var(--font-ui);
     }
     .spinner-ring {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--red);
+      width: 32px; height: 32px;
+      border: 3px solid var(--border); border-top-color: var(--red);
       border-radius: 50%;
       animation: spin .7s linear infinite;
-      margin: 0 auto 16px;
+      margin: 0 auto 1rem;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Theme toggle ────────────────────────────────────── */
+    #btn-theme-toggle {
+      position: fixed; top: 1rem; right: 1rem;
+      z-index: 100;
+    }
   </style>
 </head>
-<body style="margin:0; background: #0f0f11;">
+<body style="margin:0; background:#0f0f11;">
 
-  <!-- Loading state (shown until JS runs) -->
+  <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+    <span class="theme-icon-dark">☀</span>
+    <span class="theme-icon-light">☾</span>
+  </button>
+
+  <!-- Loading -->
   <div id="loading-state" class="profile-loading">
     <div style="text-align:center">
       <div class="spinner-ring"></div>
@@ -217,127 +220,250 @@
     </div>
   </div>
 
-  <!-- Profile content (hidden until authenticated) -->
+  <!-- Profile content -->
   <div id="profile-content" class="profile-page" style="display:none">
+    <div class="profile-inner">
 
-    <nav class="profile-nav">
-      <a href="index.html" class="profile-back-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-        Back to Games
-      </a>
-      <span style="font: 600 13px var(--font-ui); color: var(--text-muted); text-transform:uppercase; letter-spacing:.08em;">
-        My Profile
-      </span>
-    </nav>
+      <!-- Nav -->
+      <nav class="profile-nav">
+        <a href="index.html" class="profile-back-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          Back
+        </a>
+        <span class="profile-nav-title">My Profile</span>
+        <div style="width:50px"></div><!-- spacer -->
+      </nav>
 
-    <!-- Avatar + email -->
-    <div class="profile-card">
-      <div class="profile-avatar" id="profile-avatar">?</div>
-      <p class="profile-email" id="profile-email"></p>
-      <p class="profile-joined" id="profile-joined"></p>
-      <span class="profile-badge">Member</span>
+      <!-- Avatar card -->
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <p class="profile-email"   id="profile-email"></p>
+        <p class="profile-joined"  id="profile-joined"></p>
+        <span class="profile-member-badge">✓ Member</span>
+      </div>
+
+      <!-- Game Passes -->
+      <div class="profile-section">
+        <p class="profile-section-title">Game Passes</p>
+        <div id="profile-passes-wrap"></div>
+      </div>
+
+      <!-- Account -->
+      <div class="profile-section">
+        <p class="profile-section-title">Account</p>
+        <ul class="profile-action-list">
+
+          <li>
+            <button class="profile-action-item" id="btn-reset-password">
+              <span class="profile-action-icon profile-action-icon--gray">🔑</span>
+              <span class="profile-action-label">
+                Change Password
+                <span class="profile-action-sub">We'll email you a reset link</span>
+              </span>
+              <span class="profile-action-chevron">›</span>
+            </button>
+          </li>
+
+          <li>
+            <button class="profile-action-item profile-action-item--danger" id="btn-logout">
+              <span class="profile-action-icon profile-action-icon--red">🚪</span>
+              <span class="profile-action-label">Log Out</span>
+              <span class="profile-action-chevron">›</span>
+            </button>
+          </li>
+
+        </ul>
+        <div id="profile-reset-msg" class="profile-msg"></div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="profile-section">
+        <p class="profile-section-title">Data</p>
+        <ul class="profile-action-list">
+          <li>
+            <a class="profile-action-item"
+               id="link-delete-account"
+               href="#"
+               style="color: var(--text-muted);">
+              <span class="profile-action-icon profile-action-icon--gray">🗑</span>
+              <span class="profile-action-label">
+                Delete Account
+                <span class="profile-action-sub">Email us — removed within 30 days</span>
+              </span>
+              <span class="profile-action-chevron">›</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Legal footer -->
+      <footer style="text-align:center; padding: 1.5rem 0 0;
+                     font: 400 0.7rem var(--font-ui); color: var(--text-muted);
+                     display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
+        <a href="privacy.html" style="color:var(--text-muted); text-decoration:none;">Privacy</a>
+        <span>·</span>
+        <a href="terms.html"   style="color:var(--text-muted); text-decoration:none;">Terms</a>
+        <span>·</span>
+        <a href="contact.html" style="color:var(--text-muted); text-decoration:none;">Contact</a>
+      </footer>
+
     </div>
-
-    <!-- Unlocked packs -->
-    <div class="profile-section">
-      <p class="profile-section-title">Unlocked Packs</p>
-      <div id="profile-packs-wrap"></div>
-    </div>
-
-    <!-- Actions -->
-    <div class="profile-actions">
-      <button class="btn-logout" id="btn-logout">Log Out</button>
-    </div>
-
   </div>
 
   <script src="supabase.min.js"></script>
-  <script src="packs.js?v=2"></script>
+  <script src="packs.js?v=7"></script>
   <script>
-    const SUPABASE_URL      = 'https://rzcrdngpybrsjlbenqep.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
-    const UNLOCK_KEY        = 'mayim_unlocked_packs';
+  'use strict';
 
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // ── Theme (matches rest of app) ───────────────────────────────────────────
+  const THEME_KEY = 'mayim_theme';
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY);
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+    document.body.style.background = saved === 'light' ? '#faf8f4' : '#0f0f11';
+  }
+  initTheme();
+  document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    document.body.style.background = next === 'light' ? '#faf8f4' : '#0f0f11';
+    localStorage.setItem(THEME_KEY, next);
+  });
 
-    function getUnlockedSlugs() {
-      try { return JSON.parse(localStorage.getItem(UNLOCK_KEY) || '[]'); }
-      catch { return []; }
+  // ── Supabase ──────────────────────────────────────────────────────────────
+  const SUPABASE_URL      = 'https://rzcrdngpybrsjlbenqep.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── Read unlocked pass slugs from localStorage ────────────────────────────
+  // localStorage stores { slug: { words:[], proverbs:[], unlockedAt:... } }
+  function getUnlockedSlugs() {
+    try {
+      const raw = localStorage.getItem('mayim_unlocked_packs');
+      if (!raw) return [];
+      const obj = JSON.parse(raw);
+      return typeof obj === 'object' && !Array.isArray(obj) ? Object.keys(obj) : [];
+    } catch { return []; }
+  }
+
+  // ── Render game passes section ────────────────────────────────────────────
+  function renderPasses(unlockedSlugs) {
+    const wrap = document.getElementById('profile-passes-wrap');
+    if (typeof GAME_PASS_CATALOGUE === 'undefined') return;
+
+    // Also query Supabase for server-side unlocks (belt-and-suspenders)
+    const unlockedPasses = GAME_PASS_CATALOGUE.filter(p => unlockedSlugs.includes(p.slug));
+
+    if (unlockedPasses.length === 0) {
+      wrap.innerHTML = `
+        <div class="profile-empty">
+          No game passes yet.<br>
+          <a href="index.html">Browse passes →</a>
+        </div>`;
+      return;
     }
 
-    function renderPacks(unlockedSlugs) {
-      const wrap = document.getElementById('profile-packs-wrap');
-      const packs = (typeof PACK_CATALOGUE !== 'undefined' ? PACK_CATALOGUE : [])
-        .filter(p => unlockedSlugs.includes(p.slug));
+    const list = document.createElement('ul');
+    list.className = 'profile-pass-list';
 
-      if (packs.length === 0) {
-        wrap.innerHTML = `
-          <div class="profile-no-packs">
-            No packs unlocked yet.<br>
-            <a href="index.html">Browse packs →</a>
-          </div>`;
-        return;
+    unlockedPasses.forEach(pass => {
+      const li = document.createElement('li');
+      li.className = 'profile-pass-item';
+      li.innerHTML = `
+        <span class="profile-pass-icon">${pass.icon || '🎮'}</span>
+        <div>
+          <div class="profile-pass-name">${pass.nameEn}</div>
+          <div class="profile-pass-meta">${pass.description}</div>
+        </div>
+        <span class="profile-pass-tick">✓ Active</span>`;
+      list.appendChild(li);
+    });
+
+    wrap.appendChild(list);
+  }
+
+  // ── Show/hide feedback messages ───────────────────────────────────────────
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'profile-msg show profile-msg--' + type;
+    setTimeout(() => { el.classList.remove('show'); }, 5000);
+  }
+
+  // ── Main init ─────────────────────────────────────────────────────────────
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+
+    if (!session) {
+      window.location.replace('index.html');
+      return;
+    }
+
+    const user = session.user;
+
+    // Avatar initials (up to 2 chars from email)
+    const parts = (user.email || '?').split('@')[0].split(/[\s._-]+/);
+    const initials = parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : (user.email || '?')[0].toUpperCase();
+    document.getElementById('profile-avatar').textContent = initials;
+    document.getElementById('profile-email').textContent  = user.email;
+
+    const joined  = new Date(user.created_at);
+    const dateStr = joined.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('profile-joined').textContent = 'Member since ' + dateStr;
+
+    // Render passes
+    renderPasses(getUnlockedSlugs());
+
+    // Show page
+    document.getElementById('loading-state').style.display  = 'none';
+    document.getElementById('profile-content').style.display = 'flex';
+
+    // ── Change password ───────────────────────────────────────────────────
+    document.getElementById('btn-reset-password').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-reset-password');
+      btn.disabled = true;
+      try {
+        const { error } = await sb.auth.resetPasswordForEmail(user.email, {
+          redirectTo: window.location.origin + '/profile.html',
+        });
+        if (error) throw error;
+        showMsg('profile-reset-msg', '✓ Reset link sent — check your email', 'ok');
+      } catch (err) {
+        showMsg('profile-reset-msg', '✕ ' + (err.message || 'Could not send reset email'), 'err');
+      } finally {
+        btn.disabled = false;
       }
+    });
 
-      const list = document.createElement('ul');
-      list.className = 'profile-pack-list';
-      packs.forEach(pack => {
-        const li = document.createElement('li');
-        li.className = 'profile-pack-item';
-        li.innerHTML = `
-          <div class="profile-pack-icon">✓</div>
-          <div>
-            <div class="profile-pack-name">${pack.name}</div>
-            <div class="profile-pack-type">${pack.mode === 'words' ? 'Mayim — Word Pack' : 'Misla — Proverb Pack'}</div>
-          </div>`;
-        list.appendChild(li);
-      });
-      wrap.appendChild(list);
-    }
+    // ── Delete account (mailto) ───────────────────────────────────────────
+    document.getElementById('link-delete-account').addEventListener('click', e => {
+      e.preventDefault();
+      const subject = encodeURIComponent('Account Deletion Request');
+      const body    = encodeURIComponent(
+        'Please delete my account and all associated data.\n\nEmail: ' + user.email
+      );
+      window.location.href = `mailto:hello@tigrinyapartygames.com?subject=${subject}&body=${body}`;
+    });
 
-    async function init() {
-      const { data: { session } } = await sb.auth.getSession();
+    // ── Log out ───────────────────────────────────────────────────────────
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-logout');
+      const label = btn.querySelector('.profile-action-label');
+      label.textContent = 'Logging out…';
+      btn.disabled = true;
+      try { await sb.auth.signOut(); } catch { /* ignore */ }
+      window.location.replace('index.html');
+    });
+  }
 
-      if (!session) {
-        // Not logged in — send back to home
-        window.location.replace('index.html');
-        return;
-      }
-
-      const user = session.user;
-
-      // Fill in profile info
-      const initial = (user.email || '?')[0].toUpperCase();
-      document.getElementById('profile-avatar').textContent = initial;
-      document.getElementById('profile-email').textContent = user.email;
-
-      const joined = new Date(user.created_at);
-      const formatted = joined.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
-      document.getElementById('profile-joined').textContent = 'Joined ' + formatted;
-
-      // Render unlocked packs
-      renderPacks(getUnlockedSlugs());
-
-      // Show content
-      document.getElementById('loading-state').style.display = 'none';
-      document.getElementById('profile-content').style.display = 'flex';
-
-      // Logout handler
-      document.getElementById('btn-logout').addEventListener('click', async () => {
-        const btn = document.getElementById('btn-logout');
-        btn.textContent = 'Logging out…';
-        btn.disabled = true;
-        try {
-          await sb.auth.signOut();
-        } catch(e) { /* ignore */ }
-        window.location.replace('index.html');
-      });
-    }
-
-    init();
+  init();
   </script>
 </body>
 </html>

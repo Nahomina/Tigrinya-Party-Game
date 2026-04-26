@@ -549,15 +549,20 @@ function pauseForNextWord(result) {
   }
 }
 
+function fmtSecs(s) {
+  if (s < 60) return String(s);
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
 function updateTimerUI() {
   const el   = document.getElementById('timer-display');
   const prog = document.getElementById('timer-progress');
   if (!el || !prog) return;
   const t   = Math.max(0, gameState.wordTimeLeft ?? gameState.secondsPerWord);
   const dur = gameState.secondsPerWord;
-  el.textContent   = t;
+  el.textContent   = fmtSecs(t);
   prog.style.width = ((t / dur) * 100) + '%';
-  const danger = t <= 3;
+  const danger = t <= 5;
   el.classList.toggle('danger', danger);
   prog.classList.toggle('danger', danger);
 }
@@ -600,11 +605,11 @@ function updateProverbTimerUI() {
   if (!el) return;
   const t   = Math.max(0, gameState.proverbTimeLeft);
   const dur = gameState.secondsPerWord;
-  el.textContent = t;
-  el.classList.toggle('danger', t <= 3);
+  el.textContent = fmtSecs(t);
+  el.classList.toggle('danger', t <= 5);
   if (fill) {
     fill.style.width = ((t / dur) * 100) + '%';
-    fill.classList.toggle('danger', t <= 3);
+    fill.classList.toggle('danger', t <= 5);
   }
 }
 
@@ -770,7 +775,7 @@ function showNextProverb() {
   gameState.proverbTimeLeft = gameState.secondsPerWord;
   const timerEl = document.getElementById('proverb-timer-display');
   if (timerEl) {
-    timerEl.textContent = gameState.secondsPerWord;
+    timerEl.textContent = fmtSecs(gameState.secondsPerWord);
     timerEl.classList.remove('danger');
   }
   const fillEl = document.getElementById('proverb-timer-progress');
@@ -914,8 +919,41 @@ function judgeProverb(result) {
   if (gameState.proverbDeck.length === 0) {
     endRound();
   } else {
-    showNextProverb();
+    showTurnTransition();
   }
+}
+
+// ── Between-turn pause overlay (Misla) ───────────────────────────────────────
+// Shows the next team's name + current scores. Judge taps "Ready" to continue.
+// This gives the judge a natural moment to hand the phone and let the new team
+// look away while the proverb loads.
+function showTurnTransition() {
+  const overlay   = document.getElementById('turn-transition-overlay');
+  const nameEl    = document.getElementById('turn-transition-team-name');
+  const scoresEl  = document.getElementById('turn-transition-scores');
+  if (!overlay) { showNextProverb(); return; } // Graceful fallback
+
+  const nextTeam = gameState.teams[gameState.wordTeamIndex];
+
+  nameEl.textContent = nextTeam.name;
+
+  // Render scores for both teams
+  scoresEl.innerHTML = '';
+  gameState.teams.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'turn-score-item' + (i === gameState.wordTeamIndex ? ' turn-score-item--active' : '');
+    div.innerHTML = `<span class="turn-score-name">${t.name}</span><span class="turn-score-val">${t.score}</span>`;
+    scoresEl.appendChild(div);
+  });
+
+  overlay.classList.remove('hidden');
+  // Focus the ready button for keyboard/accessibility
+  document.getElementById('btn-turn-transition-ready')?.focus();
+}
+
+function hideTurnTransition() {
+  document.getElementById('turn-transition-overlay')?.classList.add('hidden');
+  showNextProverb();
 }
 
 function renderProverb() {
@@ -1009,7 +1047,7 @@ function renderSetup() {
   if (proverbConfigRows) proverbConfigRows.classList.toggle('hidden', !isProverbs);
 
   // Update stepper displays
-  document.getElementById('secs-display').textContent = gameState.secondsPerWord;
+  document.getElementById('secs-display').textContent = fmtSecs(gameState.secondsPerWord);
   if (!isProverbs) {
     document.getElementById('words-display').textContent    = gameState.wordsPerRound;
   } else {
@@ -1030,14 +1068,14 @@ function updateSetupComputed() {
   const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
   const perTeam  = deckSize / 2;
   const el = document.getElementById('computed-turn-time');
-  if (el) el.textContent = `${deckSize} cards · ${perTeam} per team · ${gameState.secondsPerWord}s each`;
+  if (el) el.textContent = `${deckSize} cards · ${perTeam} per team · ${fmtSecs(gameState.secondsPerWord)} each`;
 }
 
 function updateProverbSetupComputed() {
   const total  = Math.floor(gameState.proverbsPerRound / 2) * 2;
   const perTeam = total / 2;
   const el = document.getElementById('computed-proverb-time');
-  if (el) el.textContent = `${total} proverbs · ${perTeam} per team · ${gameState.secondsPerWord}s each`;
+  if (el) el.textContent = `${total} proverbs · ${perTeam} per team · ${fmtSecs(gameState.secondsPerWord)} each`;
 }
 
 function checkResumeBanner() {
@@ -1077,7 +1115,7 @@ function renderInterstitial() {
       btn.textContent = `▶ Start · ${count} proverbs`;
     } else {
       const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
-      btn.textContent = `▶ Start · ${deckSize} cards · ${gameState.secondsPerWord}s each`;
+      btn.textContent = `▶ Start · ${deckSize} cards · ${fmtSecs(gameState.secondsPerWord)} each`;
     }
   }
 
@@ -1183,22 +1221,23 @@ function renderWinner() {
 
 // ── Stepper factory ────────────────────────────────────
 // DRY helper that wires +/− buttons to a gameState key.
-function makeStepper(minusId, plusId, displayId, key, min, max, onChange) {
+function makeStepper(minusId, plusId, displayId, key, min, max, onChange, fmt) {
   const minusEl = document.getElementById(minusId);
   const plusEl  = document.getElementById(plusId);
   // Elements only exist on game.html — silently skip on other pages
   if (!minusEl || !plusEl) return;
+  const format = fmt || (v => v);
   minusEl.addEventListener('click', () => {
     if (gameState[key] > min) {
       gameState[key]--;
-      document.getElementById(displayId).textContent = gameState[key];
+      document.getElementById(displayId).textContent = format(gameState[key]);
       onChange?.();
     }
   });
   plusEl.addEventListener('click', () => {
     if (gameState[key] < max) {
       gameState[key]++;
-      document.getElementById(displayId).textContent = gameState[key];
+      document.getElementById(displayId).textContent = format(gameState[key]);
       onChange?.();
     }
   });
@@ -1259,7 +1298,7 @@ function wireEvents() {
               'words-display',  'wordsPerRound', 3, 20, updateSetupComputed);
 
   makeStepper('btn-secs-minus',   'btn-secs-plus',
-              'secs-display',   'secondsPerWord',    3, 30, () => { updateSetupComputed(); updateProverbSetupComputed(); });
+              'secs-display',   'secondsPerWord',    1, 120, () => { updateSetupComputed(); updateProverbSetupComputed(); }, fmtSecs);
 
   makeStepper('btn-proverbs-minus', 'btn-proverbs-plus',
               'proverbs-display', 'proverbsPerRound', 2, 25, updateProverbSetupComputed);
@@ -1351,6 +1390,7 @@ function wireEvents() {
   document.getElementById('btn-proverb-correct')?.addEventListener('click', () => judgeProverb('correct'));
   document.getElementById('btn-proverb-wrong')?.addEventListener('click',   () => judgeProverb('wrong'));
   document.getElementById('btn-quit-proverb')?.addEventListener('click', showQuitModal);
+  document.getElementById('btn-turn-transition-ready')?.addEventListener('click', hideTurnTransition);
 
   // ── Summary ─────────────────────────────────────────
   document.getElementById('btn-next-round').addEventListener('click', nextRound);
@@ -1536,9 +1576,22 @@ const TIER_DIFFICULTIES = {
 function getMergedProverbs() {
   const unlocked     = getUnlockedPacks();
   const activeTier   = getActiveTierSlug();
-  const tierPacks    = getActiveTierPacks();
   const allowedDiffs = TIER_DIFFICULTIES[activeTier] || ['easy', 'medium', 'hard'];
 
+  // Shimagile is exclusive — only its own proverbs, no lower-tier bleed.
+  // This gives the feel of a genuinely different/harder experience at the top tier.
+  if (activeTier === 'shimagile') {
+    const data = unlocked['shimagile'];
+    if (data && Array.isArray(data.proverbs) && data.proverbs.length > 0) {
+      return data.proverbs;
+    }
+    // Fallback: shimagile not unlocked yet — return hard gasha proverbs
+    const source = gameProverbs.length > 0 ? gameProverbs
+      : (typeof PROVERBS !== 'undefined' ? PROVERBS : []);
+    return source.filter(p => p.difficulty === 'hard');
+  }
+
+  const tierPacks = getActiveTierPacks();
   let all = [];
 
   for (const pack of tierPacks) {
@@ -1886,115 +1939,89 @@ function showUnlockError(msg) {
 // ── Pack cards on landing page ─────────────────────────────
 function renderPackCards() {
   const container = document.getElementById('pack-cards');
-  if (!container || typeof PACK_CATALOGUE === 'undefined') return;
+  if (!container || typeof GAME_PASS_CATALOGUE === 'undefined') return;
 
   container.textContent = '';
 
-  // ── Helper: build a single card ────────────────────────────────────────
-  function buildCard({ slug, accentColor, nameEn, description, meta, isFree, price, bundleSlug = null }) {
-    const unlocked = isPackUnlocked(slug);
+  GAME_PASS_CATALOGUE.forEach(pass => {
+    const unlocked = !!getUnlockedPacks()[pass.slug];
+    const isAllGames = pass.slug === 'all-games';
 
     const card = document.createElement('div');
-    card.className = 'pack-card';
-    card.style.setProperty('--pack-accent', accentColor);
+    card.className = 'pass-card' + (isAllGames ? ' pass-card--featured' : '');
+    card.style.setProperty('--pass-accent', pass.accentColor);
 
-    const info = document.createElement('div');
-    info.className = 'pack-card-info';
+    // Top accent bar handled by CSS ::before
 
-    const nameP = document.createElement('p');
-    nameP.className = 'pack-card-name';
-    nameP.textContent = nameEn;
-    info.appendChild(nameP);
+    // Header row: icon + name + price/badge
+    const header = document.createElement('div');
+    header.className = 'pass-card-header';
 
-    const descP = document.createElement('p');
-    descP.className = 'pack-card-desc';
-    descP.textContent = description;
-    info.appendChild(descP);
+    const icon = document.createElement('span');
+    icon.className = 'pass-card-icon';
+    icon.textContent = pass.icon || '🎮';
+    header.appendChild(icon);
 
-    const metaP = document.createElement('p');
-    metaP.className = 'pack-card-meta';
-    metaP.textContent = meta;
-    info.appendChild(metaP);
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'pass-card-names';
 
-    card.appendChild(info);
+    const nameEl = document.createElement('p');
+    nameEl.className = 'pass-card-name';
+    nameEl.textContent = pass.nameEn;
+    nameWrap.appendChild(nameEl);
 
-    const action = document.createElement('div');
-    action.className = 'pack-card-action';
-
-    if (isFree) {
+    if (isAllGames) {
       const badge = document.createElement('span');
-      badge.className = 'pack-badge-free';
-      badge.textContent = 'FREE';
-      action.appendChild(badge);
-    } else if (unlocked) {
-      const badge = document.createElement('span');
-      badge.className = 'pack-badge-unlocked';
-      badge.textContent = '✓ Unlocked';
-      action.appendChild(badge);
-    } else if (bundleSlug) {
-      // Not sold individually — redirect to bundle pass
-      const passEntry = (typeof GAME_PASS_CATALOGUE !== 'undefined')
-        ? GAME_PASS_CATALOGUE.find(p => p.slug === bundleSlug) : null;
+      badge.className = 'pass-badge-best';
+      badge.textContent = 'BEST VALUE';
+      nameWrap.appendChild(badge);
+    }
+    header.appendChild(nameWrap);
+
+    const priceEl = document.createElement('p');
+    priceEl.className = 'pass-card-price';
+    priceEl.textContent = unlocked ? '✓' : `£${pass.priceGbp.toFixed(2)}`;
+    if (unlocked) priceEl.classList.add('pass-price--unlocked');
+    header.appendChild(priceEl);
+
+    card.appendChild(header);
+
+    // Description
+    const desc = document.createElement('p');
+    desc.className = 'pass-card-desc';
+    desc.textContent = pass.description;
+    card.appendChild(desc);
+
+    // Meta chips
+    const chips = document.createElement('div');
+    chips.className = 'pass-card-chips';
+    const chipData = isAllGames
+      ? ['All 4 games', 'Every tier', 'One-time payment']
+      : ['One game', 'All tiers', 'One-time payment'];
+    chipData.forEach(label => {
+      const chip = document.createElement('span');
+      chip.className = 'pass-chip';
+      chip.textContent = label;
+      chips.appendChild(chip);
+    });
+    card.appendChild(chips);
+
+    // CTA button
+    if (!unlocked) {
       const btn = document.createElement('button');
-      btn.className = 'pack-unlock-btn pack-unlock-btn--bundle';
-      btn.textContent = passEntry
-        ? `Included in ${passEntry.nameEn} · £${passEntry.priceGbp.toFixed(2)}`
-        : 'Get with Game Pass →';
-      btn.addEventListener('click', () => startPaymentFlow(bundleSlug));
-      action.appendChild(btn);
+      btn.className = 'pass-card-btn' + (isAllGames ? ' pass-card-btn--featured' : '');
+      btn.textContent = `Get Pass — £${pass.priceGbp.toFixed(2)}`;
+      btn.addEventListener('click', () => startPaymentFlow(pass.slug));
+      card.appendChild(btn);
     } else {
-      const btn = document.createElement('button');
-      btn.className = 'pack-unlock-btn';
-      btn.dataset.slug = slug;
-      btn.textContent = `£${price.toFixed(2)} — Unlock`;
-      btn.addEventListener('click', () => startPaymentFlow(slug));
-      action.appendChild(btn);
+      const unlockedBadge = document.createElement('div');
+      unlockedBadge.className = 'pass-unlocked-row';
+      unlockedBadge.innerHTML = '<span class="pass-unlocked-icon">✓</span><span>Unlocked — enjoy all content</span>';
+      card.appendChild(unlockedBadge);
     }
 
-    card.appendChild(action);
-    return card;
-  }
-
-  // ── Section label helper ────────────────────────────────────────────────
-  function sectionLabel(text) {
-    const p = document.createElement('p');
-    p.className = 'pack-section-label';
-    p.textContent = text;
-    return p;
-  }
-
-  // ── 1. MAYIM & MISLA word tier packs ───────────────────────────────────
-  container.appendChild(sectionLabel('MAYIM & MISLA — WORD TIERS'));
-  PACK_CATALOGUE.forEach(pack => {
-    const wordTotal = pack.sequenceOrder > 1 ? `+${pack.wordCount} words` : `${pack.wordCount} words`;
-    container.appendChild(buildCard({
-      slug:        pack.slug,
-      accentColor: pack.accentColor,
-      nameEn:      pack.nameEn,
-      description: pack.description,
-      meta:        `${pack.tierLabel} · ${wordTotal} · ${pack.proverbCount} proverbs`,
-      isFree:      pack.isFree,
-      price:       pack.priceGbp,
-      bundleSlug:  pack.soldIndividually === false ? (pack.bundleSlug ?? null) : null,
-    }));
+    container.appendChild(card);
   });
-
-  // ── 2. Game Passes ─────────────────────────────────────────────────────
-  if (typeof GAME_PASS_CATALOGUE !== 'undefined') {
-    container.appendChild(sectionLabel('GAME PASSES'));
-    GAME_PASS_CATALOGUE.forEach(pass => {
-      const isAllGames = pass.slug === 'all-games';
-      container.appendChild(buildCard({
-        slug:        pass.slug,
-        accentColor: pass.accentColor,
-        nameEn:      pass.nameEn,
-        description: pass.description,
-        meta:        isAllGames ? 'All 4 games · every tier · forever' : `One game · all tiers · one-time`,
-        isFree:      false,
-        price:       pass.priceGbp,
-      }));
-    });
-  }
 }
 
 // ── Tier selector in game setup ───────────────────────────

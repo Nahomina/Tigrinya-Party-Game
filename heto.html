@@ -30,7 +30,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=26" />
+  <link rel="stylesheet" href="style.css?v=28" />
   <title>HITO — ሕቶ</title>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.80.0/bundle.min.js"></script>
@@ -638,6 +638,30 @@ async function hasHitoAccess(difficulty) {
     const slugs = (data || []).map(r => r.packs?.slug).filter(Boolean);
     return slugs.includes('hito-pass') || slugs.includes('all-games');
   } catch { return false; }
+}
+
+async function startPaymentFlow(slug) {
+  if (!_supabase) return;
+  const { data: { session } } = await _supabase.auth.getSession();
+  if (!session) {
+    alert('Please sign in first to purchase a game pass.');
+    return;
+  }
+  try {
+    const res = await fetch(
+      'https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ pack_slug: slug }),
+      }
+    );
+    const json = await res.json();
+    if (json.url) window.location.href = json.url;
+    else alert('Could not start checkout: ' + (json.error || 'Unknown error'));
+  } catch (err) {
+    alert('Payment error: ' + err.message);
+  }
 }
 
 function wireEvents() {
