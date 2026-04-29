@@ -516,8 +516,10 @@ if (typeof SUPABASE_URL === 'undefined') {
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ6Y3JkbmdweWJyc2psYmVucWVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4MDMsImV4cCI6MjA5MDg4MTgwM30.ILN4ZrvMX5sfbd8mCnnnal9-U4ojQ-SVYTUuS1QoqaE';
 }
 
-const HITO_CACHE_KEY = 'hito_questions_cache';
-const HITO_CACHE_TTL = 5 * 60 * 1000;
+const HITO_CACHE_KEY     = 'hito_questions_cache';
+const HITO_CACHE_TTL     = 5 * 60 * 1000;
+const HITO_ACCESS_KEY    = 'hito_pass_v1';   // caches purchased state (1 hr TTL)
+const HITO_ACCESS_TTL    = 60 * 60 * 1000;
 
 let _supabase = null;
 let gameState = {
@@ -588,14 +590,17 @@ function handlePaymentReturn() {
 
   if (payment === 'success' && slug) {
     showToast('Payment confirmed! Activating your pass…', 'success');
-    // Re-check access with backoff (webhook may still be processing)
+    // Clear stale cache so fresh DB check runs
+    try { localStorage.removeItem(HITO_ACCESS_KEY); } catch {}
+    // Re-check with backoff (Stripe webhook may still be processing)
     const delays = [1500, 4000, 9000];
     let attempt = 0;
     const check = async () => {
       const ok = await hasHitoAccess('medium');
       if (ok) {
+        setCachedHitoAccess(true);
+        applyHitoTierUI(true);
         showToast('✓ HITO Game Pass activated — enjoy all tiers!', 'success');
-        refreshHitoTierLockState();
       } else if (attempt < delays.length) {
         setTimeout(check, delays[attempt++]);
       }
@@ -681,8 +686,22 @@ async function hasHitoAccess(difficulty) {
   } catch { return false; }
 }
 
-async function refreshHitoTierLockState() {
-  const access = await hasHitoAccess('medium');
+// ── Access cache helpers (instant UI — no flash for paying customers) ───────
+function getCachedHitoAccess() {
+  try {
+    const raw = localStorage.getItem(HITO_ACCESS_KEY);
+    if (!raw) return null;
+    const { value, ts } = JSON.parse(raw);
+    if (Date.now() - ts > HITO_ACCESS_TTL) return null;
+    return value; // true | false
+  } catch { return null; }
+}
+function setCachedHitoAccess(value) {
+  try { localStorage.setItem(HITO_ACCESS_KEY, JSON.stringify({ value, ts: Date.now() })); }
+  catch {}
+}
+
+function applyHitoTierUI(access) {
   ['hito-tier-qola', 'hito-tier-gobez', 'hito-tier-shimagile'].forEach(id => {
     const label = document.getElementById(id);
     const radio = label?.querySelector('.tier-radio-input');
@@ -691,16 +710,41 @@ async function refreshHitoTierLockState() {
     if (access) {
       label.classList.remove('tier-option--locked');
       if (radio) radio.disabled = false;
-      if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓</span>';
+      if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓ Purchased</span>';
     } else {
       label.classList.add('tier-option--locked');
       if (radio) radio.disabled = true;
+      // Only restore the buy button if not already there
+      if (right && !right.querySelector('.tier-unlock-btn')) {
+        right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hito-pass\')">🔒 £4.99</button>';
+      }
     }
   });
 }
 
+async function refreshHitoTierLockState() {
+  // 1. Apply cached state instantly (no flash of lock buttons for paying customers)
+  const cached = getCachedHitoAccess();
+  if (cached !== null) applyHitoTierUI(cached);
+
+  // 2. Fresh check from Supabase in background
+  const access = await hasHitoAccess('medium');
+  setCachedHitoAccess(access);
+  applyHitoTierUI(access);
+}
+
 async function startPaymentFlow(slug) {
   if (!_supabase) return;
+
+  // Guard: don't let paying customers accidentally buy again
+  const alreadyOwns = await hasHitoAccess('medium');
+  if (alreadyOwns) {
+    setCachedHitoAccess(true);
+    applyHitoTierUI(true);
+    showToast('✓ You already own this pass — all tiers are unlocked!', 'success');
+    return;
+  }
+
   const { data: { session } } = await _supabase.auth.getSession();
   if (!session) {
     showToast('Please sign in first to purchase a game pass.', 'error');

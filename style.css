@@ -3443,10 +3443,24 @@ details[open] > .faq-q::after {
   padding: 3px 8px;
 }
 
-/* Unlocked badge */
+/* Purchased / Unlocked badge — pill with green tint */
 .tier-badge--unlocked {
-  font: 600 11px var(--font-ui);
-  color: #43a047;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 10px var(--font-ui);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #2e7d32;
+  background: rgba(27,94,32,.12);
+  border: 1px solid rgba(27,94,32,.25);
+  padding: 3px 9px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+[data-theme="light"] .tier-badge--unlocked {
+  color: #1b5e20;
+  background: rgba(27,94,32,.10);
 }
 
 /* Lock: key icon + price stacked */

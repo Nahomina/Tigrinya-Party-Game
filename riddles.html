@@ -600,6 +600,10 @@
   <script>
   'use strict';
 
+  // ── Access cache keys ─────────────────────────────────────
+  const RIDDLES_ACCESS_KEY = 'riddles_pass_v1'; // caches purchased state (1 hr TTL)
+  const RIDDLES_ACCESS_TTL = 60 * 60 * 1000;
+
   // ── Supabase ──────────────────────────────────────────────
   const _sb = window.supabase.createClient(
     'https://rzcrdngpybrsjlbenqep.supabase.co',
@@ -663,17 +667,16 @@
 
     if (payment === 'success' && slug) {
       showToast('Payment confirmed! Activating your pass…', 'success');
+      // Clear stale cache so fresh DB check runs
+      try { localStorage.removeItem(RIDDLES_ACCESS_KEY); } catch {}
       const delays = [1500, 4000, 9000];
       let attempt = 0;
       const check = async () => {
         const ok = await hasHinqleAccess();
         if (ok) {
+          setCachedRiddlesAccess(true);
+          applyRiddlesTierUI(true);
           showToast('✓ Hinqle Pass activated — all tiers unlocked!', 'success');
-          // Refresh tier tiles by hiding the unlock prompt
-          document.getElementById('hinqle-unlock-prompt')?.style.setProperty('display', 'none');
-          document.getElementById('btn-start')?.removeAttribute('disabled');
-          // Re-apply filter so tiers update
-          applyFilter();
         } else if (attempt < delays.length) {
           setTimeout(check, delays[attempt++]);
         }
@@ -715,28 +718,55 @@
   }
 
   async function startPaymentFlow(slug) {
-    const { data: { session } } = await _sb.auth.getSession();
-    if (!session) {
-      alert('Please sign in first to purchase a game pass.');
+    // Guard: already purchased — don't let them buy again
+    const alreadyOwns = await hasHinqleAccess();
+    if (alreadyOwns) {
+      setCachedRiddlesAccess(true);
+      applyRiddlesTierUI(true);
+      showToast('✓ You already own this pass — all tiers are unlocked!', 'success');
       return;
     }
-    const res = await fetch(
-      'https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ pack_slug: slug }),
-      }
-    );
-    const json = await res.json();
-    if (json.url) window.location.href = json.url;
-    else alert('Could not start checkout: ' + (json.error || 'Unknown error'));
+
+    const { data: { session } } = await _sb.auth.getSession();
+    if (!session) {
+      showToast('Please sign in first to purchase a game pass.', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(
+        'https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+          body: JSON.stringify({ pack_slug: slug }),
+        }
+      );
+      const json = await res.json();
+      if (json.url) window.location.href = json.url;
+      else showToast('Could not start checkout: ' + (json.error || 'Unknown error'), 'error');
+    } catch (err) {
+      showToast('Payment error: ' + err.message, 'error');
+    }
   }
 
   // ── Tier radio selection — same pattern as Mayim/Misla ───
   // On boot, check access and unlock paid tiers if user has hinqle-pass
-  async function refreshTierLockState() {
-    const access = await hasHinqleAccess();
+  // ── Access cache helpers ─────────────────────────────────
+  function getCachedRiddlesAccess() {
+    try {
+      const raw = localStorage.getItem(RIDDLES_ACCESS_KEY);
+      if (!raw) return null;
+      const { value, ts } = JSON.parse(raw);
+      if (Date.now() - ts > RIDDLES_ACCESS_TTL) return null;
+      return value;
+    } catch { return null; }
+  }
+  function setCachedRiddlesAccess(value) {
+    try { localStorage.setItem(RIDDLES_ACCESS_KEY, JSON.stringify({ value, ts: Date.now() })); }
+    catch {}
+  }
+
+  function applyRiddlesTierUI(access) {
     ['tier-qola', 'tier-gobez'].forEach(id => {
       const label = document.getElementById(id);
       const radio = label?.querySelector('.tier-radio-input');
@@ -745,12 +775,26 @@
       if (access) {
         label.classList.remove('tier-option--locked');
         if (radio) radio.disabled = false;
-        if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓</span>';
+        if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓ Purchased</span>';
       } else {
         label.classList.add('tier-option--locked');
         if (radio) radio.disabled = true;
+        if (right && !right.querySelector('.tier-unlock-btn')) {
+          right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hinqle-pass\')">🔒 £4.99</button>';
+        }
       }
     });
+  }
+
+  async function refreshTierLockState() {
+    // 1. Apply cached state instantly (no flash for paying customers)
+    const cached = getCachedRiddlesAccess();
+    if (cached !== null) applyRiddlesTierUI(cached);
+
+    // 2. Fresh check from Supabase
+    const access = await hasHinqleAccess();
+    setCachedRiddlesAccess(access);
+    applyRiddlesTierUI(access);
   }
 
   document.querySelectorAll('input[name="riddle-tier"]').forEach(radio => {
