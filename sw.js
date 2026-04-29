@@ -1,10 +1,10 @@
-// Mayim Service Worker — v29
+// Mayim Service Worker — v30
 // HTML pages:    network-first  (always fresh)
 // JS/CSS assets: stale-while-revalidate  (fast + always up-to-date)
 // Supabase API:  network-first with cache fallback
 // Fonts:         cache-first  (immutable)
 
-const CACHE_VERSION      = 'mayim-v29';
+const CACHE_VERSION      = 'mayim-v30';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 // Assets to precache on install (bare URLs — no version query strings here)
@@ -143,7 +143,8 @@ self.addEventListener('fetch', event => {
       // Try exact URL first, then bare URL (strips ?v=X query string)
       return cache.match(event.request).then(exact => {
         const bareUrl  = event.request.url.split('?')[0];
-        const cacheHit = exact || cache.match(bareUrl);
+        // Always a Promise — when exact is a Response we wrap it; otherwise do a bare-URL lookup
+        const cacheHit = exact ? Promise.resolve(exact) : cache.match(bareUrl);
 
         // Background revalidation — always fetch fresh and update cache
         const networkFetch = fetch(event.request)
@@ -151,8 +152,10 @@ self.addEventListener('fetch', event => {
             if (res && res.status === 200 && res.type !== 'opaque') {
               // Store under BOTH the exact versioned URL and the bare URL
               // so future version bumps are served immediately
-              cache.put(event.request, res.clone()).catch(() => {});
-              cache.put(bareUrl, res.clone()).catch(() => {});
+              const clone1 = res.clone();
+              const clone2 = res.clone();
+              cache.put(event.request, clone1).catch(() => {});
+              cache.put(bareUrl, clone2).catch(() => {});
             }
             return res;
           })
