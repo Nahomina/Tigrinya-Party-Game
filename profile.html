@@ -105,10 +105,17 @@
     .profile-pass-item {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-left: 3px solid var(--correct);
+      border-left: 3px solid var(--border-mid);
       border-radius: 10px;
       padding: 0.85rem 1rem;
       display: flex; align-items: center; gap: 0.75rem;
+      transition: border-color .18s;
+    }
+    .profile-pass-item--owned {
+      border-left-color: #43a047;
+    }
+    .profile-pass-item--locked {
+      opacity: .55;
     }
     .profile-pass-icon {
       font-size: 1.4rem; flex-shrink: 0; line-height: 1;
@@ -120,13 +127,25 @@
       font: 400 0.72rem var(--font-ui); color: var(--text-muted);
       margin-top: 0.15rem;
     }
+    /* Purchased badge — matches tier-badge--unlocked pill */
     .profile-pass-tick {
       margin-left: auto; flex-shrink: 0;
-      font: 700 0.72rem var(--font-ui); color: var(--correct);
-      background: rgba(67,160,71,.1);
-      border: 1px solid rgba(67,160,71,.25);
-      border-radius: 20px; padding: 0.2rem 0.55rem;
+      font: 700 10px var(--font-ui);
+      letter-spacing: .06em; text-transform: uppercase;
+      color: #2e7d32;
+      background: rgba(27,94,32,.12);
+      border: 1px solid rgba(27,94,32,.25);
+      border-radius: 100px; padding: 3px 9px;
+      white-space: nowrap;
     }
+    /* "Get Pass" link on unpurchased rows */
+    .profile-pass-get {
+      margin-left: auto; flex-shrink: 0;
+      font: 600 0.72rem var(--font-ui);
+      color: var(--red); text-decoration: none;
+      white-space: nowrap;
+    }
+    .profile-pass-get:hover { text-decoration: underline; }
     .profile-empty {
       background: var(--bg-card);
       border: 1px solid var(--border); border-radius: 10px;
@@ -340,8 +359,7 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ── Read unlocked pass slugs from localStorage ────────────────────────────
-  // localStorage stores { slug: { words:[], proverbs:[], unlockedAt:... } }
-  function getUnlockedSlugs() {
+  function getLocalSlugs() {
     try {
       const raw = localStorage.getItem('mayim_unlocked_packs');
       if (!raw) return [];
@@ -350,36 +368,64 @@
     } catch { return []; }
   }
 
+  // ── Query Supabase for authoritative purchased slugs ──────────────────────
+  // This is the source of truth — works across devices after re-login.
+  async function getDbSlugs(userId) {
+    try {
+      const { data } = await sb
+        .from('user_pack_unlocks')
+        .select('packs(slug)')
+        .eq('user_id', userId);
+      return (data || []).map(r => r.packs?.slug).filter(Boolean);
+    } catch { return []; }
+  }
+
   // ── Render game passes section ────────────────────────────────────────────
-  function renderPasses(unlockedSlugs) {
+  // Shows ALL passes — owned ones highlighted, others shown as available.
+  function renderPasses(ownedSlugs) {
     const wrap = document.getElementById('profile-passes-wrap');
     if (typeof GAME_PASS_CATALOGUE === 'undefined') return;
 
-    // Also query Supabase for server-side unlocks (belt-and-suspenders)
-    const unlockedPasses = GAME_PASS_CATALOGUE.filter(p => unlockedSlugs.includes(p.slug));
-
-    if (unlockedPasses.length === 0) {
-      wrap.innerHTML = `
-        <div class="profile-empty">
-          No game passes yet.<br>
-          <a href="index.html">Browse passes →</a>
-        </div>`;
-      return;
-    }
-
+    wrap.textContent = '';
     const list = document.createElement('ul');
     list.className = 'profile-pass-list';
 
-    unlockedPasses.forEach(pass => {
+    GAME_PASS_CATALOGUE.forEach(pass => {
+      const owned = ownedSlugs.includes(pass.slug);
       const li = document.createElement('li');
-      li.className = 'profile-pass-item';
-      li.innerHTML = `
-        <span class="profile-pass-icon">${pass.icon || '🎮'}</span>
-        <div>
-          <div class="profile-pass-name">${pass.nameEn}</div>
-          <div class="profile-pass-meta">${pass.description}</div>
-        </div>
-        <span class="profile-pass-tick">✓ Active</span>`;
+      li.className = 'profile-pass-item' +
+        (owned ? ' profile-pass-item--owned' : ' profile-pass-item--locked');
+
+      const icon = document.createElement('span');
+      icon.className = 'profile-pass-icon';
+      icon.textContent = pass.icon || '🎮';
+
+      const info = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'profile-pass-name';
+      name.textContent = pass.nameEn;
+      const meta = document.createElement('div');
+      meta.className = 'profile-pass-meta';
+      meta.textContent = pass.description;
+      info.appendChild(name);
+      info.appendChild(meta);
+
+      li.appendChild(icon);
+      li.appendChild(info);
+
+      if (owned) {
+        const tick = document.createElement('span');
+        tick.className = 'profile-pass-tick';
+        tick.textContent = '✓ Purchased';
+        li.appendChild(tick);
+      } else {
+        const link = document.createElement('a');
+        link.className = 'profile-pass-get';
+        link.href = 'index.html#passes';
+        link.textContent = `Get £${pass.priceGbp.toFixed(2)} →`;
+        li.appendChild(link);
+      }
+
       list.appendChild(li);
     });
 
@@ -418,8 +464,15 @@
     const dateStr = joined.toLocaleDateString(undefined, { year:'numeric', month:'long', day:'numeric' });
     document.getElementById('profile-joined').textContent = 'Member since ' + dateStr;
 
-    // Render passes
-    renderPasses(getUnlockedSlugs());
+    // Render passes: DB is the source of truth (works on any device after login)
+    // Merge with localStorage so it's instant if already synced
+    const localSlugs = getLocalSlugs();
+    renderPasses(localSlugs); // instant render from cache
+    getDbSlugs(user.id).then(dbSlugs => {
+      // Merge: union of both (DB may have more from other devices)
+      const merged = [...new Set([...localSlugs, ...dbSlugs])];
+      renderPasses(merged); // re-render with authoritative data
+    });
 
     // Show page
     document.getElementById('loading-state').style.display  = 'none';
