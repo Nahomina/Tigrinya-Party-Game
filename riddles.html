@@ -80,13 +80,15 @@
       color: rgba(255,255,255,.65); margin: .55rem 0 0;
     }
 
-    /* ── Setup screen: full-page scroll (hero + body + button + footer
-          all move together). Override .screen's fixed 100dvh so the
-          whole screen scrolls as one unit, matching Mayim / Misla. ── */
+    /* ── Setup screen: unified scroll (hero + body + footer all move together).
+          Keep height: 100dvh so the screen stays viewport-sized (body.game-body
+          has overflow:hidden so height:auto never creates a scrollable context).
+          Switch overflow hidden → auto so the screen itself is the scroll
+          container — every child scrolls as one unit. ── */
     #screen-setup {
-      height: auto;
-      min-height: 100dvh;
+      height: 100dvh;
       overflow-y: auto;
+      overflow-x: hidden;
     }
     .setup-body {
       padding: 1.5rem 1.25rem 1rem;
