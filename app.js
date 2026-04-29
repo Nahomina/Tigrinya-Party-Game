@@ -1713,7 +1713,31 @@ async function startPaymentFlow(slug) {
     const { data: { session } } = await _supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
-    // Show brief loading state on the unlock button if present
+    // ── Guard 1: localStorage (instant — covers this device) ──────────────
+    if (isPackUnlocked(slug)) {
+      showNotification('✓ You already own this pass — enjoy all content!', 'success');
+      renderPackCards();
+      return;
+    }
+
+    // ── Guard 2: DB check (catches cross-device purchases) ─────────────────
+    const { data: ownedRows } = await _supabase
+      .from('user_pack_unlocks')
+      .select('packs(slug)')
+      .eq('user_id', session.user.id);
+    const ownedSlugs = (ownedRows || []).map(r => r.packs?.slug).filter(Boolean);
+    // Already owns this exact pass, or owns all-games (which unlocks everything)
+    const alreadyOwned = ownedSlugs.includes(slug) ||
+      (slug !== 'all-games' && ownedSlugs.includes('all-games'));
+
+    if (alreadyOwned) {
+      showNotification('✓ You already own this pass — enjoy all content!', 'success');
+      // Sync localStorage so this device catches up for future checks
+      fetchAndSyncUnlockedPacks();
+      return;
+    }
+
+    // Show brief loading state on the button
     const btn = document.querySelector(`[data-pay-slug="${slug}"]`);
     if (btn) { btn.textContent = '…'; btn.disabled = true; }
 
@@ -1736,7 +1760,7 @@ async function startPaymentFlow(slug) {
     showNotification(`Payment error: ${err.message}`, 'error');
     // Re-enable button on error
     const btn = document.querySelector(`[data-pay-slug="${slug}"]`);
-    if (btn) { btn.textContent = 'Unlock'; btn.disabled = false; }
+    if (btn) { btn.textContent = `Get Pass — £${btn.dataset.price || ''}`.trim(); btn.disabled = false; }
   }
 }
 
@@ -2022,8 +2046,14 @@ function renderPackCards() {
 
     const priceEl = document.createElement('p');
     priceEl.className = 'pass-card-price';
-    priceEl.textContent = unlocked ? '✓' : `£${pass.priceGbp.toFixed(2)}`;
-    if (unlocked) priceEl.classList.add('pass-price--unlocked');
+    priceEl.textContent = unlocked ? '' : `£${pass.priceGbp.toFixed(2)}`;
+    if (unlocked) {
+      priceEl.classList.add('pass-price--unlocked');
+      const badge = document.createElement('span');
+      badge.className = 'pass-owned-badge';
+      badge.textContent = '✓ Purchased';
+      priceEl.appendChild(badge);
+    }
     header.appendChild(priceEl);
 
     card.appendChild(header);
@@ -2048,17 +2078,25 @@ function renderPackCards() {
     });
     card.appendChild(chips);
 
-    // CTA button
+    // CTA button or purchased row
     if (!unlocked) {
       const btn = document.createElement('button');
       btn.className = 'pass-card-btn' + (isAllGames ? ' pass-card-btn--featured' : '');
       btn.textContent = `Get Pass — £${pass.priceGbp.toFixed(2)}`;
+      btn.dataset.paySlug = pass.slug;           // enables loading state + guard lookup
+      btn.dataset.price   = pass.priceGbp.toFixed(2); // used to restore label on error
       btn.addEventListener('click', () => startPaymentFlow(pass.slug));
       card.appendChild(btn);
     } else {
       const unlockedBadge = document.createElement('div');
       unlockedBadge.className = 'pass-unlocked-row';
-      unlockedBadge.innerHTML = '<span class="pass-unlocked-icon">✓</span><span>Unlocked — enjoy all content</span>';
+      const icon = document.createElement('span');
+      icon.className = 'pass-unlocked-icon';
+      icon.textContent = '✓';
+      const label = document.createElement('span');
+      label.textContent = 'Purchased — enjoy all content';
+      unlockedBadge.appendChild(icon);
+      unlockedBadge.appendChild(label);
       card.appendChild(unlockedBadge);
     }
 

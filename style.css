@@ -4718,17 +4718,44 @@ button, a, input, select {
   color: #fff;
 }
 
-/* Unlocked state */
+/* Purchased / Unlocked row — bottom of pass card */
 .pass-unlocked-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.55rem 0.75rem;
-  background: rgba(67,160,71,0.1);
-  border: 1px solid var(--correct);
+  padding: 0.6rem 0.75rem;
+  background: rgba(27,94,32,.10);
+  border: 1px solid rgba(27,94,32,.28);
   border-radius: 8px;
-  font: 600 0.78rem/1 var(--font-ui);
-  color: var(--correct);
+  font: 700 0.78rem/1 var(--font-ui);
+  color: #2e7d32;
   margin-top: 0.1rem;
+  letter-spacing: .03em;
+}
+[data-theme="light"] .pass-unlocked-row {
+  background: rgba(27,94,32,.08);
+  color: #1b5e20;
 }
 .pass-unlocked-icon { font-size: 1rem; }
+
+/* "✓ Purchased" pill in the price area */
+.pass-owned-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: 700 10px var(--font-ui);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #2e7d32;
+  background: rgba(27,94,32,.12);
+  border: 1px solid rgba(27,94,32,.25);
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+[data-theme="light"] .pass-owned-badge {
+  color: #1b5e20;
+  background: rgba(27,94,32,.10);
+}
+/* Hide the raw price text when badge is showing */
+.pass-price--unlocked { font-size: 0; }
