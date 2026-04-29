@@ -213,6 +213,20 @@
           </div>
         </label>
 
+        <label class="tier-option tier-option--locked" id="hito-tier-shimagile" data-tier="shimagile" style="--tier-color:#f4511e">
+          <input class="tier-radio-input" type="radio" name="hito-tier" value="expert" disabled />
+          <div class="tier-option-left">
+            <span class="tier-icon">🟠</span>
+            <div>
+              <p class="tier-name">Shimagile</p>
+              <p class="tier-profile">Expert · deep cultural wisdom</p>
+            </div>
+          </div>
+          <div class="tier-option-right" id="hito-tier-shimagile-right">
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+          </div>
+        </label>
+
       </div>
 
       <div class="config-row" style="margin-top:0.75rem">
@@ -421,6 +435,7 @@
     </div>
 
     <div class="button-footer">
+      <button id="btn-lb-open-solo" class="btn-secondary">🏆 Leaderboard</button>
       <button id="btn-play-again" class="btn-primary">Play Again</button>
     </div>
 
@@ -469,10 +484,24 @@
     </div>
 
     <div class="button-footer">
+      <button id="btn-lb-open-team" class="btn-secondary">🏆 Leaderboard</button>
       <button id="btn-team-play-again" class="btn-primary">Play Again</button>
     </div>
 
   </section>
+
+  <!-- ═══ LEADERBOARD MODAL ═══ -->
+  <div id="hito-lb-modal" class="hito-lb-modal hidden" role="dialog" aria-modal="true" aria-label="Leaderboard">
+    <div class="hito-lb-box">
+      <div class="hito-lb-header">
+        <span class="hito-lb-title">🏆 Top Scores</span>
+        <button id="btn-lb-close" class="hito-lb-close" aria-label="Close leaderboard">✕</button>
+      </div>
+      <div id="hito-lb-list" class="hito-lb-list">
+        <p class="hito-lb-loading">Loading…</p>
+      </div>
+    </div>
+  </div>
 
   <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>
 
@@ -509,11 +538,30 @@ let gameState = {
   currentRound: 1,
   totalRounds: 5,
   roundQuestions: [],
+  _teamTimerInterval: null,   // held so we can clear it on quit
 };
 
-const CATEGORIES = ['all', 'Geography', 'History', 'Culture', 'Language', 'Music', 'General'];
-const DIFFICULTIES = ['easy', 'medium', 'hard'];
+const CATEGORIES  = ['all', 'Geography', 'History', 'Culture', 'Language', 'Music', 'General'];
+const DIFFICULTIES = ['easy', 'medium', 'hard', 'expert'];
 const ROUND_OPTIONS = [3, 5, 7, 10];
+
+// ── Debug logging — append ?debug to URL to enable in production ──────────
+const DEBUG = new URLSearchParams(window.location.search).has('debug');
+function dbg(...a) { if (DEBUG) console.log('[HITO]', ...a); }
+
+// ── Offline fallback — 10 seed questions used when Supabase is unreachable ─
+const HITO_FALLBACK_QUESTIONS = [
+  { id:'f1',  question:'ርእሰ-ከተማ ኤርትራ እንታይ ይብሃል?', question_latin:"What is the capital of Eritrea?", options:[{label:'A',text:'ኣስመራ',latin:'Asmara'},{label:'B',text:'ምጽዋ',latin:'Massawa'},{label:'C',text:'ከረን',latin:'Keren'},{label:'D',text:'ደቀምሓረ',latin:'Dekemhare'}], correct_option:'A', category:'Geography', difficulty:'easy' },
+  { id:'f2',  question:'ሰላም ብትግርኛ እንታይ ማለት ዩ?', question_latin:"What does 'Selam' mean in Tigrinya?", options:[{label:'A',text:'ሰላምታ/ሰላም',latin:'Greeting/Peace'},{label:'B',text:'ምስጋና',latin:'Thank you'},{label:'C',text:'ሰናይ ምሸት',latin:'Good evening'},{label:'D',text:'ብፍቕሪ',latin:'With love'}], correct_option:'A', category:'Language', difficulty:'easy' },
+  { id:'f3',  question:'ኤርትራ ካብ ኢትዮጵያ ናጻ ዝወጸት ኣብ ምንታይ ዓመት ዩ?', question_latin:'In what year did Eritrea gain independence?', options:[{label:'A',text:'1991',latin:'1991'},{label:'B',text:'1993',latin:'1993'},{label:'C',text:'1998',latin:'1998'},{label:'D',text:'1980',latin:'1980'}], correct_option:'B', category:'History', difficulty:'easy' },
+  { id:'f4',  question:'እንጀራ ካብ እንታይ ይሰርሓ?', question_latin:'What is injera made from?', options:[{label:'A',text:'ጣፍ',latin:'Teff'},{label:'B',text:'ስርናይ',latin:'Wheat'},{label:'C',text:'ሽምብራ',latin:'Barley'},{label:'D',text:'ዓተር',latin:'Pea'}], correct_option:'A', category:'Culture', difficulty:'easy' },
+  { id:'f5',  question:'ቀይሕ ባሕሪ ካብ ኤርትራ ናብ ምንታይ ኣንፈት ዩ?', question_latin:'The Red Sea lies in which direction from Eritrea?', options:[{label:'A',text:'ምብራቕ',latin:'East'},{label:'B',text:'ምዕራብ',latin:'West'},{label:'C',text:'ሰሜን',latin:'North'},{label:'D',text:'ደቡብ',latin:'South'}], correct_option:'A', category:'Geography', difficulty:'easy' },
+  { id:'f6',  question:'ቋንቋ ትግርኛ ብምንታይ ፊደል ይጽሓፍ?', question_latin:'Tigrinya is written in which script?', options:[{label:'A',text:"ግዕዝ (Ge'ez)",latin:"Ge'ez"},{label:'B',text:'ዓረብ',latin:'Arabic'},{label:'C',text:'ላቲን',latin:'Latin'},{label:'D',text:'ሕብሩ',latin:'Hebrew'}], correct_option:'A', category:'Language', difficulty:'easy' },
+  { id:'f7',  question:'ቃል «ኣደ» ብእንግሊዝኛ እንታይ ዩ?', question_latin:"What does 'Ade' mean?", options:[{label:'A',text:'Mother',latin:'Mother'},{label:'B',text:'Father',latin:'Father'},{label:'C',text:'Sister',latin:'Sister'},{label:'D',text:'Brother',latin:'Brother'}], correct_option:'A', category:'Language', difficulty:'easy' },
+  { id:'f8',  question:'ሃገር ኤርትራ ናጻነታ ዝጎናጸፈቶ ዕለት «ናጽነት» ዝብሃል ዩ — ናብ ምንታይ ወርሒ ዩ?', question_latin:'Eritrea Independence Day falls in which month?', options:[{label:'A',text:'ሚያዝያ',latin:'April'},{label:'B',text:'ግንቦት',latin:'May'},{label:'C',text:'ሰነ',latin:'June'},{label:'D',text:'ሓምለ',latin:'July'}], correct_option:'B', category:'History', difficulty:'easy' },
+  { id:'f9',  question:'ሓጎስ ኣብ ትግርኛ እንታይ ማለት ዩ?', question_latin:"What does 'Hagos' mean in Tigrinya?", options:[{label:'A',text:'ሓዘን',latin:'Sadness'},{label:'B',text:'ሓጐስ/ደስታ',latin:'Joy/Happiness'},{label:'C',text:'ሰላም',latin:'Peace'},{label:'D',text:'ፍቕሪ',latin:'Love'}], correct_option:'B', category:'Language', difficulty:'easy' },
+  { id:'f10', question:'ቐይሕ ባሕሪ ናይ ምንታይ ዓሌት ባሕሪ ዩ?', question_latin:'The Red Sea is part of which ocean system?', options:[{label:'A',text:'ህንዳዊ ውቅያኖስ',latin:'Indian Ocean'},{label:'B',text:'ሰሜናዊ ዓትላንቲክ',latin:'North Atlantic'},{label:'C',text:'ፓሲፊክ',latin:'Pacific'},{label:'D',text:'ደቡባዊ ዓትላንቲክ',latin:'South Atlantic'}], correct_option:'A', category:'Geography', difficulty:'easy' },
+];
 
 function init() {
   _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -598,12 +646,8 @@ function setupTheme() {
 }
 
 function setupModeSelector() {
-  const radios = document.querySelectorAll('input[name="gameMode"]');
-  console.log('[HITO] setupModeSelector: Found', radios.length, 'radio buttons');
-
-  radios.forEach(radio => {
+  document.querySelectorAll('input[name="gameMode"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
-      console.log('[HITO] Mode changed to:', e.target.value);
       gameState.mode = e.target.value;
       updateModeUI();
     });
@@ -613,24 +657,8 @@ function setupModeSelector() {
 
 function updateModeUI() {
   const isSolo = gameState.mode === 'solo';
-  const teamConfig = document.getElementById('team-config');
-  const soloConfig = document.getElementById('solo-config');
-
-  console.log('[HITO] updateModeUI: isSolo=' + isSolo + ', teamConfig exists=' + !!teamConfig + ', soloConfig exists=' + !!soloConfig);
-
-  if (teamConfig) {
-    teamConfig.classList.toggle('hidden', isSolo);
-    console.log('[HITO] team-config hidden class:', teamConfig.classList.contains('hidden'));
-  } else {
-    console.warn('[HITO] team-config element not found!');
-  }
-
-  if (soloConfig) {
-    soloConfig.classList.toggle('hidden', !isSolo);
-    console.log('[HITO] solo-config hidden class:', soloConfig.classList.contains('hidden'));
-  } else {
-    console.warn('[HITO] solo-config element not found!');
-  }
+  document.getElementById('team-config')?.classList.toggle('hidden', isSolo);
+  document.getElementById('solo-config')?.classList.toggle('hidden', !isSolo);
 }
 
 // ── HITO game pass access check ───────────────────────────────────────────
@@ -655,7 +683,7 @@ async function hasHitoAccess(difficulty) {
 
 async function refreshHitoTierLockState() {
   const access = await hasHitoAccess('medium');
-  ['hito-tier-qola', 'hito-tier-gobez'].forEach(id => {
+  ['hito-tier-qola', 'hito-tier-gobez', 'hito-tier-shimagile'].forEach(id => {
     const label = document.getElementById(id);
     const radio = label?.querySelector('.tier-radio-input');
     const right = document.getElementById(id + '-right');
@@ -675,7 +703,7 @@ async function startPaymentFlow(slug) {
   if (!_supabase) return;
   const { data: { session } } = await _supabase.auth.getSession();
   if (!session) {
-    alert('Please sign in first to purchase a game pass.');
+    showToast('Please sign in first to purchase a game pass.', 'error');
     return;
   }
   try {
@@ -689,9 +717,9 @@ async function startPaymentFlow(slug) {
     );
     const json = await res.json();
     if (json.url) window.location.href = json.url;
-    else alert('Could not start checkout: ' + (json.error || 'Unknown error'));
+    else showToast('Could not start checkout: ' + (json.error || 'Unknown error'), 'error');
   } catch (err) {
-    alert('Payment error: ' + err.message);
+    showToast('Payment error: ' + err.message, 'error');
   }
 }
 
@@ -734,6 +762,7 @@ function wireEvents() {
   document.getElementById('btn-quit-team-playing')?.addEventListener('click', showQuitModal);
   document.getElementById('btn-quit-cancel').addEventListener('click', closeQuitModal);
   document.getElementById('btn-quit-confirm').addEventListener('click', () => {
+    stopAllTimers();
     closeQuitModal();
     goToScreen('setup');
   });
@@ -767,6 +796,14 @@ function wireEvents() {
     btn.addEventListener('click', () => selectAnswer(btn.dataset.option));
   });
 
+  // Leaderboard
+  document.getElementById('btn-lb-open-solo')?.addEventListener('click', openLeaderboard);
+  document.getElementById('btn-lb-open-team')?.addEventListener('click', openLeaderboard);
+  document.getElementById('btn-lb-close')?.addEventListener('click', closeLeaderboard);
+  document.getElementById('hito-lb-modal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeLeaderboard();
+  });
+
   // Service worker update
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_UPDATE' });
@@ -789,37 +826,43 @@ function updateTeamDurationDisplay() {
   document.getElementById('team-duration-display').textContent = `2 teams × ${rounds} rounds = ~${totalQ} questions`;
 }
 
+// Exposed globally so the admin panel can call window.clearHetoCache() after
+// saving questions, ensuring players always see fresh content immediately.
+window.clearHetoCache = function () {
+  localStorage.removeItem(HITO_CACHE_KEY);
+  localStorage.removeItem(HITO_CACHE_KEY + '_time');
+  dbg('cache cleared');
+};
+
 async function fetchHetoQuestions(count = 10) {
-  console.log('[HITO] fetchHetoQuestions called with count=' + count);
+  dbg('fetch count=%d diff=%s cat=%s', count, gameState.difficulty, gameState.category);
+
+  // ?bust in URL forces a one-time cache clear (useful right after admin edits)
+  if (new URLSearchParams(window.location.search).has('bust')) window.clearHetoCache();
+
   try {
-    const cached = localStorage.getItem(HITO_CACHE_KEY);
-    const cacheTime = localStorage.getItem(HITO_CACHE_KEY + '_time');
-    if (cached && cacheTime && Date.now() - parseInt(cacheTime) < HITO_CACHE_TTL) {
-      console.log('[HITO] Using cached questions');
-      const data = JSON.parse(cached);
-      return filterQuestions(data, count);
+    const cached   = localStorage.getItem(HITO_CACHE_KEY);
+    const cacheAge = localStorage.getItem(HITO_CACHE_KEY + '_time');
+    if (cached && cacheAge && Date.now() - parseInt(cacheAge) < HITO_CACHE_TTL) {
+      dbg('cache hit');
+      return filterQuestions(JSON.parse(cached), count);
     }
 
-    console.log('[HITO] Fetching from Supabase, category=' + gameState.category + ', difficulty=' + gameState.difficulty);
     let query = _supabase.from('heto_questions').select('*');
-    if (gameState.category !== 'all') {
-      query = query.eq('category', gameState.category);
-    }
+    if (gameState.category !== 'all') query = query.eq('category', gameState.category);
 
-    console.log('[HITO] Executing Supabase query...');
     const { data, error } = await query;
-    console.log('[HITO] Supabase query returned, error=' + (error ? error.message : 'null') + ', data length=' + (data ? data.length : 'null'));
     if (error) throw error;
 
     localStorage.setItem(HITO_CACHE_KEY, JSON.stringify(data));
     localStorage.setItem(HITO_CACHE_KEY + '_time', Date.now().toString());
+    dbg('fetched %d questions', data.length);
+    return filterQuestions(data, count);
 
-    const filtered = filterQuestions(data, count);
-    console.log('[HITO] Filtered to ' + filtered.length + ' questions');
-    return filtered;
   } catch (err) {
-    console.warn('[HITO] Failed to fetch questions:', err);
-    return [];
+    // Network unavailable — serve hardcoded seed questions so the game still works
+    console.warn('[HITO] Supabase unreachable, using offline fallback:', err.message);
+    return filterQuestions(HITO_FALLBACK_QUESTIONS, count);
   }
 }
 
@@ -840,8 +883,8 @@ async function startGame() {
     }
     overlay.classList.add('hidden');
   } catch (err) {
-    console.error('[HITO] Failed to start game:', err);
-    alert('Failed to load questions. Please try again.');
+    console.error('[HITO] startGame error:', err);
+    showToast('Failed to load questions — please try again.', 'error');
     overlay.classList.add('hidden');
   }
 }
@@ -850,7 +893,7 @@ async function startSoloGame() {
   const questions = await fetchHetoQuestions(10);
 
   if (!questions || questions.length < 10) {
-    alert('Not enough questions for this difficulty/category combination. Try a different setting.');
+    showToast('Not enough questions for this combination — try a different setting.', 'error');
     return;
   }
 
@@ -867,53 +910,38 @@ async function startSoloGame() {
 }
 
 async function startTeamGame() {
-  // Get team names with fallback to defaults
-  const team1Input = document.getElementById('team1-name-input').value.trim();
-  const team2Input = document.getElementById('team2-name-input').value.trim();
-  const team1Name = team1Input || 'Team A';
-  const team2Name = team2Input || 'Team B';
-
-  console.log('[HITO] startTeamGame: team1Input="' + team1Input + '", team2Input="' + team2Input + '"');
-  console.log('[HITO] startTeamGame: team1Name="' + team1Name + '", team2Name="' + team2Name + '"');
+  const sanitise = (raw, fb) => raw.trim().replace(/[<>&"']/g, '').slice(0, 24) || fb;
+  const team1Name = sanitise(document.getElementById('team1-name-input').value, 'Team A');
+  const team2Name = sanitise(document.getElementById('team2-name-input').value, 'Team B');
 
   gameState.teams = [
     { name: team1Name, score: 0, correct: 0, skipped: 0 },
-    { name: team2Name, score: 0, correct: 0, skipped: 0 }
+    { name: team2Name, score: 0, correct: 0, skipped: 0 },
   ];
 
-  console.log('[HITO] startTeamGame: gameState.teams set to:', gameState.teams);
-
   const totalQNeeded = gameState.totalRounds * 2;
-  console.log('[HITO] startTeamGame: Fetching ' + totalQNeeded + ' questions...');
-  const questions = await fetchHetoQuestions(totalQNeeded);
-  console.log('[HITO] startTeamGame: fetchHetoQuestions returned ' + (questions ? questions.length : 'null') + ' questions');
+  const questions    = await fetchHetoQuestions(totalQNeeded);
 
   if (!questions || questions.length < totalQNeeded) {
-    console.error('[HITO] startTeamGame: Not enough questions. Expected ' + totalQNeeded + ', got ' + (questions ? questions.length : 'null'));
-    alert('Not enough questions for this difficulty/category combination. Try a different setting.');
+    showToast('Not enough questions for this combination — try a different setting.', 'error');
     return;
   }
 
-  gameState.questions = questions;
+  gameState.questions    = questions;
   gameState.currentRound = 1;
-  gameState.currentTeam = 0;
-  gameState.currentQ = 0;
+  gameState.currentTeam  = 0;
+  gameState.currentQ     = 0;
   gameState.roundQuestions = [];
 
-  console.log('[HITO] startTeamGame: Going to interstitial screen...');
   goToScreen('interstitial');
-  console.log('[HITO] startTeamGame: Calling updateInterstitial...');
   updateInterstitial();
-  console.log('[HITO] startTeamGame: Complete');
 }
 
 function updateInterstitial() {
-  document.getElementById('current-round').textContent = gameState.currentRound;
-  document.getElementById('total-rounds').textContent = gameState.totalRounds;
-  const teamName = gameState.teams[gameState.currentTeam].name;
-  const displayText = teamName + " is up!";
-  console.log('[HITO] updateInterstitial: currentTeam=' + gameState.currentTeam + ', teamName="' + teamName + '", displayText="' + displayText + '"');
-  document.getElementById('active-team-display').textContent = displayText;
+  document.getElementById('current-round').textContent    = gameState.currentRound;
+  document.getElementById('total-rounds').textContent     = gameState.totalRounds;
+  document.getElementById('active-team-display').textContent =
+    gameState.teams[gameState.currentTeam].name + ' is up!';
 }
 
 function startTeamRound() {
@@ -939,18 +967,24 @@ function showTeamQuestion() {
   startTeamTimer();
 }
 
+function stopAllTimers() {
+  gameState.timerActive = false;
+  clearInterval(gameState._teamTimerInterval);
+  gameState._teamTimerInterval = null;
+}
+
 function startTeamTimer() {
   if (gameState.timerActive) return;
+  stopAllTimers(); // defensive: clear any stale interval before starting a new one
   gameState.timerActive = true;
-  gameState.timeLeft = 30;
+  gameState.timeLeft    = 30;
 
-  const interval = setInterval(() => {
+  gameState._teamTimerInterval = setInterval(() => {
     gameState.timeLeft--;
     document.getElementById('timer-display-team').textContent = gameState.timeLeft;
 
     if (gameState.timeLeft <= 0) {
-      clearInterval(interval);
-      gameState.timerActive = false;
+      stopAllTimers();
       recordTeamAnswer(false);
     }
   }, 1000);
@@ -1028,6 +1062,8 @@ function showTeamWinner() {
   document.getElementById('stat-team2-c').textContent = team2.correct;
   document.getElementById('stat-team2-s').textContent = team2.skipped;
 
+  const totalQ = gameState.totalRounds * 2;
+  submitScore(winner.name, winner.score, totalQ * 10, gameState.difficulty, 'team');
   goToScreen('team-winner');
 }
 
@@ -1171,15 +1207,17 @@ function endGame() {
   correctList.innerHTML = '';
   wrongList.innerHTML = '';
 
+  // Use textContent (not innerHTML) to prevent XSS from malicious DB content
   gameState.answers.forEach((ans, idx) => {
-    const q = gameState.questions[idx];
-    if (ans.isCorrect) {
-      correctList.innerHTML += `<div class="result-question" lang="ti">${q.question}</div>`;
-    } else {
-      wrongList.innerHTML += `<div class="result-question" lang="ti">${q.question}</div>`;
-    }
+    const q    = gameState.questions[idx];
+    const item = document.createElement('div');
+    item.className  = 'result-question';
+    item.lang       = 'ti';
+    item.textContent = q.question;
+    (ans.isCorrect ? correctList : wrongList).appendChild(item);
   });
 
+  submitScore('Solo', gameState.score, 10, gameState.difficulty, 'solo');
   goToScreen('winner');
 }
 
@@ -1195,6 +1233,91 @@ function goToScreen(screen) {
   gameState.screen = screen;
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + screen).classList.add('active');
+}
+
+// ── Leaderboard ──────────────────────────────────────────────────────────
+
+async function submitScore(teamName, score, totalPossible, difficulty, mode) {
+  if (!_supabase) return;
+  try {
+    const { data: { session } } = await _supabase.auth.getSession();
+    await _supabase.from('heto_scores').insert([{
+      team_name:      teamName,
+      score,
+      total_possible: totalPossible,
+      percentage:     Math.round((score / totalPossible) * 100),
+      difficulty,
+      rounds:         mode === 'team' ? gameState.totalRounds : 1,
+      user_id:        session?.user?.id ?? null,
+      played_at:      new Date().toISOString(),
+    }]);
+    dbg('score submitted');
+  } catch (err) {
+    // Non-fatal — game works even if score submission fails
+    console.warn('[HITO] score submission failed:', err.message);
+  }
+}
+
+async function loadLeaderboard() {
+  const list = document.getElementById('hito-lb-list');
+  list.innerHTML = '<p class="hito-lb-loading">Loading…</p>';
+  try {
+    const { data, error } = await _supabase
+      .from('heto_scores')
+      .select('team_name, score, total_possible, percentage, difficulty, played_at')
+      .order('percentage', { ascending: false })
+      .order('score',      { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    renderLeaderboard(data || []);
+  } catch (err) {
+    list.innerHTML = '<p class="hito-lb-loading">Could not load scores.</p>';
+  }
+}
+
+function renderLeaderboard(rows) {
+  const list = document.getElementById('hito-lb-list');
+  if (!rows.length) {
+    list.innerHTML = '<p class="hito-lb-loading">No scores yet — be the first!</p>';
+    return;
+  }
+  const medals = ['🥇', '🥈', '🥉'];
+  list.innerHTML = '';
+  rows.forEach((r, i) => {
+    const row  = document.createElement('div');
+    row.className = 'hito-lb-row' + (i < 3 ? ' hito-lb-top' : '');
+
+    const rank = document.createElement('span');
+    rank.className = 'hito-lb-rank';
+    rank.textContent = medals[i] ?? String(i + 1);
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'hito-lb-name';
+    nameEl.textContent = r.team_name;
+
+    const pct = document.createElement('span');
+    pct.className = 'hito-lb-pct';
+    pct.textContent = r.percentage + '%';
+
+    const diff = document.createElement('span');
+    diff.className = 'hito-lb-diff';
+    diff.textContent = r.difficulty;
+
+    row.appendChild(rank);
+    row.appendChild(nameEl);
+    row.appendChild(pct);
+    row.appendChild(diff);
+    list.appendChild(row);
+  });
+}
+
+function openLeaderboard() {
+  document.getElementById('hito-lb-modal').classList.remove('hidden');
+  loadLeaderboard();
+}
+
+function closeLeaderboard() {
+  document.getElementById('hito-lb-modal').classList.add('hidden');
 }
 
 if (document.readyState === 'loading') {
@@ -1827,6 +1950,86 @@ body.game-body {
 }
 
 /* (old .hito-tier-tile / .hito-unlock-prompt CSS removed — now uses shared .tier-option from style.css) */
+
+/* ═══ SECONDARY BUTTON ═══ */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  padding: 0.9rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-secondary:hover { border-color: var(--text-sub); color: var(--text); }
+
+/* ═══ LEADERBOARD MODAL ═══ */
+.hito-lb-modal {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.hito-lb-modal.hidden { display: none; }
+
+.hito-lb-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  width: 100%; max-width: 480px;
+  max-height: 70vh;
+  display: flex; flex-direction: column;
+  animation: slideUp 0.25s cubic-bezier(0.22,1,0.36,1);
+}
+
+.hito-lb-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.hito-lb-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem; letter-spacing: 0.06em; color: var(--text);
+}
+.hito-lb-close {
+  background: none; border: none; color: var(--text-muted);
+  font-size: 1.1rem; cursor: pointer; padding: 0.25rem 0.5rem;
+  transition: color 0.2s;
+}
+.hito-lb-close:hover { color: var(--text); }
+
+.hito-lb-list {
+  overflow-y: auto; flex: 1;
+  padding: 0.5rem 0 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hito-lb-loading {
+  text-align: center; color: var(--text-muted); font-size: 0.875rem;
+  padding: 2rem;
+}
+
+.hito-lb-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto auto;
+  align-items: center; gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.hito-lb-row:last-child { border-bottom: none; }
+.hito-lb-row:hover { background: var(--bg-elevated); }
+.hito-lb-top { background: rgba(255,193,7,0.05); }
+
+.hito-lb-rank  { font-size: 1.1rem; text-align: center; }
+.hito-lb-name  { font-weight: 600; color: var(--text); font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hito-lb-pct   { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); min-width: 3rem; text-align: right; }
+.hito-lb-diff  { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); background: var(--bg); padding: 0.2rem 0.45rem;
+  border-radius: 4px; border: 1px solid var(--border); }
 
 /* ═══ DESKTOP CENTERED LAYOUT ═══ */
 @media (min-width: 768px) {
