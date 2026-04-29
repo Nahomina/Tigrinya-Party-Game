@@ -166,35 +166,53 @@
         </div>
       </div>
 
-      <!-- DIFFICULTY TIER (BOTH MODES) -->
+      <!-- DIFFICULTY TIER — same .tier-option radio-list as Mayim/Misla -->
       <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty Tier</div>
 
-      <div class="hito-tier-grid">
-        <button class="hito-tier-tile" data-diff="easy" data-free="true">
-          <span class="tier-emoji">🟢</span>
-          <span class="tier-name">Gasha</span>
-          <span class="tier-sub">Easy · Free</span>
-        </button>
-        <button class="hito-tier-tile" data-diff="medium" data-free="false">
-          <span class="tier-emoji">🔵</span>
-          <span class="tier-name">Qol'a</span>
-          <span class="tier-sub">Medium · 🔒</span>
-        </button>
-        <button class="hito-tier-tile" data-diff="hard" data-free="false">
-          <span class="tier-emoji">🟣</span>
-          <span class="tier-name">Gobez</span>
-          <span class="tier-sub">Hard · 🔒</span>
-        </button>
-      </div>
+      <div class="tier-selector" id="hito-tier-selector" role="radiogroup" aria-label="Select difficulty tier">
 
-      <!-- HITO unlock prompt (shown when paid tier selected without access) -->
-      <div id="hito-unlock-prompt" class="hito-unlock-prompt" style="display:none">
-        <p class="unlock-prompt-msg">🔒 This tier requires the <strong>HITO Game Pass</strong></p>
-        <div class="unlock-prompt-prices">
-          <button class="unlock-btn-game" id="btn-buy-hito-pass">Get HITO Pass — £4.99</button>
-          <button class="unlock-btn-bundle" id="btn-buy-all-games-hito">All Games — £12.99</button>
-        </div>
-        <p class="unlock-prompt-sub">One-time payment · Gasha tier always free</p>
+        <label class="tier-option" data-tier="gasha" style="--tier-color:#43a047">
+          <input class="tier-radio-input" type="radio" name="hito-tier" value="easy" checked />
+          <div class="tier-option-left">
+            <span class="tier-icon">🟢</span>
+            <div>
+              <p class="tier-name">Gasha</p>
+              <p class="tier-profile">Easy · basic cultural trivia</p>
+            </div>
+          </div>
+          <div class="tier-option-right">
+            <span class="tier-badge--free">FREE</span>
+          </div>
+        </label>
+
+        <label class="tier-option tier-option--locked" id="hito-tier-qola" data-tier="qola" style="--tier-color:#1e88e5">
+          <input class="tier-radio-input" type="radio" name="hito-tier" value="medium" disabled />
+          <div class="tier-option-left">
+            <span class="tier-icon">🔵</span>
+            <div>
+              <p class="tier-name">Qol'a</p>
+              <p class="tier-profile">Medium · history & traditions</p>
+            </div>
+          </div>
+          <div class="tier-option-right" id="hito-tier-qola-right">
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+          </div>
+        </label>
+
+        <label class="tier-option tier-option--locked" id="hito-tier-gobez" data-tier="gobez" style="--tier-color:#8e24aa">
+          <input class="tier-radio-input" type="radio" name="hito-tier" value="hard" disabled />
+          <div class="tier-option-left">
+            <span class="tier-icon">🟣</span>
+            <div>
+              <p class="tier-name">Gobez</p>
+              <p class="tier-profile">Hard · advanced knowledge</p>
+            </div>
+          </div>
+          <div class="tier-option-right" id="hito-tier-gobez-right">
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+          </div>
+        </label>
+
       </div>
 
       <div class="config-row" style="margin-top:0.75rem">
@@ -526,15 +544,10 @@ function handlePaymentReturn() {
     const delays = [1500, 4000, 9000];
     let attempt = 0;
     const check = async () => {
-      const ok = await hasHitoAccess('medium'); // medium = any paid tier
+      const ok = await hasHitoAccess('medium');
       if (ok) {
         showToast('✓ HITO Game Pass activated — enjoy all tiers!', 'success');
-        // Update tile UI
-        document.querySelectorAll('.hito-tier-tile').forEach(t => {
-          t.classList.remove('locked');
-        });
-        document.getElementById('hito-unlock-prompt').style.display = 'none';
-        document.getElementById('btn-start-game').disabled = false;
+        refreshHitoTierLockState();
       } else if (attempt < delays.length) {
         setTimeout(check, delays[attempt++]);
       }
@@ -640,6 +653,24 @@ async function hasHitoAccess(difficulty) {
   } catch { return false; }
 }
 
+async function refreshHitoTierLockState() {
+  const access = await hasHitoAccess('medium');
+  ['hito-tier-qola', 'hito-tier-gobez'].forEach(id => {
+    const label = document.getElementById(id);
+    const radio = label?.querySelector('.tier-radio-input');
+    const right = document.getElementById(id + '-right');
+    if (!label) return;
+    if (access) {
+      label.classList.remove('tier-option--locked');
+      if (radio) radio.disabled = false;
+      if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓</span>';
+    } else {
+      label.classList.add('tier-option--locked');
+      if (radio) radio.disabled = true;
+    }
+  });
+}
+
 async function startPaymentFlow(slug) {
   if (!_supabase) return;
   const { data: { session } } = await _supabase.auth.getSession();
@@ -665,45 +696,14 @@ async function startPaymentFlow(slug) {
 }
 
 function wireEvents() {
-  // ── Tier tiles ──────────────────────────────────────────────────────────
-  const tiles = document.querySelectorAll('.hito-tier-tile');
-  // Set Gasha active by default
-  tiles[0]?.classList.add('active');
-
-  tiles.forEach(tile => {
-    tile.addEventListener('click', async () => {
-      const diff = tile.dataset.diff;
-      const isFree = tile.dataset.free === 'true';
-
-      // Optimistically select
-      tiles.forEach(t => t.classList.remove('active'));
-      tile.classList.add('active');
-      gameState.difficulty = diff;
-
-      const prompt = document.getElementById('hito-unlock-prompt');
-
-      if (!isFree) {
-        const hasAccess = await hasHitoAccess(diff);
-        if (!hasAccess) {
-          prompt.style.display = '';
-          document.getElementById('btn-start-game').disabled = true;
-          // Mark locked tiles visually
-          tile.classList.add('locked');
-        } else {
-          prompt.style.display = 'none';
-          document.getElementById('btn-start-game').disabled = false;
-          tile.classList.remove('locked');
-        }
-      } else {
-        prompt.style.display = 'none';
-        document.getElementById('btn-start-game').disabled = false;
-      }
+  // ── Tier radios ─────────────────────────────────────────────────────────
+  document.querySelectorAll('input[name="hito-tier"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      gameState.difficulty = radio.value;
     });
   });
-
-  // Unlock buttons
-  document.getElementById('btn-buy-hito-pass')?.addEventListener('click', () => startPaymentFlow('hito-pass'));
-  document.getElementById('btn-buy-all-games-hito')?.addEventListener('click', () => startPaymentFlow('all-games'));
+  // Check Supabase session and unlock tiers if user has access
+  refreshHitoTierLockState();
 
   // Category dropdown
   document.getElementById('category-dropdown').addEventListener('change', (e) => {
@@ -742,9 +742,8 @@ function wireEvents() {
   document.getElementById('btn-play-again').addEventListener('click', () => {
     gameState.difficulty = 'easy';
     gameState.category = 'all';
-    document.querySelectorAll('.hito-tier-tile').forEach((t,i) => t.classList.toggle('active', i === 0));
-    document.getElementById('hito-unlock-prompt').style.display = 'none';
-    document.getElementById('btn-start-game').disabled = false;
+    const gashaRadio = document.querySelector('input[name="hito-tier"][value="easy"]');
+    if (gashaRadio) gashaRadio.checked = true;
     document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
   });
@@ -757,9 +756,8 @@ function wireEvents() {
   document.getElementById('btn-team-play-again')?.addEventListener('click', () => {
     gameState.difficulty = 'easy';
     gameState.category = 'all';
-    document.querySelectorAll('.hito-tier-tile').forEach((t,i) => t.classList.toggle('active', i === 0));
-    document.getElementById('hito-unlock-prompt').style.display = 'none';
-    document.getElementById('btn-start-game').disabled = false;
+    const gashaRadio = document.querySelector('input[name="hito-tier"][value="easy"]');
+    if (gashaRadio) gashaRadio.checked = true;
     document.getElementById('category-dropdown').value = 'all';
     goToScreen('setup');
   });
@@ -1825,50 +1823,10 @@ body.game-body {
 
 .btn-primary:active {
   transform: translateY(0);
-  background: #0d47a1;
+  background: #bf360c;
 }
 
-/* ═══ HITO TIER TILES ═══ */
-.hito-tier-grid {
-  display: flex; gap: 0.5rem; margin-top: 0.5rem;
-}
-.hito-tier-tile {
-  flex: 1; padding: 0.65rem 0.4rem; border-radius: 12px;
-  border: 1.5px solid var(--border-mid); background: var(--bg-card);
-  text-align: center; cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
-  font-family: inherit;
-}
-.hito-tier-tile .tier-emoji { font-size: 1.1rem; }
-.hito-tier-tile .tier-name  { font-size: 0.75rem; font-weight: 700; color: var(--text-sub); letter-spacing: 0.04em; }
-.hito-tier-tile .tier-sub   { font-size: 0.6rem; color: var(--text-muted); }
-.hito-tier-tile.active      { border-color: #f4511e; background: rgba(244,81,30,0.08); }
-.hito-tier-tile.active .tier-name { color: #f4511e; }
-.hito-tier-tile.locked      { opacity: 0.65; }
-
-/* HITO unlock prompt */
-.hito-unlock-prompt {
-  margin-top: 0.75rem; padding: 1rem;
-  background: rgba(244,81,30,0.06); border: 1.5px solid rgba(244,81,30,0.3);
-  border-radius: 12px; text-align: center;
-}
-.unlock-prompt-msg { font-size: 0.85rem; color: var(--text); margin: 0 0 0.75rem; }
-.unlock-prompt-prices { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-.unlock-btn-game {
-  padding: 0.6rem 1rem; background: #f4511e; color: #fff;
-  border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700;
-  cursor: pointer; transition: opacity 0.15s; font-family: inherit;
-}
-.unlock-btn-game:hover { opacity: 0.88; }
-.unlock-btn-bundle {
-  padding: 0.6rem 1rem; background: transparent; color: var(--text-sub);
-  border: 1.5px solid var(--border-mid); border-radius: 10px;
-  font-size: 0.82rem; font-weight: 600; cursor: pointer;
-  transition: border-color 0.15s; font-family: inherit;
-}
-.unlock-btn-bundle:hover { border-color: #f4511e; color: var(--text); }
-.unlock-prompt-sub { font-size: 0.68rem; color: var(--text-muted); margin: 0.5rem 0 0; }
+/* (old .hito-tier-tile / .hito-unlock-prompt CSS removed — now uses shared .tier-option from style.css) */
 
 /* ═══ DESKTOP CENTERED LAYOUT ═══ */
 @media (min-width: 768px) {

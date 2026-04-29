@@ -80,28 +80,15 @@
       color: rgba(255,255,255,.65); margin: .55rem 0 0;
     }
 
-    /* ── Setup screen: scroll body, sticky footer ──────── */
+    /* ── Setup screen: flex column so body scrolls, footer sticks ── */
     #screen-setup {
       display: flex; flex-direction: column;
-      overflow: hidden; /* parent clips; scroll is on .setup-body */
+      overflow: hidden;
     }
     .setup-body {
       padding: 1.5rem 1.25rem 1rem; overflow-y: auto; flex: 1;
       display: flex; flex-direction: column; gap: 1.4rem;
     }
-    /* Floating footer pinned to bottom of setup screen */
-    .button-footer {
-      padding: 1rem 1.25rem; flex-shrink: 0;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-    }
-    .setup-footer {
-      display: flex; align-items: center; justify-content: center;
-      gap: .5rem; padding-top: .75rem;
-      font-size: .68rem; color: var(--text-muted);
-    }
-    .setup-footer a { color: var(--text-muted); text-decoration: none; }
-    .setup-footer a:hover { color: var(--text); }
     .section-label {
       font-size: .62rem; font-weight: 700; letter-spacing: .12em;
       text-transform: uppercase; color: var(--text-muted); margin: 0 0 .55rem;
@@ -122,20 +109,7 @@
     }
     .team-col input:focus { border-color: var(--riddle); }
 
-    /* Tier tiles */
-    .tier-group { display: flex; gap: .55rem; }
-    .tier-tile {
-      flex: 1; padding: .65rem .4rem; border-radius: 12px;
-      border: 1.5px solid var(--border-mid); background: var(--bg-card);
-      text-align: center; cursor: pointer;
-      transition: border-color .15s, background .15s;
-      font-family: inherit;
-    }
-    .tier-tile .t-emoji { font-size: 1.15rem; display: block; margin-bottom: .2rem; }
-    .tier-tile .t-name  { font-size: .72rem; font-weight: 700; color: var(--text-sub); letter-spacing: .04em; display: block; }
-    .tier-tile .t-sub   { font-size: .6rem;  color: var(--text-muted); display: block; margin-top: .1rem; }
-    .tier-tile.active { border-color: var(--riddle); background: var(--riddle-tint); }
-    .tier-tile.active .t-name { color: var(--riddle); }
+    /* Tier selector — no overrides needed; .tier-option from style.css handles all styling */
 
     /* Config rows */
     .config-row {
@@ -166,19 +140,6 @@
 
     /* Available riddles note */
     #avail-msg { font-size: .75rem; color: var(--text-muted); text-align: center; }
-
-    /* Start button */
-    .btn-start {
-      width: 100%; padding: 1rem;
-      background: linear-gradient(135deg, var(--riddle), var(--riddle-dark));
-      color: #fff; border: none; border-radius: 14px;
-      font-family: var(--font-display); font-size: 1.1rem;
-      letter-spacing: .1em; cursor: pointer;
-      transition: opacity .15s, transform .1s;
-    }
-    .btn-start:hover  { opacity: .92; }
-    .btn-start:active { transform: scale(.98); }
-    .btn-start:disabled { opacity: .4; cursor: default; }
 
     /* ── Game screen ─────────────────────────────────────── */
     .riddle-header {
@@ -416,30 +377,67 @@
         </div>
       </div>
 
-      <!-- Difficulty tier -->
+      <!-- Difficulty Tier — same radio-list pattern as Mayim/Misla -->
       <div>
         <p class="section-label">Difficulty Tier</p>
-        <div class="tier-group">
-          <button class="tier-tile active" data-diff="all">
-            <span class="t-emoji">🌟</span>
-            <span class="t-name">All</span>
-            <span class="t-sub">Mixed</span>
-          </button>
-          <button class="tier-tile" data-diff="easy">
-            <span class="t-emoji">🟢</span>
-            <span class="t-name">Gasha</span>
-            <span class="t-sub">Easy</span>
-          </button>
-          <button class="tier-tile" data-diff="medium">
-            <span class="t-emoji">🔵</span>
-            <span class="t-name">Qol'a</span>
-            <span class="t-sub">Medium</span>
-          </button>
-          <button class="tier-tile" data-diff="hard">
-            <span class="t-emoji">🟣</span>
-            <span class="t-name">Gobez</span>
-            <span class="t-sub">Hard</span>
-          </button>
+        <div class="tier-selector" id="tier-selector" role="radiogroup" aria-label="Select difficulty tier">
+
+          <label class="tier-option" data-tier="all" style="--tier-color:#00897b">
+            <input class="tier-radio-input" type="radio" name="riddle-tier" value="all" checked />
+            <div class="tier-option-left">
+              <span class="tier-icon">🌟</span>
+              <div>
+                <p class="tier-name">All Tiers</p>
+                <p class="tier-profile">Mixed difficulty · all riddles</p>
+              </div>
+            </div>
+            <div class="tier-option-right">
+              <span class="tier-badge--free">FREE</span>
+            </div>
+          </label>
+
+          <label class="tier-option" data-tier="gasha" style="--tier-color:#43a047">
+            <input class="tier-radio-input" type="radio" name="riddle-tier" value="easy" />
+            <div class="tier-option-left">
+              <span class="tier-icon">🟢</span>
+              <div>
+                <p class="tier-name">Gasha</p>
+                <p class="tier-profile">Easy · simple, fun riddles</p>
+              </div>
+            </div>
+            <div class="tier-option-right">
+              <span class="tier-badge--free">FREE</span>
+            </div>
+          </label>
+
+          <label class="tier-option tier-option--locked" id="tier-qola" data-tier="qola" style="--tier-color:#1e88e5">
+            <input class="tier-radio-input" type="radio" name="riddle-tier" value="medium" disabled />
+            <div class="tier-option-left">
+              <span class="tier-icon">🔵</span>
+              <div>
+                <p class="tier-name">Qol'a</p>
+                <p class="tier-profile">Medium · cultural knowledge</p>
+              </div>
+            </div>
+            <div class="tier-option-right" id="tier-qola-right">
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99</button>
+            </div>
+          </label>
+
+          <label class="tier-option tier-option--locked" id="tier-gobez" data-tier="gobez" style="--tier-color:#8e24aa">
+            <input class="tier-radio-input" type="radio" name="riddle-tier" value="hard" disabled />
+            <div class="tier-option-left">
+              <span class="tier-icon">🟣</span>
+              <div>
+                <p class="tier-name">Gobez</p>
+                <p class="tier-profile">Hard · deep & tricky riddles</p>
+              </div>
+            </div>
+            <div class="tier-option-right" id="tier-gobez-right">
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99</button>
+            </div>
+          </label>
+
         </div>
       </div>
 
@@ -484,31 +482,24 @@
         </div>
       </div>
 
-      <!-- Unlock prompt — shown when paid tier selected without access -->
-      <div id="hinqle-unlock-prompt" style="display:none;padding:1rem;background:rgba(0,137,123,0.07);border:1.5px solid rgba(0,137,123,0.3);border-radius:12px;text-align:center">
-        <p style="font-size:.85rem;color:var(--text);margin:0 0 .7rem">🔒 This tier requires the <strong>Hinqle Game Pass</strong></p>
-        <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
-          <button id="btn-buy-hinqle-pass" style="padding:.6rem 1rem;background:var(--riddle);color:#fff;border:none;border-radius:10px;font-size:.82rem;font-weight:700;cursor:pointer">Get Hinqle Pass — £4.99</button>
-          <button id="btn-buy-all-games-hinqle" style="padding:.6rem 1rem;background:transparent;color:var(--text-sub);border:1.5px solid var(--border-mid);border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer">All Games — £12.99</button>
-        </div>
-        <p style="font-size:.68rem;color:var(--text-muted);margin:.5rem 0 0">One-time · Gasha tier always free</p>
-      </div>
-
       <p id="avail-msg"></p>
 
     </div><!-- /.setup-body -->
 
-    <!-- Floating footer — sticky at bottom, always visible -->
+    <!-- Sticky CTA — identical to Mayim/Misla pattern -->
     <div class="button-footer">
-      <button id="btn-start" class="btn-start">▶ Start Game</button>
-      <footer class="setup-footer">
-        <a href="terms.html">Terms</a>
-        <span>·</span>
-        <a href="privacy.html">Privacy</a>
-        <span>·</span>
-        <a href="contact.html">Contact</a>
-      </footer>
+      <button id="btn-start" class="btn-primary">▶ Start Game</button>
     </div>
+
+    <footer class="game-legal-footer">
+      <span>© 2026 Tigrinya Party Games</span>
+      <span class="game-footer-sep">·</span>
+      <a href="terms.html" class="footer-link">Terms</a>
+      <span class="game-footer-sep">·</span>
+      <a href="privacy.html" class="footer-link">Privacy</a>
+      <span class="game-footer-sep">·</span>
+      <a href="contact.html" class="footer-link">Contact</a>
+    </footer>
 
   </section>
 
@@ -697,6 +688,7 @@
       if (!allRiddles.length) throw new Error('No riddles in the database yet. Add some in the admin panel.');
       applyFilter();
       showScreen('setup');
+      refreshTierLockState(); // async — updates tier lock icons after auth check
     } catch (e) {
       document.getElementById('error-msg').textContent = e.message || String(e);
       showScreen('error');
@@ -736,31 +728,32 @@
     else alert('Could not start checkout: ' + (json.error || 'Unknown error'));
   }
 
-  // ── Tier tile selection ───────────────────────────────────
-  document.querySelectorAll('.tier-tile[data-diff]').forEach(tile => {
-    tile.addEventListener('click', async () => {
-      document.querySelectorAll('.tier-tile[data-diff]').forEach(x => x.classList.remove('active'));
-      tile.classList.add('active');
-      chosenDiff = tile.dataset.diff;
-
-      // Gate non-free tiers
-      const prompt = document.getElementById('hinqle-unlock-prompt');
-      if (chosenDiff !== 'all' && chosenDiff !== 'easy') {
-        const access = await hasHinqleAccess();
-        prompt.style.display = access ? 'none' : '';
-        document.getElementById('btn-start').disabled = !access || poolRiddles.length === 0;
+  // ── Tier radio selection — same pattern as Mayim/Misla ───
+  // On boot, check access and unlock paid tiers if user has hinqle-pass
+  async function refreshTierLockState() {
+    const access = await hasHinqleAccess();
+    ['tier-qola', 'tier-gobez'].forEach(id => {
+      const label = document.getElementById(id);
+      const radio = label?.querySelector('.tier-radio-input');
+      const right = document.getElementById(id + '-right');
+      if (!label) return;
+      if (access) {
+        label.classList.remove('tier-option--locked');
+        if (radio) radio.disabled = false;
+        if (right) right.innerHTML = '<span class="tier-badge--unlocked">✓</span>';
       } else {
-        prompt.style.display = 'none';
-        document.getElementById('btn-start').disabled = false;
+        label.classList.add('tier-option--locked');
+        if (radio) radio.disabled = true;
       }
+    });
+  }
 
+  document.querySelectorAll('input[name="riddle-tier"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      chosenDiff = radio.value;
       applyFilter();
     });
   });
-
-  // Unlock buttons
-  document.getElementById('btn-buy-hinqle-pass')?.addEventListener('click', () => startPaymentFlow('hinqle-pass'));
-  document.getElementById('btn-buy-all-games-hinqle')?.addEventListener('click', () => startPaymentFlow('all-games'));
 
   function applyFilter() {
     poolRiddles = chosenDiff === 'all'
