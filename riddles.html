@@ -810,9 +810,20 @@
   });
 
   function applyFilter() {
-    poolRiddles = chosenDiff === 'all'
+    // Deduplicate by riddle text to prevent the same riddle appearing twice
+    function dedupeRiddles(arr) {
+      const seen = new Set();
+      return arr.filter(r => {
+        const key = (r.riddle || r.question || '').trim().toLowerCase();
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+    const filtered = chosenDiff === 'all'
       ? allRiddles
       : allRiddles.filter(r => r.difficulty === chosenDiff);
+    poolRiddles = dedupeRiddles(filtered);
 
     const avail = poolRiddles.length;
     const msg   = document.getElementById('avail-msg');

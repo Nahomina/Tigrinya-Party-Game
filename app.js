@@ -1591,7 +1591,7 @@ function getMergedWords() {
   // Mirrors the same logic in getMergedProverbs() for a consistent tier experience.
   if (activeTier === 'shimagile') {
     const data = unlocked['shimagile'];
-    if (data && Array.isArray(data.words) && data.words.length > 0) return data.words;
+    if (data && Array.isArray(data.words) && data.words.length > 0) return deduplicateWords(data.words);
     // Fallback: shimagile not unlocked — show gasha words so the game still runs
     return [...gameWords];
   }
@@ -1607,7 +1607,19 @@ function getMergedWords() {
       all = all.concat(data.words);
     }
   }
-  return all;
+  return deduplicateWords(all);
+}
+
+// Remove duplicate words (same word text, case-insensitive) — keeps first occurrence.
+// Prevents the same word appearing twice in one game when packs overlap.
+function deduplicateWords(arr) {
+  const seen = new Set();
+  return arr.filter(w => {
+    const key = (w.word || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // Which difficulty labels are allowed per tier (cumulative).
@@ -1629,7 +1641,7 @@ function getMergedProverbs() {
   if (activeTier === 'shimagile') {
     const data = unlocked['shimagile'];
     if (data && Array.isArray(data.proverbs) && data.proverbs.length > 0) {
-      return data.proverbs;
+      return deduplicateProverbs(data.proverbs);
     }
     // Fallback: shimagile not unlocked yet — return hard gasha proverbs
     const source = gameProverbs.length > 0 ? gameProverbs
@@ -1654,7 +1666,18 @@ function getMergedProverbs() {
       }
     }
   }
-  return all;
+  return deduplicateProverbs(all);
+}
+
+// Remove duplicate proverbs (same tigrinya text, case-insensitive) — keeps first occurrence.
+function deduplicateProverbs(arr) {
+  const seen = new Set();
+  return arr.filter(p => {
+    const key = (p.tigrinya || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 // ── Score validation (anti-tamper) ────────────────────────

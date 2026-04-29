@@ -444,7 +444,7 @@
   <script src="packs.js?v=7"></script>
 
   <!-- Main app -->
-  <script src="app.js?v=33"></script>
+  <script src="app.js?v=34"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -532,6 +532,21 @@
         document.querySelector('.home-wrap').classList.add('page-exit');
         setTimeout(() => { window.location.href = href; }, 200);
       });
+    });
+
+    // ── bfcache restore (browser back button) ──────────────────────────────
+    // When the user pressed browser-back from a game, the browser restores this
+    // page from bfcache with page-exit still applied (invisible + unclickable).
+    // Remove it and reset the animation so the home screen is visible again.
+    window.addEventListener('pageshow', e => {
+      if (e.persisted) {
+        const wrap = document.querySelector('.home-wrap');
+        if (wrap) {
+          wrap.classList.remove('page-exit');
+          wrap.style.opacity = '1';
+          wrap.style.animation = 'pageFadeIn 0.25s ease forwards';
+        }
+      }
     });
 
     // ── Fade in on landing (in case user came back from game) ──

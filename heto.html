@@ -912,7 +912,15 @@ async function fetchHetoQuestions(count = 10) {
 }
 
 function filterQuestions(allQ, count) {
-  const filtered = allQ.filter(q => q.difficulty === gameState.difficulty);
+  // Deduplicate by question text before filtering (prevents repeats if DB has dupes)
+  const seen = new Set();
+  const unique = allQ.filter(q => {
+    const key = (q.question || '').trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const filtered = unique.filter(q => q.difficulty === gameState.difficulty);
   return filtered.sort(() => Math.random() - 0.5).slice(0, count);
 }
 

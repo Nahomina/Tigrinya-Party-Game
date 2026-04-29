@@ -155,6 +155,14 @@ async function loadAllWords() {
 }
 
 async function createWord(word, latin, english, category, pack_id) {
+  // Prevent duplicates — check in-memory list before hitting DB
+  const isDup = allWords.some(w =>
+    w.word.trim().toLowerCase() === word.trim().toLowerCase() && w.pack_id === pack_id
+  );
+  if (isDup) {
+    showToast(`❌ "${word}" already exists in this pack`, 'error');
+    return;
+  }
   const { error } = await _sb.from('words').insert([{ word, latin, english, category, pack_id }]);
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
   showToast(`✓ Added word: ${word}`, 'success');
@@ -273,6 +281,14 @@ async function loadAllProverbs() {
 }
 
 async function createProverb(tigrinya, latin, english, difficulty, pack_id) {
+  // Prevent duplicates — check in-memory list before hitting DB
+  const isDup = allProverbs.some(p =>
+    p.tigrinya.trim().toLowerCase() === tigrinya.trim().toLowerCase() && p.pack_id === pack_id
+  );
+  if (isDup) {
+    showToast('❌ This proverb already exists in this pack', 'error');
+    return;
+  }
   const { error } = await _sb.from('proverbs').insert([{ tigrinya, latin, english, difficulty, pack_id }]);
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
   showToast(`✓ Added proverb`, 'success');
@@ -481,6 +497,15 @@ async function createHeto() {
   // Validate
   if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category) {
     showToast('❌ Please fill in all required fields', 'error');
+    return;
+  }
+
+  // Prevent duplicates — check in-memory list before hitting DB
+  const isDup = allHeto.some(q =>
+    q.question.trim().toLowerCase() === question.trim().toLowerCase()
+  );
+  if (isDup) {
+    showToast('❌ This question already exists', 'error');
     return;
   }
 
