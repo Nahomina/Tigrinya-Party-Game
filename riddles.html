@@ -80,13 +80,16 @@
       color: rgba(255,255,255,.65); margin: .55rem 0 0;
     }
 
-    /* ── Setup screen: flex column so body scrolls, footer sticks ── */
+    /* ── Setup screen: full-page scroll (hero + body + button + footer
+          all move together). Override .screen's fixed 100dvh so the
+          whole screen scrolls as one unit, matching Mayim / Misla. ── */
     #screen-setup {
-      display: flex; flex-direction: column;
-      overflow: hidden;
+      height: auto;
+      min-height: 100dvh;
+      overflow-y: auto;
     }
     .setup-body {
-      padding: 1.5rem 1.25rem 1rem; overflow-y: auto; flex: 1;
+      padding: 1.5rem 1.25rem 1rem;
       display: flex; flex-direction: column; gap: 1.4rem;
     }
     .section-label {
