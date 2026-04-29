@@ -25,7 +25,7 @@
   <link rel="canonical" href="https://habeshagame.com/riddles.html" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=27" />
+  <link rel="stylesheet" href="style.css?v=28" />
   <style>
     /* ── Design tokens ──────────────────────────────────── */
     :root {
@@ -337,6 +337,11 @@
   </style>
 </head>
 <body class="game-body">
+
+  <div id="update-banner" role="status">
+    <span>NEW VERSION AVAILABLE</span>
+    <button id="btn-update-reload">RELOAD</button>
+  </div>
 
   <!-- Loading -->
   <section id="screen-loading" class="screen active">
@@ -1044,6 +1049,27 @@
 
   // ── Init ──────────────────────────────────────────────────
   boot();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(err => console.warn('[SW] registration failed:', err));
+      });
+
+      // SW_UPDATED: silent reload on setup screen, banner mid-game
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type !== 'SW_UPDATED') return;
+        const active = document.querySelector('.screen.active');
+        const safe   = !active || active.id === 'screen-setup' || active.id === 'screen-loading';
+        if (safe) { window.location.reload(); return; }
+        const banner = document.getElementById('update-banner');
+        const btn    = document.getElementById('btn-update-reload');
+        if (banner) banner.classList.add('visible');
+        if (btn) btn.onclick = () => window.location.reload();
+      });
+    }
   </script>
 </body>
 </html>

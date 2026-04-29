@@ -27,7 +27,7 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=27" />
+  <link rel="stylesheet" href="style.css?v=28" />
   <title>Mayim — ማይም</title>
 
   <!-- Sentry Error Tracking — async so it never blocks page parse or Supabase init -->
@@ -560,7 +560,7 @@
   <script src="supabase.min.js"></script>
   <script src="words.js?v=14"></script>
   <script src="proverbs.js?v=14"></script>
-  <script src="packs.js?v=3"></script>
+  <script src="packs.js?v=7"></script>
   <script src="app.js?v=33"></script>
 
   <script>
@@ -568,6 +568,15 @@
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
           .catch(err => console.warn('SW registration failed:', err));
+      });
+
+      // SW_UPDATED: auto-reload when on a safe screen (home/setup), banner mid-game
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type !== 'SW_UPDATED') return;
+        const screen = window.gameState?.screen;
+        const safe   = !screen || screen === 'home' || screen === 'setup';
+        if (safe) { window.location.reload(); return; }
+        document.getElementById('update-banner')?.classList.add('visible');
       });
     }
     // Wire unlock modal for game page

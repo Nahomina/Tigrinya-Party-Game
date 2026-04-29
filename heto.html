@@ -848,16 +848,17 @@ function wireEvents() {
     if (e.target === e.currentTarget) closeLeaderboard();
   });
 
-  // Service worker update
+  // SW_UPDATED: silent reload on setup/landing, banner mid-game
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_UPDATE' });
-    navigator.serviceWorker.addEventListener('message', (e) => {
-      if (e.data.type === 'SW_UPDATED') {
-        document.getElementById('update-banner').classList.remove('hidden');
-        document.getElementById('btn-update-reload').addEventListener('click', () => {
-          window.location.reload();
-        });
-      }
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type !== 'SW_UPDATED') return;
+      const screen = gameState?.screen;
+      const safe   = !screen || screen === 'landing' || screen === 'setup';
+      if (safe) { window.location.reload(); return; }
+      const banner = document.getElementById('update-banner');
+      const btn    = document.getElementById('btn-update-reload');
+      if (banner) banner.classList.remove('hidden');
+      if (btn) btn.onclick = () => window.location.reload();
     });
   }
 }

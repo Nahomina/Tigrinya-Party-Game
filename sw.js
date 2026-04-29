@@ -1,10 +1,13 @@
-// Mayim Service Worker — v18
-// HTML pages: network-first (always fresh)
-// Assets/fonts: cache-first (fast)
-// Supabase API: network-first with cache fallback
-const CACHE_VERSION = 'mayim-v28';
+// Mayim Service Worker — v29
+// HTML pages:    network-first  (always fresh)
+// JS/CSS assets: stale-while-revalidate  (fast + always up-to-date)
+// Supabase API:  network-first with cache fallback
+// Fonts:         cache-first  (immutable)
+
+const CACHE_VERSION      = 'mayim-v29';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
+// Assets to precache on install (bare URLs — no version query strings here)
 const PRECACHE_ASSETS = [
   './style.css',
   './supabase.min.js',
@@ -13,126 +16,150 @@ const PRECACHE_ASSETS = [
   './packs.js',
   './app.js',
   './manifest.json',
-  './assets/NotoSansEthiopic.woff2',
-  './assets/BebasNeue.woff2'
 ];
 
-// ── Install: pre-cache static assets (NOT index.html — network-first) ────
+// Fonts: large, immutable — cache separately so they survive a full cache wipe
+const FONT_CACHE   = 'mayim-fonts-v1';
+const FONT_ASSETS  = [
+  './assets/NotoSansEthiopic.woff2',
+  './assets/BebasNeue.woff2',
+];
+
+// ── Install: pre-cache assets, skip waiting immediately ─────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then(cache => {
-        // Add all assets, but continue even if some fail
-        return Promise.allSettled(
-          PRECACHE_ASSETS.map(url => cache.add(url))
-        ).then(results => {
-          const failed = results.filter(r => r.status === 'rejected');
-          if (failed.length > 0) {
-            console.warn(`[SW] Failed to cache ${failed.length} asset(s)`);
-          }
-          return cache;
-        });
-      })
-      .then(() => self.skipWaiting())  // activate immediately
-      .catch(err => {
-        console.error('[SW] Cache install failed:', err);
-        // Continue even if cache fails
-        return self.skipWaiting();
-      })
+    Promise.all([
+      // Main cache
+      caches.open(CACHE_VERSION).then(cache =>
+        Promise.allSettled(PRECACHE_ASSETS.map(url => cache.add(url)))
+          .then(results => {
+            const failed = results.filter(r => r.status === 'rejected');
+            if (failed.length) console.warn(`[SW] ${failed.length} precache miss(es)`);
+          })
+      ),
+      // Font cache — kept across version bumps (fonts don't change)
+      caches.open(FONT_CACHE).then(cache =>
+        Promise.allSettled(FONT_ASSETS.map(url =>
+          caches.match(url).then(hit => hit ? null : cache.add(url))
+        ))
+      ),
+    ])
+    .then(() => self.skipWaiting())  // activate immediately, no waiting for tabs to close
+    .catch(() => self.skipWaiting())
   );
 });
 
-// ── Activate: wipe all old caches immediately ─────────────────────────────
+// ── Activate: wipe stale caches, claim all clients, trigger reload ──────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys
-            .filter(key => key !== CACHE_VERSION && key !== SUPABASE_API_CACHE)
-            .map(key => caches.delete(key).catch(err => console.warn(`[SW] Failed to delete cache ${key}:`, err)))
-        )
-      )
+      .then(keys => Promise.all(
+        keys
+          .filter(k => k !== CACHE_VERSION && k !== SUPABASE_API_CACHE && k !== FONT_CACHE)
+          .map(k => caches.delete(k).catch(() => {}))
+      ))
+      .then(() => self.clients.claim())
       .then(() => {
-        self.clients.matchAll({ type: 'window' })
-          .then(clients => {
-            clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
-          })
-          .catch(err => console.warn('[SW] Failed to notify clients:', err));
-        return self.clients.claim();  // take control of all open tabs immediately
+        // Tell every open tab a new version is live.
+        // Pages decide whether to reload silently or show a banner.
+        self.clients.matchAll({ type: 'window' }).then(clients =>
+          clients.forEach(c => c.postMessage({ type: 'SW_UPDATED' }))
+        );
       })
-      .catch(err => {
-        console.error('[SW] Activation failed:', err);
-        return self.clients.claim();
-      })
+      .catch(() => self.clients.claim())
   );
 });
 
-// ── Fetch ─────────────────────────────────────────────────────────────────
+// ── Message handler ──────────────────────────────────────────────────────────
+// Pages can send SKIP_WAITING to force a waiting SW to activate.
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
-  const url = new URL(event.request.url);
-  const isHtml    = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '';
-  const isSbApi   = url.hostname.includes('supabase.co');
-  const isCdnJs   = url.hostname.includes('jsdelivr.net');
+  const url      = new URL(event.request.url);
+  const isHtml   = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '';
+  const isSbApi  = url.hostname.includes('supabase.co');
+  const isCdn    = url.hostname.includes('jsdelivr.net') || url.hostname.includes('fonts.gstatic.com') || url.hostname.includes('fonts.googleapis.com');
+  const isFont   = url.pathname.endsWith('.woff2') || url.pathname.endsWith('.woff') || url.pathname.endsWith('.ttf');
 
-  // ── index.html & Supabase: network-first, cache fallback ──────────────
+  // ── HTML + Supabase API: network-first, cache fallback ───────────────────
   if (isHtml || isSbApi) {
     event.respondWith(
       fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
+        .then(res => {
+          if (res && res.status === 200) {
             const key = isSbApi ? SUPABASE_API_CACHE : CACHE_VERSION;
-            caches.open(key)
-              .then(c => c.put(event.request, clone))
-              .catch(err => console.warn('[SW] Cache write failed:', err));
+            caches.open(key).then(c => c.put(event.request, res.clone())).catch(() => {});
           }
-          return response;
+          return res;
         })
-        .catch(err => {
-          console.warn('[SW] Fetch failed, falling back to cache:', event.request.url, err);
-          return caches.match(event.request);
-        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // ── CDN scripts: network-first (don't cache — they version themselves) ─
-  if (isCdnJs) {
+  // ── Fonts: cache-first, never expire ─────────────────────────────────────
+  if (isFont) {
+    event.respondWith(
+      caches.open(FONT_CACHE).then(cache =>
+        cache.match(event.request).then(cached => {
+          if (cached) return cached;
+          return fetch(event.request).then(res => {
+            if (res && res.status === 200) cache.put(event.request, res.clone()).catch(() => {});
+            return res;
+          });
+        })
+      )
+    );
+    return;
+  }
+
+  // ── CDN (external): network-first, cache as fallback ─────────────────────
+  if (isCdn) {
     event.respondWith(
       fetch(event.request)
-        .catch(err => {
-          console.warn('[SW] CDN fetch failed, falling back to cache:', event.request.url);
-          return caches.match(event.request);
+        .then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE_VERSION).then(c => c.put(event.request, res.clone())).catch(() => {});
+          }
+          return res;
         })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // ── Everything else: cache-first, network fallback ─────────────────────
-  // Try exact URL first, then strip query string so precached bare filenames
-  // (e.g. ./app.js) serve versioned requests (e.g. ./app.js?v=33) — this
-  // enables offline from the very first SW install without a second visit.
+  // ── Local JS/CSS/images: stale-while-revalidate ───────────────────────────
+  // Serve the cached version immediately (fast) while fetching a fresh copy
+  // in the background and updating the cache for next time.
+  // Version-query-stripped lookup (app.js?v=33 → app.js) handles pages that
+  // still carry old version strings — they always get the latest precached file.
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      // Fallback: try the same URL without query params (catches versioned assets)
-      const bareUrl = event.request.url.split('?')[0];
-      return caches.match(bareUrl).then(cachedBare => {
-        if (cachedBare) return cachedBare;
-        return fetch(event.request)
-          .then(response => {
-            if (response && response.status === 200 && response.type === 'basic') {
-              const toCache = response.clone();
-              caches.open(CACHE_VERSION)
-                .then(c => c.put(event.request, toCache))
-                .catch(err => console.warn('[SW] Cache write failed:', err));
+    caches.open(CACHE_VERSION).then(cache => {
+      // Try exact URL first, then bare URL (strips ?v=X query string)
+      return cache.match(event.request).then(exact => {
+        const bareUrl  = event.request.url.split('?')[0];
+        const cacheHit = exact || cache.match(bareUrl);
+
+        // Background revalidation — always fetch fresh and update cache
+        const networkFetch = fetch(event.request)
+          .then(res => {
+            if (res && res.status === 200 && res.type !== 'opaque') {
+              // Store under BOTH the exact versioned URL and the bare URL
+              // so future version bumps are served immediately
+              cache.put(event.request, res.clone()).catch(() => {});
+              cache.put(bareUrl, res.clone()).catch(() => {});
             }
-            return response;
+            return res;
           })
-          .catch(() => caches.match(event.request));
+          .catch(() => null);
+
+        // Serve from cache immediately; fall through to network if nothing cached
+        return cacheHit.then(cached => cached || networkFetch);
       });
     })
   );

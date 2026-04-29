@@ -451,6 +451,11 @@
         navigator.serviceWorker.register('./sw.js')
           .catch(err => console.warn('SW registration failed:', err));
       });
+
+      // Home page is always safe to reload silently when SW updates
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'SW_UPDATED') window.location.reload();
+      });
     }
 
     // ── How to Play & Word Packs Accordion (mutually exclusive) ──

@@ -1483,12 +1483,16 @@ function toggleTheme() {
 }
 
 // ── Service Worker update listener ────────────────────
+// Auto-reloads silently when the user is on the home or setup screen.
+// Shows the banner only if they're mid-game so they can choose to reload.
 function listenForSWUpdates() {
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data?.type === 'SW_UPDATED') {
-      document.getElementById('update-banner')?.classList.add('visible');
-    }
+    if (event.data?.type !== 'SW_UPDATED') return;
+    const screen = window.gameState?.screen;
+    const safe   = !screen || screen === 'home' || screen === 'setup';
+    if (safe) { window.location.reload(); return; }
+    document.getElementById('update-banner')?.classList.add('visible');
   });
 }
 
