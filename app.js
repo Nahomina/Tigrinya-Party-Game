@@ -4,6 +4,17 @@
 
 'use strict';
 
+// ── HTML escape utility ─────────────────────────────────
+// Prevents XSS when interpolating user-supplied strings into innerHTML
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Audio stubs ────────────────────────────────────────
 // Replace empty bodies with your own Audio() calls.
 function playTickSound()    { /* const a = new Audio('assets/tick.mp3');    a.play(); */ }
@@ -942,7 +953,7 @@ function showTurnTransition() {
   gameState.teams.forEach((t, i) => {
     const div = document.createElement('div');
     div.className = 'turn-score-item' + (i === gameState.wordTeamIndex ? ' turn-score-item--active' : '');
-    div.innerHTML = `<span class="turn-score-name">${t.name}</span><span class="turn-score-val">${t.score}</span>`;
+    div.innerHTML = `<span class="turn-score-name">${escHtml(t.name)}</span><span class="turn-score-val">${t.score}</span>`;
     scoresEl.appendChild(div);
   });
 
@@ -1305,8 +1316,13 @@ function wireEvents() {
 
   // ── Start game ──────────────────────────────────────
   document.getElementById('btn-start-game').addEventListener('click', () => {
-    const n0 = document.getElementById('team1-name').value.trim() || DEFAULTS.teamNames[0];
-    const n1 = document.getElementById('team2-name').value.trim() || DEFAULTS.teamNames[1];
+    // Sanitise: strip HTML chars and cap length to prevent display injection
+    const sanitiseName = (raw, fallback) => {
+      const clean = raw.trim().replace(/[<>&"']/g, '').slice(0, 24);
+      return clean || fallback;
+    };
+    const n0 = sanitiseName(document.getElementById('team1-name').value, DEFAULTS.teamNames[0]);
+    const n1 = sanitiseName(document.getElementById('team2-name').value, DEFAULTS.teamNames[1]);
     saveTeamNames(n0, n1);   // remember for next game
     gameState.teams[0] = { name: n0, score: 0, correctWords: [], skippedWords: [] };
     gameState.teams[1] = { name: n1, score: 0, correctWords: [], skippedWords: [] };
@@ -1497,12 +1513,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const saved = loadSavedState();
 
-  // Only resume if saved mode matches current URL mode
-  if (isResumable(saved) && saved.mode === gameState.mode) {
+  // Always start fresh on new visits — only restore state if the user explicitly
+  // navigated within the game (e.g. browser back from a mid-game interstitial).
+  // A navigation from index.html or any external page is detected by checking
+  // whether the referrer is from the same page or if ?resume=1 is in the URL.
+  // This prevents "stuck on old game" until the user manually refreshes.
+  const params       = new URLSearchParams(window.location.search);
+  const forceResume  = params.get('resume') === '1';
+  const sameOrigin   = document.referrer &&
+                       document.referrer.startsWith(window.location.origin) &&
+                       document.referrer.includes('game.html');
+  const canResume    = forceResume || sameOrigin;
+
+  if (canResume && isResumable(saved) && saved.mode === gameState.mode) {
     Object.assign(gameState, saved);
     gameState.phase = 'setup';
   } else {
     if (saved) clearSavedState();
+    resetToDefaults();
+    gameState.mode = new URLSearchParams(window.location.search).get('mode') === 'proverbs'
+      ? 'proverbs' : 'words';
   }
 
   render();
@@ -2475,11 +2505,13 @@ function updateAuthUI(isLoggedIn) {
 
   if (isLoggedIn && _currentUser) {
     // ── Avatar button that toggles a dropdown ──────────────────
-    const initials = (_currentUser.email || '?').slice(0, 2).toUpperCase();
+    // Use textContent/DOM methods throughout — never interpolate user data into innerHTML
+    const email    = _currentUser.email || '?';
+    const initials = email.slice(0, 2).toUpperCase();
 
     indicator.innerHTML = `
       <button class="profile-avatar-btn" id="profile-avatar-btn" aria-label="Account menu" aria-expanded="false">
-        <span class="profile-avatar-initials">${initials}</span>
+        <span class="profile-avatar-initials">${escHtml(initials)}</span>
         <svg class="profile-avatar-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
       </button>`;
 
@@ -2487,8 +2519,12 @@ function updateAuthUI(isLoggedIn) {
     dropdown.id = 'profile-dropdown';
     dropdown.className = 'profile-dropdown hidden';
     dropdown.setAttribute('role', 'menu');
-    dropdown.innerHTML = `
-      <div class="profile-dropdown-email">${_currentUser.email}</div>
+    // Build with DOM — no user data in innerHTML
+    const emailDiv = document.createElement('div');
+    emailDiv.className = 'profile-dropdown-email';
+    emailDiv.textContent = email;
+    dropdown.appendChild(emailDiv);
+    dropdown.insertAdjacentHTML('beforeend', `
       <a href="profile.html" class="profile-dropdown-item" role="menuitem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
         My Profile
@@ -2496,7 +2532,7 @@ function updateAuthUI(isLoggedIn) {
       <button class="profile-dropdown-item profile-dropdown-logout" role="menuitem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Log Out
-      </button>`;
+      </button>`);
     document.body.appendChild(dropdown);
 
     // Position dropdown under the indicator

@@ -121,23 +121,24 @@ function populatePackSelects() {
     el.textContent = '';
     if (blank) el.appendChild(blank);
 
-    // All 4 tiers (Classic/Starter included) go into every select
-    allPacks.forEach(p => {
+    // Word-tier packs only (exclude game passes which have no tier_label)
+    const TIER_ICONS = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' };
+    const packsToShow = allPacks.filter(p => TIER_ICONS[p.tier_label]);
+    packsToShow.forEach(p => {
       const opt = document.createElement('option');
       opt.value = useSlug ? p.slug : p.id;
-      const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] ?? '⬜';
-      opt.textContent = `${icon} ${p.name_en}`;
+      opt.textContent = `${TIER_ICONS[p.tier_label]} ${p.name_en}`;
       el.appendChild(opt);
     });
   });
 }
 
-// Helper: pack id → display name
+// Helper: pack id → display name (word-tier packs only)
+const TIER_ICONS_MAP = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' };
 function packName(pack_id) {
   const p = allPacks.find(p => p.id === pack_id);
   if (!p) return '—';
-  const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[p.tier_label] ?? '⬜';
-  return `${icon} ${p.name_en}`;
+  return `${TIER_ICONS_MAP[p.tier_label] ?? '⬜'} ${p.name_en}`;
 }
 
 // ── WORDS CRUD ────────────────────────────────────────────
@@ -432,7 +433,7 @@ function renderGrantsTable() {
   }
   allGrants.forEach(g => {
     const pack = allPacks.find(p => p.id === g.pack_id);
-    const icon = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' }[pack?.tier_label] || '⬜';
+    const icon = TIER_ICONS_MAP[pack?.tier_label] || '⬜';
     const date = new Date(g.unlocked_at).toLocaleDateString();
     const tr = document.createElement('tr');
     tr.innerHTML = `
