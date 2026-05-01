@@ -68,7 +68,23 @@
       "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__get_edge_function",
       "mcp__df3fa796-9f90-4260-b6d2-7b4c927d3065__list_edge_functions",
       "Bash(ls -d /mnt/c/Users/Bruger1/Documents/*tigrinya*)",
-      "Bash(ls -d /mnt/c/Users/Bruger1/Documents/*Tigrinya*)"
+      "Bash(ls -d /mnt/c/Users/Bruger1/Documents/*Tigrinya*)",
+      "mcp__Claude_in_Chrome__read_page",
+      "mcp__Claude_in_Chrome__tabs_close_mcp",
+      "Bash(005\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(sed -i 's/style.css?v=25/style.css?v=26/g' game.html)",
+      "Bash(sed -i 's/style.css?v=24/style.css?v=26/g' profile.html)",
+      "Bash(python -c \"import uuid; print\\(str\\(uuid.uuid4\\(\\)\\).replace\\('-',''\\)\\)\")",
+      "Bash(sed -i 's/style\\\\.css?v=27/style.css?v=28/g' \"/c/Users/Bruger1/Documents/Tigrinya Party Game/index.html\")",
+      "Bash(sed -i 's/style\\\\.css?v=28/style.css?v=28/g' \"/c/Users/Bruger1/Documents/Tigrinya Party Game/index.html\")",
+      "Bash(vercel --prod)",
+      "Bash(where vercel *)",
+      "Bash(cmd /c \"vercel deploy --prod\")"
     ]
   }
 }

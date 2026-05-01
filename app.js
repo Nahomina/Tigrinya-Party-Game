@@ -2547,6 +2547,64 @@ function reportError(err, context = {}) {
   }
 }
 
+// ── Global ErrorBoundary ──────────────────────────────────────────────
+// Catches uncaught errors + unhandled rejections so the user gets a
+// human-readable toast instead of a silently broken page. Pipes
+// everything through reportError() so logging stays consistent.
+// Throttled to one notification per 5 seconds to avoid noise loops.
+(function installErrorBoundary() {
+  if (typeof window === 'undefined' || window.__errBoundaryInstalled) return;
+  window.__errBoundaryInstalled = true;
+
+  let _lastNotifiedAt = 0;
+  function notifyOnce(message) {
+    const now = Date.now();
+    if (now - _lastNotifiedAt < 5000) return;
+    _lastNotifiedAt = now;
+    if (typeof showNotification === 'function') {
+      showNotification(message, 'error');
+    }
+  }
+
+  // Map low-level errors to user-friendly messages.
+  function friendlyMessage(err) {
+    const msg = String(err?.message || err || '').toLowerCase();
+    if (!navigator.onLine || msg.includes('failed to fetch') || msg.includes('networkerror')) {
+      return 'You appear to be offline. Some features may not work.';
+    }
+    if (msg.includes('quotaexceeded')) {
+      return 'Storage is full — try clearing site data.';
+    }
+    if (msg.includes('unauthorized') || msg.includes('jwt')) {
+      return 'Your session expired. Please log in again.';
+    }
+    return null;  // unknown — silent (still logged)
+  }
+
+  window.addEventListener('error', e => {
+    // Ignore resource load errors (images, scripts) — only handle JS runtime errors
+    if (e.error) {
+      reportError(e.error, { kind: 'window.error', src: e.filename, line: e.lineno });
+      const m = friendlyMessage(e.error);
+      if (m) notifyOnce(m);
+    }
+  });
+
+  window.addEventListener('unhandledrejection', e => {
+    reportError(e.reason || e, { kind: 'unhandledrejection' });
+    const m = friendlyMessage(e.reason);
+    if (m) notifyOnce(m);
+  });
+
+  // Network status: announce restoration so users know retries will work
+  window.addEventListener('online', () => {
+    if (typeof showNotification === 'function') showNotification('✓ Back online', 'success');
+  });
+  window.addEventListener('offline', () => {
+    if (typeof showNotification === 'function') showNotification('You are offline.', 'info');
+  });
+})();
+
 // ── Handle Logout ──────────────────────────────────────────────────────
 async function handleLogout() {
   try {

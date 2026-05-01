@@ -494,8 +494,16 @@
   <div id="hito-lb-modal" class="hito-lb-modal hidden" role="dialog" aria-modal="true" aria-label="Leaderboard">
     <div class="hito-lb-box">
       <div class="hito-lb-header">
-        <span class="hito-lb-title">🏆 Top Scores</span>
+        <div>
+          <span class="hito-lb-title">🏆 Top Scores</span>
+          <p class="hito-lb-live" id="hito-lb-live"><span class="hito-lb-dot"></span>Live</p>
+        </div>
         <button id="btn-lb-close" class="hito-lb-close" aria-label="Close leaderboard">✕</button>
+      </div>
+      <div class="hito-lb-tabs" role="tablist">
+        <button class="hito-lb-tab is-active" data-window="day"  type="button" role="tab">Today</button>
+        <button class="hito-lb-tab"           data-window="week" type="button" role="tab">This Week</button>
+        <button class="hito-lb-tab"           data-window="all"  type="button" role="tab">All&nbsp;Time</button>
       </div>
       <div id="hito-lb-list" class="hito-lb-list">
         <p class="hito-lb-loading">Loading…</p>
@@ -1311,21 +1319,52 @@ async function submitScore(teamName, score, totalPossible, difficulty, mode) {
   }
 }
 
+// Time-window filter for leaderboard. Returns ISO timestamp or null for "all time".
+let _hitoLbWindow = 'day';
+let _hitoLbSub = null;
+
+function _hitoLbWindowStart(win) {
+  const now = new Date();
+  if (win === 'day')  { now.setHours(0, 0, 0, 0); return now.toISOString(); }
+  if (win === 'week') { now.setDate(now.getDate() - 7); return now.toISOString(); }
+  return null;
+}
+
 async function loadLeaderboard() {
   const list = document.getElementById('hito-lb-list');
   list.innerHTML = '<p class="hito-lb-loading">Loading…</p>';
   try {
-    const { data, error } = await _supabase
+    let q = _supabase
       .from('heto_scores')
-      .select('team_name, score, total_possible, percentage, difficulty, played_at')
+      .select('id, team_name, score, total_possible, percentage, difficulty, played_at')
       .order('percentage', { ascending: false })
       .order('score',      { ascending: false })
-      .limit(20);
+      .limit(50);
+    const since = _hitoLbWindowStart(_hitoLbWindow);
+    if (since) q = q.gte('played_at', since);
+    const { data, error } = await q;
     if (error) throw error;
     renderLeaderboard(data || []);
   } catch (err) {
     list.innerHTML = '<p class="hito-lb-loading">Could not load scores.</p>';
   }
+}
+
+function _hitoLbSubscribe() {
+  if (_hitoLbSub) return;
+  try {
+    _hitoLbSub = _supabase.channel('heto_scores_live')
+      .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'heto_scores' },
+          () => loadLeaderboard())
+      .subscribe();
+  } catch (err) { console.warn('[HITO] realtime subscribe failed:', err.message); }
+}
+
+function _hitoLbUnsubscribe() {
+  if (!_hitoLbSub) return;
+  try { _supabase.removeChannel(_hitoLbSub); } catch {}
+  _hitoLbSub = null;
 }
 
 function renderLeaderboard(rows) {
@@ -1367,11 +1406,23 @@ function renderLeaderboard(rows) {
 function openLeaderboard() {
   document.getElementById('hito-lb-modal').classList.remove('hidden');
   loadLeaderboard();
+  _hitoLbSubscribe();
 }
 
 function closeLeaderboard() {
   document.getElementById('hito-lb-modal').classList.add('hidden');
+  _hitoLbUnsubscribe();
 }
+
+// Tab handlers — wire after DOM ready
+document.querySelectorAll('.hito-lb-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.hito-lb-tab').forEach(t => t.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    _hitoLbWindow = tab.dataset.window;
+    loadLeaderboard();
+  });
+});
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
@@ -2053,6 +2104,35 @@ body.game-body {
   transition: color 0.2s;
 }
 .hito-lb-close:hover { color: var(--text); }
+
+/* Live indicator + time-window tabs */
+.hito-lb-live {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 11px var(--font-ui); color: #f4511e; margin: 4px 0 0;
+}
+.hito-lb-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #f4511e;
+  animation: hitoLbPulse 1.4s ease-in-out infinite;
+}
+@keyframes hitoLbPulse { 0%,100%{ opacity:1; transform: scale(1); } 50% { opacity:.5; transform: scale(1.4); } }
+
+.hito-lb-tabs {
+  display: flex; gap: 4px; padding: 8px 14px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.hito-lb-tab {
+  flex: 1; padding: 8px;
+  background: transparent; border: none;
+  font: 600 12px var(--font-ui); color: var(--text-muted);
+  cursor: pointer; border-radius: 8px;
+  transition: background .15s, color .15s;
+}
+.hito-lb-tab:hover { color: var(--text); }
+.hito-lb-tab.is-active { background: rgba(244,81,30,0.12); color: #f4511e; }
+
+/* Animate new rows on insertion */
+.hito-lb-row { animation: hitoLbRowIn 0.25s ease; }
+@keyframes hitoLbRowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 .hito-lb-list {
   overflow-y: auto; flex: 1;

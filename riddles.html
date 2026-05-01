@@ -334,6 +334,86 @@
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Leaderboard modal (riddles) ─────────────────────────────────── */
+    .rl-modal {
+      position: fixed; inset: 0; z-index: 1500;
+      background: rgba(0,0,0,.78);
+      display: flex; align-items: flex-end; justify-content: center;
+      animation: fadeIn .15s ease;
+    }
+    @media (min-width: 640px) { .rl-modal { align-items: center; } }
+    .rl-modal.hidden { display: none; }
+    .rl-box {
+      width: 100%; max-width: 480px; max-height: 86vh;
+      background: var(--bg-card); border: 1px solid var(--border-mid);
+      border-radius: 16px 16px 0 0;
+      display: flex; flex-direction: column;
+      animation: rlSlide .2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @media (min-width: 640px) { .rl-box { border-radius: 16px; } }
+    @keyframes rlSlide { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+    .rl-head {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 20px 22px 12px; gap: 12px;
+    }
+    .rl-eyebrow {
+      font: 700 10px var(--font-ui); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .14em; margin: 0 0 4px;
+    }
+    .rl-title { font-family: var(--font-display); font-size: 1.6rem; line-height: 1; margin: 0; color: var(--text); }
+    .rl-live {
+      display: inline-flex; align-items: center; gap: 6px;
+      font: 600 11px var(--font-ui); color: var(--riddle); margin: 6px 0 0;
+    }
+    .rl-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--riddle);
+      animation: rlPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes rlPulse { 0%,100%{ opacity:1; transform: scale(1); } 50% { opacity:.5; transform: scale(1.4); } }
+    .rl-close {
+      background: transparent; border: none; color: var(--text-muted);
+      font-size: 18px; cursor: pointer; padding: 4px 8px;
+    }
+    .rl-close:hover { color: var(--text); }
+    .rl-tabs {
+      display: flex; gap: 4px; padding: 0 14px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .rl-tab {
+      flex: 1; padding: 10px 8px;
+      background: transparent; border: none;
+      font: 600 12px var(--font-ui); color: var(--text-muted);
+      cursor: pointer; border-radius: 8px;
+      transition: background .15s, color .15s;
+    }
+    .rl-tab:hover { color: var(--text); }
+    .rl-tab.is-active { background: var(--riddle-tint); color: var(--riddle); }
+    .rl-list {
+      flex: 1; overflow-y: auto; padding: 10px 14px 18px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .rl-row {
+      display: grid;
+      grid-template-columns: 36px 1fr auto auto;
+      align-items: center; gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid transparent; border-radius: 10px;
+      animation: rlRowIn .25s ease;
+    }
+    @keyframes rlRowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .rl-row.rl-top { border-color: var(--riddle); background: var(--riddle-card); }
+    .rl-rank { font-family: var(--font-display); font-size: 1.1rem; color: var(--text); text-align: center; }
+    .rl-name { font: 600 14px var(--font-ui); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rl-pct  { font-family: var(--font-display); font-size: 1.05rem; color: var(--riddle); }
+    .rl-diff {
+      font: 700 9px var(--font-ui); color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .1em;
+      padding: 3px 7px; border: 1px solid var(--border-mid); border-radius: 100px;
+    }
+    .rl-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0; margin: 0; }
   </style>
 </head>
 <body class="game-body">
@@ -596,10 +676,31 @@
 
       <div class="score-actions">
         <button id="btn-again" class="btn-again">▶ Play Again</button>
+        <button id="btn-rl-open" class="btn-secondary" type="button">🏆 Leaderboard</button>
         <a href="index.html" class="btn-home">Home</a>
       </div>
     </div>
   </section>
+
+  <!-- ── Leaderboard modal (parallel to HITO leaderboard) ── -->
+  <div id="rl-modal" class="rl-modal hidden" role="dialog" aria-modal="true" aria-label="Riddles leaderboard">
+    <div class="rl-box">
+      <div class="rl-head">
+        <div>
+          <p class="rl-eyebrow">RIDDLES</p>
+          <h2 class="rl-title">🏆 Top Scores</h2>
+          <p class="rl-live" id="rl-live"><span class="rl-dot"></span>Live</p>
+        </div>
+        <button id="btn-rl-close" class="rl-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="rl-tabs" role="tablist">
+        <button class="rl-tab is-active" data-window="day"  type="button" role="tab">Today</button>
+        <button class="rl-tab"           data-window="week" type="button" role="tab">This Week</button>
+        <button class="rl-tab"           data-window="all"  type="button" role="tab">All&nbsp;Time</button>
+      </div>
+      <div id="rl-list" class="rl-list" role="region" aria-live="polite"></div>
+    </div>
+  </div>
 
   <script src="supabase.min.js"></script>
   <script>
@@ -1044,10 +1145,145 @@
     else if (scores.b > scores.a) { document.getElementById('card-b').classList.add('winner'); document.getElementById('badge-b').style.display = ''; }
     else                          { document.getElementById('tie-msg').style.display = ''; }
 
+    // Submit BOTH teams to the leaderboard. Use the riddle count as total possible.
+    const total = totalCount();
+    submitRiddlesScore(names.a, scores.a, total, chosenDiff);
+    submitRiddlesScore(names.b, scores.b, total, chosenDiff);
+
     showScreen('score');
   }
 
   document.getElementById('btn-again').addEventListener('click', () => showScreen('setup'));
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Leaderboard (mirror of HITO pattern — uses Supabase Realtime for live updates)
+  // ─────────────────────────────────────────────────────────────────────────
+  let _rlSub = null;     // active realtime subscription (cleared on close)
+  let _rlWindow = 'day'; // current time filter
+
+  async function submitRiddlesScore(teamName, score, totalPossible, difficulty) {
+    if (!_sb || !teamName || !totalPossible) return;
+    try {
+      const { data: { session } } = await _sb.auth.getSession();
+      const pct = Math.round((score / totalPossible) * 100);
+      await _sb.from('riddles_scores').insert([{
+        team_name:      String(teamName).slice(0, 30),
+        score, total_possible: totalPossible,
+        percentage:     Math.max(0, Math.min(100, pct)),
+        difficulty:     String(difficulty || 'all').slice(0, 20),
+        rounds:         numRounds,
+        user_id:        session?.user?.id ?? null,
+        played_at:      new Date().toISOString(),
+      }]);
+    } catch (err) {
+      console.warn('[riddles] score submit failed:', err.message);
+    }
+  }
+
+  // Returns a UTC ISO timestamp for the start of today/week, or null for "all".
+  function windowStart(win) {
+    const now = new Date();
+    if (win === 'day')  { now.setHours(0, 0, 0, 0); return now.toISOString(); }
+    if (win === 'week') { now.setDate(now.getDate() - 7); return now.toISOString(); }
+    return null;
+  }
+
+  async function loadRiddlesLeaderboard() {
+    const list = document.getElementById('rl-list');
+    list.innerHTML = '<p class="rl-empty">Loading…</p>';
+    try {
+      let q = _sb.from('riddles_scores')
+        .select('id, team_name, percentage, score, total_possible, difficulty, played_at')
+        .order('percentage', { ascending: false })
+        .order('score',      { ascending: false })
+        .limit(50);
+      const since = windowStart(_rlWindow);
+      if (since) q = q.gte('played_at', since);
+      const { data, error } = await q;
+      if (error) throw error;
+      renderRiddlesLeaderboard(data || []);
+    } catch {
+      list.innerHTML = '<p class="rl-empty">Could not load scores.</p>';
+    }
+  }
+
+  function renderRiddlesLeaderboard(rows) {
+    const list = document.getElementById('rl-list');
+    if (!rows.length) {
+      list.innerHTML = '<p class="rl-empty">No scores yet — be the first!</p>';
+      return;
+    }
+    const medals = ['🥇','🥈','🥉'];
+    list.textContent = '';
+    rows.forEach((r, i) => {
+      const row = document.createElement('div');
+      row.className = 'rl-row' + (i < 3 ? ' rl-top' : '');
+      row.dataset.id = r.id;
+
+      const rank = document.createElement('span');
+      rank.className = 'rl-rank';
+      rank.textContent = medals[i] ?? String(i + 1);
+
+      const name = document.createElement('span');
+      name.className = 'rl-name';
+      name.textContent = r.team_name;
+
+      const pct = document.createElement('span');
+      pct.className = 'rl-pct';
+      pct.textContent = r.percentage + '%';
+
+      const diff = document.createElement('span');
+      diff.className = 'rl-diff';
+      diff.textContent = r.difficulty;
+
+      row.append(rank, name, pct, diff);
+      list.appendChild(row);
+    });
+  }
+
+  function subscribeRiddlesLeaderboard() {
+    if (_rlSub) return;
+    try {
+      _rlSub = _sb.channel('riddles_scores_live')
+        .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'riddles_scores' },
+            () => loadRiddlesLeaderboard())  // simplest: re-query (always sorted, capped at 50)
+        .subscribe();
+    } catch (err) {
+      console.warn('[riddles] realtime subscribe failed:', err.message);
+    }
+  }
+
+  function unsubscribeRiddlesLeaderboard() {
+    if (!_rlSub) return;
+    try { _sb.removeChannel(_rlSub); } catch {}
+    _rlSub = null;
+  }
+
+  function openRiddlesLeaderboard() {
+    document.getElementById('rl-modal').classList.remove('hidden');
+    loadRiddlesLeaderboard();
+    subscribeRiddlesLeaderboard();
+  }
+
+  function closeRiddlesLeaderboard() {
+    document.getElementById('rl-modal').classList.add('hidden');
+    unsubscribeRiddlesLeaderboard();
+  }
+
+  document.getElementById('btn-rl-open')?.addEventListener('click', openRiddlesLeaderboard);
+  document.getElementById('btn-rl-close')?.addEventListener('click', closeRiddlesLeaderboard);
+  document.getElementById('rl-modal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeRiddlesLeaderboard();
+  });
+  document.querySelectorAll('.rl-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.rl-tab').forEach(t => t.classList.remove('is-active'));
+      tab.classList.add('is-active');
+      _rlWindow = tab.dataset.window;
+      loadRiddlesLeaderboard();
+    });
+  });
 
   // ── Shuffle ───────────────────────────────────────────────
   function shuffle(a) {
