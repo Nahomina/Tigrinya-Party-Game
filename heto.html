@@ -27,10 +27,18 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <meta name="apple-mobile-web-app-title" content="HITO" />
 
+  <!-- Performance: pre-negotiate connections to external services -->
+  <link rel="preconnect" href="https://rzcrdngpybrsjlbenqep.supabase.co" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+  <link rel="dns-prefetch" href="https://rzcrdngpybrsjlbenqep.functions.supabase.co" />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=28" />
+  <link rel="stylesheet" href="style.css?v=29" />
   <title>HITO — ሕቶ</title>
 
   <script defer src="https://cdn.jsdelivr.net/npm/@sentry/browser@7.80.0/bundle.min.js"></script>
@@ -580,6 +588,12 @@ function init() {
   wireEvents();
   setupModeSelector();
   handlePaymentReturn(); // handle ?payment=success redirect from Stripe
+  // Warm up the checkout Edge Function ~2 s after boot so cold-start cost is
+  // paid before the user clicks Unlock (fire-and-forget, intentionally silent).
+  setTimeout(() => {
+    fetch('https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
+      { method: 'OPTIONS', keepalive: true }).catch(() => {});
+  }, 2000);
 }
 
 // ── Payment return handler ────────────────────────────────────────────────

@@ -1497,15 +1497,34 @@ function listenForSWUpdates() {
   });
 }
 
+// ── Edge Function warm-up ──────────────────────────────
+// Fires a silent OPTIONS preflight to the checkout Edge Function ~2s after
+// page load so the Deno cold-start cost is paid before the user clicks "Unlock".
+// Uses keepalive so the request survives page navigations.
+function warmupCheckoutFunction() {
+  try {
+    fetch(CHECKOUT_FN_URL, { method: 'OPTIONS', keepalive: true }).catch(() => {});
+  } catch (_) { /* intentionally silent */ }
+}
+
 // ── Boot ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();             // apply theme before first paint
   initNetworkMonitoring(); // set up offline/online detection
-  initSupabase();             // initialize Supabase client
-  await initializeWords();    // fetch words from Supabase (or fallback)
-  await initializeProverbs(); // fetch classic proverbs from Supabase (keeps in sync with admin)
-  await initAuth();           // initialize authentication (must complete before payment return check)
+  initSupabase();          // initialize Supabase client
+
+  // Run words, proverbs and auth in parallel — none depend on each other.
+  // This saves ~300–500 ms vs. awaiting sequentially.
+  await Promise.all([
+    initializeWords(),    // fetch words from Supabase (or cache)
+    initializeProverbs(), // fetch classic proverbs from Supabase (or cache)
+    initAuth(),           // init auth session + auth-state listener
+  ]);
+
   await handlePaymentReturn(); // handle ?payment=success|cancelled from Stripe redirect
+
+  // Warm up the checkout Edge Function ~2 s after boot (non-blocking)
+  setTimeout(warmupCheckoutFunction, 2000);
 
   // Read mode from URL param (?mode=words | ?mode=proverbs)
   const urlMode = new URLSearchParams(window.location.search).get('mode');

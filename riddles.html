@@ -23,9 +23,18 @@
   {"@context":"https://schema.org","@type":"WebApplication","name":"Hinqle Hinqilitey — Tigrinya Riddles Game","url":"https://habeshagame.com/riddles.html","description":"Traditional Tigrinya riddle game. The judge reads the riddle aloud and teams compete to answer first. Free Gasha tier included.","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"inLanguage":["ti","en"],"image":"https://habeshagame.com/assets/og-image.png","isPartOf":{"@type":"WebSite","name":"Tigrinya Party Games","url":"https://habeshagame.com/"}}
   </script>
   <link rel="canonical" href="https://habeshagame.com/riddles.html" />
+
+  <!-- Performance: pre-negotiate connections to external services -->
+  <link rel="preconnect" href="https://rzcrdngpybrsjlbenqep.supabase.co" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://js.stripe.com" crossorigin />
+  <link rel="dns-prefetch" href="https://rzcrdngpybrsjlbenqep.functions.supabase.co" />
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
   <link rel="apple-touch-icon" href="assets/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=28" />
+  <link rel="stylesheet" href="style.css?v=29" />
   <style>
     /* ── Design tokens ──────────────────────────────────── */
     :root {
@@ -799,6 +808,11 @@
   // ── Boot ──────────────────────────────────────────────────
   async function boot() {
     handlePaymentReturn(); // handle ?payment=success from Stripe
+    // Warm up checkout Edge Function ~2 s after boot (fire-and-forget)
+    setTimeout(() => {
+      fetch('https://rzcrdngpybrsjlbenqep.functions.supabase.co/create-checkout-session',
+        { method: 'OPTIONS', keepalive: true }).catch(() => {});
+    }, 2000);
     showScreen('loading');
     try {
       const { data, error } = await _sb.from('riddles').select('*').order('created_at');
