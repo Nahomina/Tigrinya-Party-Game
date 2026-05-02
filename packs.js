@@ -110,7 +110,7 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'Mayim Pass',
     icon:        '🔴',
     accentColor: '#e53935',
-    description: "Unlock all difficulty tiers for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez, and Shimagile.",
+    description: "Monthly subscription. Unlock all difficulty tiers for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez, and Shimagile.",
     priceGbp:    4.99,
     // Buying this cascades: qola, gobez, shimagile (includes all premium tiers)
     cascadeSlugs: ['qola', 'gobez', 'shimagile'],
@@ -123,9 +123,9 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'Hito Pass',
     icon:        '🟠',
     accentColor: '#f4511e',
-    description: "Unlock all difficulty tiers for HITO trivia — Qol'a (medium) and Gobez (hard) questions.",
+    description: "Monthly subscription. Unlock all difficulty tiers for HITO trivia — Qol'a, Gobez, and Shimagile.",
     priceGbp:    4.99,
-    cascadeSlugs: [],
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
   {
     slug:        'hinqle-pass',
@@ -135,9 +135,9 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'Hinqle Pass',
     icon:        '🟢',
     accentColor: '#00897b',
-    description: "Unlock all difficulty tiers for Hinqle Hinqilitey — Qol'a and Gobez riddles.",
+    description: "Monthly subscription. Unlock all difficulty tiers for Hinqle Hinqilitey — Qol'a, Gobez, and Shimagile.",
     priceGbp:    4.99,
-    cascadeSlugs: [],
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
   {
     slug:        'all-games',
@@ -147,8 +147,8 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'All Games',
     icon:        '⭐',
     accentColor: '#ffd600',
-    description: 'All 4 games, every tier, forever. The best value — one purchase, nothing locked.',
+    description: 'Monthly subscription. All 4 games, every tier. Unlimited play — the best value.',
     priceGbp:    12.99,
-    cascadeSlugs: ['shimagile'], // + hito-pass + hinqle-pass handled in webhook
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'], // + hito-pass + hinqle-pass handled in webhook
   },
 ];

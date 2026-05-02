@@ -2145,10 +2145,6 @@ function renderTierSelector(gamePassSlug = 'mayim-pass') {
 
   container.textContent = ''; // Clear safely
 
-  // Look up the game pass to get the price
-  const gamePass = GAME_PASS_CATALOGUE?.find(p => p.slug === gamePassSlug);
-  const gamePassPrice = gamePass ? `£${gamePass.priceGbp.toFixed(2)}/mo` : '£4.99/mo';
-
   PACK_CATALOGUE.forEach((pack, idx) => {
     const unlocked = isPackUnlocked(pack.slug);
     const locked   = !unlocked;
@@ -2220,10 +2216,10 @@ function renderTierSelector(gamePassSlug = 'mayim-pass') {
       badge.textContent = '✓ Unlocked';
       right.appendChild(badge);
     } else {
-      // Locked tier: show game pass unlock button with price
+      // Locked tier: show unlock button (no price on tier, only on checkout)
       const unlockBtn = document.createElement('button');
       unlockBtn.className = 'tier-unlock-btn';
-      unlockBtn.textContent = `🔒 ${gamePassPrice}`;
+      unlockBtn.textContent = `🔒 Unlock`;
       unlockBtn.dataset.paySlug = gamePassSlug;
       unlockBtn.addEventListener('click', (e) => {
         e.preventDefault(); // don't trigger the label/radio
