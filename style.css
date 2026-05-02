@@ -630,6 +630,11 @@ button {
 .team-dot.t3 { background: #8e24aa; }
 .team-dot.t4 { background: #f4511e; }
 
+/* Extra teams wrapper — transparent to flex layout so rows align with Team 1/2 */
+#extra-teams-section {
+  display: contents;
+}
+
 /* ── Team count controls (add/remove team buttons + lock badge) ── */
 .team-count-controls {
   display: flex; align-items: center; gap: .5rem; margin-top: .55rem;

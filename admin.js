@@ -352,7 +352,7 @@ function renderProverbsTable(proverbs) {
 
   proverbs.forEach(p => {
     const tr = document.createElement('tr');
-    const diffColor = { easy: 'green', medium: 'blue', hard: 'orange' }[p.difficulty] || 'grey';
+    const diffColor = { easy: 'green', medium: 'blue', hard: 'orange', expert: 'red' }[p.difficulty] || 'grey';
     const pack = allPacks.find(pk => pk.id === p.pack_id);
     const tierColor = pack ? { starter:'green', intermediate:'blue', advanced:'purple', expert:'orange' }[pack.tier_label] : 'grey';
 

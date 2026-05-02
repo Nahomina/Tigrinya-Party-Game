@@ -584,6 +584,7 @@ body {
 .badge--blue   { background: #dbeafe; color: #1e40af; }
 .badge--purple { background: #f3e8ff; color: #6b21a8; }
 .badge--orange { background: #ffedd5; color: #9a3412; }
+.badge--red    { background: #fee2e2; color: #991b1b; }
 .badge--grey   { background: #f1f5f9; color: #475569; }
 
 /* Small buttons */

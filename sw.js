@@ -1,10 +1,10 @@
-// Mayim Service Worker — v34
+// Mayim Service Worker — v35
 // HTML pages:    network-first  (always fresh)
 // JS/CSS assets: stale-while-revalidate  (fast + always up-to-date)
 // Supabase API:  network-first with cache fallback
 // Fonts:         cache-first  (immutable)
 
-const CACHE_VERSION      = 'mayim-v34';
+const CACHE_VERSION      = 'mayim-v35';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 // Assets to precache on install (bare URLs — no version query strings here)
