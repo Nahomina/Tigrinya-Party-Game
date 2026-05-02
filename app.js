@@ -2138,11 +2138,16 @@ function renderPackCards() {
 }
 
 // ── Tier selector in game setup ───────────────────────────
-function renderTierSelector() {
+// gamePassSlug: the game pass to use for all premium tiers (e.g., 'mayim-pass')
+function renderTierSelector(gamePassSlug = 'mayim-pass') {
   const container = document.getElementById('tier-selector');
   if (!container || typeof PACK_CATALOGUE === 'undefined') return;
 
   container.textContent = ''; // Clear safely
+
+  // Look up the game pass to get the price
+  const gamePass = GAME_PASS_CATALOGUE?.find(p => p.slug === gamePassSlug);
+  const gamePassPrice = gamePass ? `£${gamePass.priceGbp.toFixed(2)}/mo` : '£4.99/mo';
 
   PACK_CATALOGUE.forEach((pack, idx) => {
     const unlocked = isPackUnlocked(pack.slug);
@@ -2215,33 +2220,17 @@ function renderTierSelector() {
       badge.textContent = '✓ Unlocked';
       right.appendChild(badge);
     } else {
-      const lockWrap = document.createElement('div');
-      lockWrap.className = 'tier-lock';
-
-      const lockIcon = document.createElement('span');
-      lockIcon.className = 'tier-lock-icon';
-      lockIcon.setAttribute('aria-hidden', 'true');
-      lockIcon.innerHTML = '<svg viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="10" height="8" rx="2" fill="currentColor" opacity="0.18"/><rect x="2" y="7" width="10" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M4.5 7V5.5a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="7" cy="11" r="1.1" fill="currentColor"/><line x1="7" y1="12.1" x2="7" y2="13.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
-      lockWrap.appendChild(lockIcon);
-
-      const lockPrice = document.createElement('span');
-      lockPrice.className = 'tier-lock-price';
-      lockPrice.textContent = `£${pack.priceGbp.toFixed(2)}`;
-      lockWrap.appendChild(lockPrice);
-
-      // "Unlock" button — triggers Stripe checkout
+      // Locked tier: show game pass unlock button with price
       const unlockBtn = document.createElement('button');
       unlockBtn.className = 'tier-unlock-btn';
-      unlockBtn.textContent = 'Unlock';
-      unlockBtn.dataset.paySlug = pack.slug;
+      unlockBtn.textContent = `🔒 ${gamePassPrice}`;
+      unlockBtn.dataset.paySlug = gamePassSlug;
       unlockBtn.addEventListener('click', (e) => {
         e.preventDefault(); // don't trigger the label/radio
         e.stopPropagation();
-        startPaymentFlow(pack.slug);
+        startPaymentFlow(gamePassSlug); // Use game pass slug, not tier slug
       });
-      lockWrap.appendChild(unlockBtn);
-
-      right.appendChild(lockWrap);
+      right.appendChild(unlockBtn);
     }
 
     option.appendChild(right);

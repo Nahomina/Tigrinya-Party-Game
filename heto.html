@@ -166,7 +166,7 @@
         </div>
       </div>
 
-      <!-- DIFFICULTY TIER — same .tier-option radio-list as Mayim/Misla -->
+      <!-- DIFFICULTY TIER — All tiers, pricing via game pass only -->
       <div class="setup-section-label" style="margin-top:1.5rem;">Difficulty Tier</div>
 
       <div class="tier-selector" id="hito-tier-selector" role="radiogroup" aria-label="Select difficulty tier">
@@ -195,7 +195,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-qola-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
           </div>
         </label>
 
@@ -209,7 +209,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-gobez-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
           </div>
         </label>
 
@@ -223,7 +223,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-shimagile-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
           </div>
         </label>
 
@@ -725,7 +725,7 @@ function applyHitoTierUI(access) {
       if (radio) radio.disabled = true;
       // Only restore the buy button if not already there
       if (right && !right.querySelector('.tier-unlock-btn')) {
-        right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hito-pass\')">🔒 £4.99</button>';
+        right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hito-pass\')">🔒 £4.99/mo</button>';
       }
     }
   });
