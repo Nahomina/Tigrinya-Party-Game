@@ -166,6 +166,29 @@
         />
       </div>
 
+      <!-- Extra teams (paid tier) -->
+      <div id="extra-teams-section">
+        <div class="setup-spec-row extra-team-row" id="team3-row" style="display:none">
+          <span class="spec-label">Team 3</span>
+          <div class="team-dot t3"></div>
+          <input id="team3-name" type="text" value="Team Keren" placeholder="Team 3 name"
+                 pattern="[a-zA-Z0-9\sሀ-፿]{1,24}" title="Letters, numbers, spaces, and Tigrinya characters only"
+                 maxlength="24" autocomplete="off" spellcheck="false" aria-label="Team 3 name" />
+        </div>
+        <div class="setup-spec-row extra-team-row" id="team4-row" style="display:none">
+          <span class="spec-label">Team 4</span>
+          <div class="team-dot t4"></div>
+          <input id="team4-name" type="text" value="Team Barentu" placeholder="Team 4 name"
+                 pattern="[a-zA-Z0-9\sሀ-፿]{1,24}" title="Letters, numbers, spaces, and Tigrinya characters only"
+                 maxlength="24" autocomplete="off" spellcheck="false" aria-label="Team 4 name" />
+        </div>
+        <div class="team-count-controls">
+          <button type="button" id="btn-add-team" class="btn-add-team">+ Add Team</button>
+          <button type="button" id="btn-remove-team" class="btn-remove-team" style="display:none">− Remove Team</button>
+          <span class="team-lock-badge" id="team-count-lock">🔒 Paid tier</span>
+        </div>
+      </div>
+
       <!-- ── GAME CONFIG ────────────────────── -->
       <div class="setup-section-label">Game Config</div>
 
@@ -290,17 +313,8 @@
       </p>
     </div>
 
-    <div class="score-spec-bar">
-      <div class="score-spec-item active" id="inter-score-0">
-        <span class="spec-dim-label">Score</span>
-        <span class="spec-dim-val">0</span>
-        <span class="spec-dim-name">Team 1</span>
-      </div>
-      <div class="score-spec-item" id="inter-score-1">
-        <span class="spec-dim-label">Score</span>
-        <span class="spec-dim-val">0</span>
-        <span class="spec-dim-name">Team 2</span>
-      </div>
+    <div class="score-spec-bar" id="inter-scores-bar">
+      <!-- Populated dynamically by renderInterstitial() -->
     </div>
 
     <div class="button-footer">
@@ -364,43 +378,15 @@
     <div class="summary-header">
       <div class="summary-header-left">
         <span class="summary-eyebrow" id="summary-round-label">Round 1 of 3</span>
-        <div class="summary-vs-row">
-          <div class="summary-vs-team">
-            <span class="summary-vs-pts" id="summary-pts-0">0</span>
-            <span class="summary-vs-name" id="summary-name-0">Team 1</span>
-            <span class="summary-vs-delta" id="summary-delta-0">+0 this round</span>
-          </div>
-          <span class="summary-vs-sep">VS</span>
-          <div class="summary-vs-team">
-            <span class="summary-vs-pts" id="summary-pts-1">0</span>
-            <span class="summary-vs-name" id="summary-name-1">Team 2</span>
-            <span class="summary-vs-delta" id="summary-delta-1">+0 this round</span>
-          </div>
+        <div class="summary-vs-row" id="summary-vs-container">
+          <!-- Populated dynamically by renderSummary() -->
         </div>
       </div>
       <button class="btn-quit-game" id="btn-quit-summary" aria-label="Quit game">✕ Quit</button>
     </div>
 
-    <div class="summary-scroll">
-
-      <div class="team-round-block">
-        <div class="team-round-heading" id="summary-t0-heading">Team 1</div>
-        <div class="word-lists">
-          <div class="word-list-card correct"><div id="correct-word-list-0"></div></div>
-          <div class="word-list-card skipped"><div id="skipped-word-list-0"></div></div>
-        </div>
-      </div>
-
-      <div class="summary-team-divider"></div>
-
-      <div class="team-round-block">
-        <div class="team-round-heading" id="summary-t1-heading">Team 2</div>
-        <div class="word-lists">
-          <div class="word-list-card correct"><div id="correct-word-list-1"></div></div>
-          <div class="word-list-card skipped"><div id="skipped-word-list-1"></div></div>
-        </div>
-      </div>
-
+    <div class="summary-scroll" id="summary-teams-container">
+      <!-- Populated dynamically by renderSummary() -->
     </div>
 
     <div class="button-footer">
@@ -426,17 +412,8 @@
       <h2 id="winner-team-name">Team Asmara Wins</h2>
     </div>
 
-    <div class="final-scores-bar">
-      <div class="final-score-item" id="final-score-0">
-        <span class="f-label">Points</span>
-        <span class="f-val">0</span>
-        <span class="f-name">Team 1</span>
-      </div>
-      <div class="final-score-item" id="final-score-1">
-        <span class="f-label">Points</span>
-        <span class="f-val">0</span>
-        <span class="f-name">Team 2</span>
-      </div>
+    <div class="final-scores-bar" id="final-scores-container">
+      <!-- Populated dynamically by renderWinner() -->
     </div>
 
     <!-- Pack upsell — shown when at least one pack is still locked -->

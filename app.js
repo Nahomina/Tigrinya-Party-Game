@@ -75,7 +75,7 @@ const DEFAULTS = {
   wordsPerRound:    10,
   proverbsPerRound: 10,
   secondsPerWord: 6,
-  teamNames:     ['Team Asmara', 'Team Massawa'],
+  teamNames:     ['Team Asmara', 'Team Massawa', 'Team Keren', 'Team Barentu'],
 };
 
 // ── Supabase Configuration ──────────────────────────────
@@ -228,6 +228,7 @@ const _savedNames = loadTeamNames();
 let gameState = {
   phase:           'setup',
   mode:            'words',        // 'words' | 'proverbs'
+  numTeams:        2,
   teams: [
     { name: _savedNames[0], score: 0, correctWords: [], skippedWords: [] },
     { name: _savedNames[1], score: 0, correctWords: [], skippedWords: [] },
@@ -327,8 +328,8 @@ function isResumable(saved) {
   // These phases have nothing to resume
   if (['setup', 'winner'].includes(saved.phase))    return false;
   if (!saved.phase)                                  return false;
-  // Must have two named teams
-  if (!Array.isArray(saved.teams) || saved.teams.length !== 2) return false;
+  // Must have 2-4 named teams
+  if (!Array.isArray(saved.teams) || saved.teams.length < 2 || saved.teams.length > 4) return false;
   if (!saved.teams.every(t => t && typeof t.name === 'string')) return false;
   // Must have coherent round numbers
   if (typeof saved.totalRounds  !== 'number' || saved.totalRounds  < 1) return false;
@@ -346,6 +347,7 @@ function resetToDefaults() {
   Object.assign(gameState, {
     phase:           'setup',
     mode:            'words',
+    numTeams:        2,
     teams: [
       { name: names[0], score: 0, correctWords: [], skippedWords: [] },
       { name: names[1], score: 0, correctWords: [], skippedWords: [] },
@@ -447,8 +449,9 @@ function shuffle(arr) {
 }
 
 function buildDeck() {
-  // Always use an even count so both teams get equal cards
-  const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
+  // Use a count divisible by number of teams so each team gets equal cards
+  const n = gameState.teams.length || 2;
+  const deckSize = Math.floor(gameState.wordsPerRound / n) * n;
 
   const pool    = getMergedWords();
   const usedSet = new Set(gameState.usedWords.map(w => w.word));
@@ -482,7 +485,8 @@ function getMaskedProverb(proverbString) {
 }
 
 function buildProverbDeck() {
-  const deckSize  = Math.floor(gameState.proverbsPerRound / 2) * 2;
+  const n = gameState.teams.length || 2;
+  const deckSize  = Math.floor(gameState.proverbsPerRound / n) * n;
   const pool      = getMergedProverbs();
   const usedSet   = new Set((gameState.usedProverbs || []).map(p => p.tigrinya));
   let available   = pool.filter(p => !usedSet.has(p.tigrinya));
@@ -555,7 +559,7 @@ function pauseForNextWord(result) {
     if (nwBtn) nwBtn.textContent = 'End Round →';
   } else {
     // Show which team plays next
-    const nextTeam = gameState.teams[1 - gameState.wordTeamIndex].name;
+    const nextTeam = gameState.teams[(gameState.wordTeamIndex + 1) % gameState.teams.length].name;
     if (nwBtn) nwBtn.textContent = `→ ${nextTeam}'s Turn`;
   }
 }
@@ -646,9 +650,9 @@ function startGame(prePickedTeam) {
   if (!validateGameStart()) return;
 
   const turnDuration = computeTurnDuration();
-  const startTeam    = (prePickedTeam === 0 || prePickedTeam === 1)
+  const startTeam    = (typeof prePickedTeam === 'number' && prePickedTeam < gameState.teams.length)
     ? prePickedTeam
-    : (Math.random() < 0.5 ? 0 : 1);
+    : Math.floor(Math.random() * gameState.teams.length);
   const basePayload  = {
     currentRound:    1,
     wordTeamIndex:   startTeam,
@@ -718,10 +722,10 @@ function showNextWord() {
   el.textContent   = word.word;
   hint.textContent = word.latin + ' — ' + word.english;
 
-  // Total cards used across both teams
-  const done = gameState.teams[0].correctWords.length + gameState.teams[0].skippedWords.length
-             + gameState.teams[1].correctWords.length + gameState.teams[1].skippedWords.length;
-  const total = Math.floor(gameState.wordsPerRound / 2) * 2;
+  // Total cards used across all teams
+  const done = gameState.teams.reduce((sum, t) => sum + t.correctWords.length + t.skippedWords.length, 0);
+  const n = gameState.teams.length || 2;
+  const total = Math.floor(gameState.wordsPerRound / n) * n;
   if (counter) counter.textContent = `${done + 1} / ${total}`;
 
   // Timer does NOT auto-start — judge clicks "Start Timer" button to begin
@@ -923,7 +927,7 @@ function judgeProverb(result) {
   gameState.currentProverb  = null;
   gameState.proverbRevealed = false;
   // Alternate teams between proverbs
-  gameState.wordTeamIndex = 1 - gameState.wordTeamIndex;
+  gameState.wordTeamIndex = (gameState.wordTeamIndex + 1) % gameState.teams.length;
 
   saveState();
 
@@ -996,8 +1000,7 @@ function endRound() {
   playBuzzerSound();
   // Word mode: tally scores from correctWords (proverb mode increments scores live)
   if (gameState.mode !== 'proverbs') {
-    gameState.teams[0].score += gameState.teams[0].correctWords.length;
-    gameState.teams[1].score += gameState.teams[1].correctWords.length;
+    gameState.teams.forEach(t => { t.score += t.correctWords.length; });
   }
   setState('roundSummary', {});
 }
@@ -1010,7 +1013,7 @@ function nextRound() {
   if (nextRoundNum > gameState.totalRounds) {
     setState('winner', {});
   } else {
-    const startTeam   = Math.random() < 0.5 ? 0 : 1;
+    const startTeam   = Math.floor(Math.random() * gameState.teams.length);
     const basePayload = {
       currentRound:    nextRoundNum,
       wordTeamIndex:   startTeam,
@@ -1033,10 +1036,32 @@ function playAgain() {
   window.location.href = 'index.html';
 }
 
+// ── Paid access helpers (for team count gating) ───────
+// Returns true if the user has unlocked any premium pack (instant, localStorage only).
+function hasAnyPaidAccess() {
+  if (typeof PACK_CATALOGUE === 'undefined') return false;
+  return PACK_CATALOGUE.some(p => !p.isFree && isPackUnlocked(p.slug));
+}
+
+// ── Team count UI ─────────────────────────────────────
+function updateTeamCountUI() {
+  const r3 = document.getElementById('team3-row');
+  const r4 = document.getElementById('team4-row');
+  const addBtn = document.getElementById('btn-add-team');
+  const rmBtn = document.getElementById('btn-remove-team');
+  if (r3) r3.style.display = gameState.numTeams >= 3 ? '' : 'none';
+  if (r4) r4.style.display = gameState.numTeams >= 4 ? '' : 'none';
+  if (addBtn) addBtn.style.display = gameState.numTeams < 4 ? '' : 'none';
+  if (rmBtn) rmBtn.style.display = gameState.numTeams > 2 ? '' : 'none';
+}
+
 // ── Renderers ──────────────────────────────────────────
 function renderSetup() {
-  document.getElementById('team1-name').value           = gameState.teams[0].name;
-  document.getElementById('team2-name').value           = gameState.teams[1].name;
+  for (let i = 0; i < gameState.teams.length && i < 4; i++) {
+    const input = document.getElementById(`team${i + 1}-name`);
+    if (input) input.value = gameState.teams[i].name;
+  }
+  updateTeamCountUI();
   document.getElementById('rounds-display').textContent = gameState.totalRounds;
 
   const isProverbs = gameState.mode === 'proverbs';
@@ -1077,15 +1102,17 @@ function renderSetup() {
 }
 
 function updateSetupComputed() {
-  const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
-  const perTeam  = deckSize / 2;
+  const n = gameState.numTeams || 2;
+  const deckSize = Math.floor(gameState.wordsPerRound / n) * n;
+  const perTeam  = deckSize / n;
   const el = document.getElementById('computed-turn-time');
   if (el) el.textContent = `${deckSize} cards · ${perTeam} per team · ${fmtSecs(gameState.secondsPerWord)} each`;
 }
 
 function updateProverbSetupComputed() {
-  const total  = Math.floor(gameState.proverbsPerRound / 2) * 2;
-  const perTeam = total / 2;
+  const n = gameState.numTeams || 2;
+  const total  = Math.floor(gameState.proverbsPerRound / n) * n;
+  const perTeam = total / n;
   const el = document.getElementById('computed-proverb-time');
   if (el) el.textContent = `${total} proverbs · ${perTeam} per team · ${fmtSecs(gameState.secondsPerWord)} each`;
 }
@@ -1097,11 +1124,10 @@ function checkResumeBanner() {
 
   if (isResumable(saved)) {
     // Show team names from the saved game for context
-    const t0 = saved.teams?.[0]?.name || '';
-    const t1 = saved.teams?.[1]?.name || '';
+    const teamNames = (saved.teams || []).map(t => t.name).filter(Boolean).join(' vs ');
     const label = document.getElementById('resume-game-info');
-    if (label && t0 && t1) {
-      label.textContent = `${t0} vs ${t1}  ·  Round ${saved.currentRound}/${saved.totalRounds}`;
+    if (label && teamNames) {
+      label.textContent = `${teamNames}  ·  Round ${saved.currentRound}/${saved.totalRounds}`;
     }
     banner.classList.add('visible');
   } else {
@@ -1126,21 +1152,22 @@ function renderInterstitial() {
       const count = gameState.proverbDeck.length;
       btn.textContent = `▶ Start · ${count} proverbs`;
     } else {
-      const deckSize = Math.floor(gameState.wordsPerRound / 2) * 2;
+      const n = gameState.teams.length;
+      const deckSize = Math.floor(gameState.wordsPerRound / n) * n;
       btn.textContent = `▶ Start · ${deckSize} cards · ${fmtSecs(gameState.secondsPerWord)} each`;
     }
   }
 
-  // Score bar — highlight the starting team
-  const s0 = document.getElementById('inter-score-0');
-  const s1 = document.getElementById('inter-score-1');
-  if (s0 && s1) {
-    s0.querySelector('.spec-dim-name').textContent = gameState.teams[0].name;
-    s0.querySelector('.spec-dim-val').textContent  = gameState.teams[0].score;
-    s1.querySelector('.spec-dim-name').textContent = gameState.teams[1].name;
-    s1.querySelector('.spec-dim-val').textContent  = gameState.teams[1].score;
-    s0.classList.toggle('active', gameState.wordTeamIndex === 0);
-    s1.classList.toggle('active', gameState.wordTeamIndex === 1);
+  // Score bar — dynamically populate for N teams, highlight the starting team
+  const scoresBar = document.getElementById('inter-scores-bar');
+  if (scoresBar) {
+    scoresBar.innerHTML = '';
+    gameState.teams.forEach((t, i) => {
+      const item = document.createElement('div');
+      item.className = 'score-spec-item' + (i === gameState.wordTeamIndex ? ' active' : '');
+      item.innerHTML = `<span class="spec-dim-name">${escHtml(t.name)}</span><span class="spec-dim-val">${t.score}</span>`;
+      scoresBar.appendChild(item);
+    });
   }
 }
 
@@ -1154,46 +1181,92 @@ function renderPlaying() {
 }
 
 function renderSummary() {
-  const [t0, t1] = gameState.teams;
-  const pts0 = t0.correctWords.length;
-  const pts1 = t1.correctWords.length;
-
   document.getElementById('summary-round-label').textContent =
     `Round ${gameState.currentRound} of ${gameState.totalRounds}`;
 
-  document.getElementById('summary-pts-0').textContent   = t0.score;
-  document.getElementById('summary-pts-1').textContent   = t1.score;
-  document.getElementById('summary-name-0').textContent  = t0.name;
-  document.getElementById('summary-name-1').textContent  = t1.name;
-  document.getElementById('summary-delta-0').textContent = `+${pts0} this round`;
-  document.getElementById('summary-delta-1').textContent = `+${pts1} this round`;
-  document.getElementById('summary-t0-heading').textContent = t0.name;
-  document.getElementById('summary-t1-heading').textContent = t1.name;
+  // VS header — dynamically populate for N teams
+  const vsContainer = document.getElementById('summary-vs-container');
+  if (vsContainer) {
+    vsContainer.innerHTML = '';
+    gameState.teams.forEach((t, i) => {
+      if (i > 0) {
+        const sep = document.createElement('span');
+        sep.className = 'summary-vs-sep';
+        sep.textContent = 'vs';
+        vsContainer.appendChild(sep);
+      }
+      const block = document.createElement('div');
+      block.className = 'summary-vs-team';
+      block.innerHTML =
+        `<span class="summary-vs-pts">${t.score}</span>` +
+        `<span class="summary-vs-name">${escHtml(t.name)}</span>` +
+        `<span class="summary-vs-delta">+${t.correctWords.length} this round</span>`;
+      vsContainer.appendChild(block);
+    });
+  }
 
-  const renderList = (id, words) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    el.textContent = ''; // Clear safely
-
+  // Helper to render a word list into a container element
+  const renderWordList = (container, words) => {
     if (words.length === 0) {
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'word-entry empty';
       emptyDiv.textContent = '—';
-      el.appendChild(emptyDiv);
+      container.appendChild(emptyDiv);
     } else {
       words.forEach(w => {
         const div = document.createElement('div');
         div.className = 'word-entry';
         div.textContent = w.tigrinya || w.word;
-        el.appendChild(div);
+        container.appendChild(div);
       });
     }
   };
-  renderList('correct-word-list-0', t0.correctWords);
-  renderList('skipped-word-list-0', t0.skippedWords);
-  renderList('correct-word-list-1', t1.correctWords);
-  renderList('skipped-word-list-1', t1.skippedWords);
+
+  // Team round blocks — dynamically populate for N teams
+  const teamsContainer = document.getElementById('summary-teams-container');
+  if (teamsContainer) {
+    teamsContainer.innerHTML = '';
+    gameState.teams.forEach((t, i) => {
+      const block = document.createElement('div');
+      block.className = 'team-round-block';
+
+      const heading = document.createElement('h3');
+      heading.className = 'team-round-heading';
+      heading.textContent = t.name;
+      block.appendChild(heading);
+
+      const lists = document.createElement('div');
+      lists.className = 'word-lists';
+
+      // Correct words card
+      const correctCard = document.createElement('div');
+      correctCard.className = 'word-list-card correct';
+      const correctH4 = document.createElement('h4');
+      correctH4.textContent = `✓ Correct (${t.correctWords.length})`;
+      correctCard.appendChild(correctH4);
+      renderWordList(correctCard, t.correctWords);
+      lists.appendChild(correctCard);
+
+      // Skipped words card
+      const skippedCard = document.createElement('div');
+      skippedCard.className = 'word-list-card skipped';
+      const skippedH4 = document.createElement('h4');
+      skippedH4.textContent = `✕ Skipped (${t.skippedWords.length})`;
+      skippedCard.appendChild(skippedH4);
+      renderWordList(skippedCard, t.skippedWords);
+      lists.appendChild(skippedCard);
+
+      block.appendChild(lists);
+
+      if (i < gameState.teams.length - 1) {
+        const divider = document.createElement('div');
+        divider.className = 'summary-team-divider';
+        block.appendChild(divider);
+      }
+
+      teamsContainer.appendChild(block);
+    });
+  }
 
   const isFinalRound = gameState.currentRound >= gameState.totalRounds;
   const nextBtn = document.getElementById('btn-next-round');
@@ -1203,26 +1276,27 @@ function renderSummary() {
 function renderWinner() {
   validateScores();
 
-  const [t0, t1] = gameState.teams;
-  let winner = null;
-  if      (t0.score > t1.score) winner = t0;
-  else if (t1.score > t0.score) winner = t1;
+  // Find winner(s) — handle N teams and ties
+  const maxScore = Math.max(...gameState.teams.map(t => t.score));
+  const winners  = gameState.teams.filter(t => t.score === maxScore);
+  const isTie    = winners.length > 1;
 
   const nameEl = document.getElementById('winner-team-name');
   const trophy = document.querySelector('.winner-trophy-inline');
 
-  nameEl.textContent       = winner ? `${winner.name} Wins` : "It's a Tie";
-  if (trophy) trophy.textContent = winner ? '🏆' : '🤝';
+  nameEl.textContent = isTie ? "It's a Tie" : `${winners[0].name} Wins`;
+  if (trophy) trophy.textContent = isTie ? '🤝' : '🏆';
 
-  const f0 = document.getElementById('final-score-0');
-  const f1 = document.getElementById('final-score-1');
-  if (f0 && f1) {
-    f0.querySelector('.f-name').textContent = t0.name;
-    f0.querySelector('.f-val').textContent  = t0.score;
-    f1.querySelector('.f-name').textContent = t1.name;
-    f1.querySelector('.f-val').textContent  = t1.score;
-    f0.classList.toggle('winner', t0.score > t1.score);
-    f1.classList.toggle('winner', t1.score > t0.score);
+  // Final scores — dynamically populate for N teams
+  const container = document.getElementById('final-scores-container');
+  if (container) {
+    container.innerHTML = '';
+    gameState.teams.forEach(t => {
+      const item = document.createElement('div');
+      item.className = 'final-score-item' + (t.score === maxScore && !isTie ? ' winner' : '');
+      item.innerHTML = `<span class="f-name">${escHtml(t.name)}</span><span class="f-val">${t.score}</span>`;
+      container.appendChild(item);
+    });
   }
 
   // Show upsell for the first locked pack
@@ -1322,15 +1396,18 @@ function wireEvents() {
       const clean = raw.trim().replace(/[<>&"']/g, '').slice(0, 24);
       return clean || fallback;
     };
-    const n0 = sanitiseName(document.getElementById('team1-name').value, DEFAULTS.teamNames[0]);
-    const n1 = sanitiseName(document.getElementById('team2-name').value, DEFAULTS.teamNames[1]);
-    saveTeamNames(n0, n1);   // remember for next game
-    gameState.teams[0] = { name: n0, score: 0, correctWords: [], skippedWords: [] };
-    gameState.teams[1] = { name: n1, score: 0, correctWords: [], skippedWords: [] };
+    const teamInputIds = ['team1-name', 'team2-name', 'team3-name', 'team4-name'];
+    gameState.teams = [];
+    for (let i = 0; i < gameState.numTeams; i++) {
+      const input = document.getElementById(teamInputIds[i]);
+      const name = sanitiseName(input ? input.value : '', DEFAULTS.teamNames[i]);
+      gameState.teams.push({ name, score: 0, correctWords: [], skippedWords: [] });
+    }
+    saveTeamNames(gameState.teams[0].name, gameState.teams[1].name);
     gameState.turnDuration = computeTurnDuration();
 
     // Pick random starting team BEFORE countdown so it can be shown during 3-2-1
-    const startTeam     = Math.random() < 0.5 ? 0 : 1;
+    const startTeam     = Math.floor(Math.random() * gameState.teams.length);
     const startTeamName = gameState.teams[startTeam].name;
     showCountdown(startTeamName, () => startGame(startTeam));
   });
@@ -1366,6 +1443,32 @@ function wireEvents() {
     renderSetup();
   });
 
+  // ── Add / Remove team buttons ──────────────────────
+  document.getElementById('btn-add-team')?.addEventListener('click', () => {
+    if (!hasAnyPaidAccess()) {
+      // Use the existing game pass slug for payment — 'mayim-pass' is the default product
+      const gamePassSlug = (typeof PACK_CATALOGUE !== 'undefined')
+        ? (PACK_CATALOGUE.find(p => !p.isFree)?.slug || 'mayim-pass')
+        : 'mayim-pass';
+      startPaymentFlow(gamePassSlug);
+      return;
+    }
+    if (gameState.numTeams < 4) {
+      gameState.numTeams++;
+      updateTeamCountUI();
+      updateSetupComputed();
+      updateProverbSetupComputed();
+    }
+  });
+  document.getElementById('btn-remove-team')?.addEventListener('click', () => {
+    if (gameState.numTeams > 2) {
+      gameState.numTeams--;
+      updateTeamCountUI();
+      updateSetupComputed();
+      updateProverbSetupComputed();
+    }
+  });
+
   // ── Interstitial ────────────────────────────────────
   document.getElementById('btn-back-to-setup').addEventListener('click', () => {
     stopWordTimer();
@@ -1395,7 +1498,7 @@ function wireEvents() {
       endRound();
     } else {
       // Flip to the other team before showing next word
-      gameState.wordTeamIndex = 1 - gameState.wordTeamIndex;
+      gameState.wordTeamIndex = (gameState.wordTeamIndex + 1) % gameState.teams.length;
       showNextWord();
     }
   });
@@ -2257,6 +2360,7 @@ function renderTierSelector(gamePassSlug = 'mayim-pass') {
 const renderPackToggles = renderTierSelector;
 
 // Update the Teams section badge to reflect the active tier difficulty.
+// Also manages the team-count lock badge for paid-tier gating.
 function updateTeamsTierBadge() {
   const badge = document.getElementById('teams-tier-badge');
   if (!badge) return;
@@ -2270,6 +2374,19 @@ function updateTeamsTierBadge() {
   const meta = TIER_META[slug] ?? TIER_META.gasha;
   badge.textContent    = meta.label;
   badge.dataset.tier   = meta.tier;
+
+  // Team count lock badge — hide if user has paid access
+  const teamLock = document.getElementById('team-count-lock');
+  const access = hasAnyPaidAccess();
+  if (access) {
+    if (teamLock) teamLock.style.display = 'none';
+  } else {
+    if (teamLock) teamLock.style.display = '';
+    if (gameState.numTeams > 2) {
+      gameState.numTeams = 2;
+      updateTeamCountUI();
+    }
+  }
 }
 
 // ── Winner screen upsell ───────────────────────────────────

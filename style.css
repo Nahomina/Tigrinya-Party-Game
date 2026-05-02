@@ -627,6 +627,29 @@ button {
 }
 .team-dot.t1 { background: #4fc3f7; }
 .team-dot.t2 { background: var(--red); }
+.team-dot.t3 { background: #8e24aa; }
+.team-dot.t4 { background: #f4511e; }
+
+/* ── Team count controls (add/remove team buttons + lock badge) ── */
+.team-count-controls {
+  display: flex; align-items: center; gap: .5rem; margin-top: .55rem;
+}
+.btn-add-team, .btn-remove-team {
+  padding: .5rem .9rem; font-size: .78rem; font-weight: 600;
+  border-radius: 8px; cursor: pointer; font-family: inherit;
+  transition: background .15s, border-color .15s;
+  background: var(--bg-elevated); border: 1.5px solid var(--border-mid);
+  color: var(--text-sub);
+}
+.btn-add-team:hover { border-color: var(--red); color: var(--text); }
+.btn-remove-team:hover { border-color: #e53935; color: #e53935; }
+.team-lock-badge {
+  display: inline-flex; align-items: center; gap: .2rem;
+  font-size: .62rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #f4511e;
+  background: rgba(244,81,30,0.08); border: 1px solid rgba(244,81,30,0.2);
+  border-radius: 20px; padding: .18rem .5rem;
+}
 
 .setup-spec-row input {
   flex: 1;
@@ -1012,6 +1035,7 @@ button {
   flex-shrink: 0;
   border-top: 1px solid var(--border);
   display: flex;
+  flex-wrap: wrap;
   padding: 1rem 2rem;
 }
 .score-spec-item {
@@ -1328,6 +1352,7 @@ button {
 .summary-vs-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1.5rem;
   margin-top: 0.35rem;
 }
@@ -1482,6 +1507,7 @@ button {
   flex-shrink: 0;
   border-top: 1px solid var(--border);
   display: flex;
+  flex-wrap: wrap;
   padding: 1rem 2rem;
 }
 .final-score-item {
