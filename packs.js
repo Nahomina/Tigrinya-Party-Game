@@ -1,20 +1,15 @@
-// packs.js — Pack / Tier catalogue  (v8)
+// packs.js — Pack / Tier catalogue  (v9)
 // Slugs match the database — do NOT rename them.
-// Premium content unlocked via Stripe payment only.
-// Counts are exact — pulled from DB 2026-04-19.
-//
-// Tier structure: two levels only.
-//   Level 1 — Gasha (Free)       : everyday starter content
-//   Level 2 — Shimagile (Paid)   : full expert unlock — everything
+// Premium content unlocked via game pass subscriptions only.
+// All pricing handled through game pass bundles, not individual tier prices.
 
 const PACK_CATALOGUE = [
   {
-    // ── LEVEL 1 ───────────────────────────────────────────────
+    // ── LEVEL 1 (Free) ────────────────────────────────────────
     slug:          'gasha',
     tier:          'starter',
     sequenceOrder: 1,
 
-    // Display
     nameGeez:    'ጋሻ',
     nameLatin:   'Gasha',
     nameEn:      'Gasha',
@@ -33,10 +28,56 @@ const PACK_CATALOGUE = [
     proverbProfile: '68 proverbs · easy to follow',
   },
   {
-    // ── LEVEL 2 (Full Unlock) ─────────────────────────────────
+    // ── LEVEL 2 (Premium via Game Pass) ──────────────────────
+    slug:          'qola',
+    tier:          'intermediate',
+    sequenceOrder: 2,
+
+    nameGeez:    'ቁልዓ',
+    nameLatin:   "Qol'a",
+    nameEn:      "Qol'a",
+    tierLabel:   'Intermediate',
+    icon:        '🔵',
+    accentColor: '#1e88e5',
+
+    description:  "The Baby. You know the basics — weddings, family & cultural vocab.",
+    wordCount:    40,
+    proverbCount: 30,
+
+    priceGbp: 0,  // Pricing via game pass only
+    isFree:   false,
+
+    wordProfile:    '40 words · weddings & family',
+    proverbProfile: '30 proverbs · cultural references',
+  },
+  {
+    // ── LEVEL 3 (Premium via Game Pass) ──────────────────────
+    slug:          'gobez',
+    tier:          'advanced',
+    sequenceOrder: 3,
+
+    nameGeez:    'ጎበዝ',
+    nameLatin:   'Gobez',
+    nameEn:      'Gobez',
+    tierLabel:   'Advanced',
+    icon:        '🟣',
+    accentColor: '#8e24aa',
+
+    description:  "The Cool Youth. You navigate culture — homeland vocab & advanced proverbs.",
+    wordCount:    40,
+    proverbCount: 35,
+
+    priceGbp: 0,  // Pricing via game pass only
+    isFree:   false,
+
+    wordProfile:    '40 words · geography & homeland',
+    proverbProfile: '35 proverbs · idioms & deeper meaning',
+  },
+  {
+    // ── LEVEL 4 (Premium via Game Pass) ──────────────────────
     slug:          'shimagile',
     tier:          'expert',
-    sequenceOrder: 2,
+    sequenceOrder: 4,
 
     nameGeez:    'ሽማግለ',
     nameLatin:   'Shimagile',
@@ -49,10 +90,8 @@ const PACK_CATALOGUE = [
     wordCount:    58,
     proverbCount: 104,
 
-    priceGbp:         9.99,
-    isFree:           false,
-    soldIndividually: false,
-    bundleSlug:       'mayim-pass',
+    priceGbp: 0,  // Pricing via game pass only
+    isFree:   false,
 
     wordProfile:    'Full word pack · all levels unlocked',
     proverbProfile: 'Full proverb pack · advanced wisdom',
@@ -71,10 +110,10 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'Mayim Pass',
     icon:        '🔴',
     accentColor: '#e53935',
-    description: "Unlock the full Shimagile tier for MAYIM (word guessing) and MISLA (proverbs) — every word & proverb unlocked.",
-    priceGbp:    6.99,
-    // Buying this cascades: shimagile (includes all content)
-    cascadeSlugs: ['shimagile'],
+    description: "Unlock all difficulty tiers for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez, and Shimagile.",
+    priceGbp:    4.99,
+    // Buying this cascades: qola, gobez, shimagile (includes all premium tiers)
+    cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
   {
     slug:        'hito-pass',
