@@ -367,12 +367,12 @@
       ════════════════════════════════════════════════ -->
       <div id="tab-grants" class="tab-panel hidden">
         <div class="admin-section">
-          <h2>🔑 Grant Pack Access</h2>
-          <p class="section-hint">Give a user free access to a paid tier — no payment required.</p>
+          <h2>🔑 Grant Game Pass</h2>
+          <p class="section-hint">Give a user free access to a game pass — no payment required.</p>
           <form id="form-grant" class="word-form">
             <input type="email" id="grant-email" placeholder="User's email address" required />
             <select id="grant-pack" required>
-              <option value="">Select tier to grant</option>
+              <option value="">Select game pass to grant</option>
               <!-- Populated by JS -->
             </select>
             <button type="submit" class="btn btn-success">Grant Access</button>
@@ -386,7 +386,7 @@
           <div class="table-wrap">
             <table class="admin-table">
               <thead>
-                <tr><th>Email</th><th>Tier</th><th>Granted</th><th>Actions</th></tr>
+                <tr><th>Email</th><th>Game Pass</th><th>Granted</th><th>Actions</th></tr>
               </thead>
               <tbody id="grants-tbody"></tbody>
             </table>
@@ -557,6 +557,7 @@
   <div id="toast" class="toast hidden"></div>
 
   <script src="supabase.min.js"></script>
-  <script src="admin.js?v=10"></script>
+  <script src="packs.js?v=8"></script>
+  <script src="admin.js?v=11"></script>
 </body>
 </html>

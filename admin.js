@@ -87,6 +87,14 @@ const FALLBACK_PACKS = [
   { id: '081261fa-5174-47de-9c3f-40723690372a', slug: 'shimagile', name_en: 'Shimagile — The Village Elder', tier_label: 'expert',     sequence_order: 4 },
 ];
 
+// Fallback game passes — used when packs.js isn't loaded or GAME_PASS_CATALOGUE is missing
+const FALLBACK_GAME_PASSES = [
+  { slug: 'mayim-pass',  icon: '🔴', nameEn: 'MAYIM & MISLA Pass',      priceGbp: 2.99 },
+  { slug: 'hito-pass',   icon: '🟠', nameEn: 'HITO Pass',               priceGbp: 1.99 },
+  { slug: 'hinqle-pass', icon: '🟢', nameEn: 'Hinqle Hinqilitey Pass',  priceGbp: 1.99 },
+  { slug: 'all-games',   icon: '⭐', nameEn: 'All Games',               priceGbp: 4.99 },
+];
+
 async function loadPacks() {
   const { data, error } = await _sb
     .from('packs')
@@ -104,25 +112,23 @@ async function loadPacks() {
 }
 
 function populatePackSelects() {
-  const selects = [
+  // Tier selects (words, proverbs, filters)
+  const tierSelects = [
     'input-pack', 'edit-word-pack',
     'input-proverb-pack', 'edit-proverb-pack',
     'filter-tier', 'filter-proverb-tier',
-    'grant-pack',
   ];
 
-  selects.forEach(id => {
+  const TIER_ICONS = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' };
+
+  tierSelects.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    // filter selects and the grant select use slug; form selects use UUID
-    const useSlug = id.startsWith('filter-') || id === 'grant-pack';
-    // Only preserve a true blank placeholder (value=""), never a real pack option
+    const useSlug = id.startsWith('filter-');
     const blank = (el.options[0]?.value === '') ? el.options[0] : null;
     el.textContent = '';
     if (blank) el.appendChild(blank);
 
-    // Word-tier packs only (exclude game passes which have no tier_label)
-    const TIER_ICONS = { starter:'🟢', intermediate:'🔵', advanced:'🟣', expert:'🟠' };
     const packsToShow = allPacks.filter(p => TIER_ICONS[p.tier_label]);
     packsToShow.forEach(p => {
       const opt = document.createElement('option');
@@ -131,6 +137,22 @@ function populatePackSelects() {
       el.appendChild(opt);
     });
   });
+
+  // Grant select — game passes only
+  const grantEl = document.getElementById('grant-pack');
+  if (grantEl) {
+    const blank = (grantEl.options[0]?.value === '') ? grantEl.options[0] : null;
+    grantEl.textContent = '';
+    if (blank) grantEl.appendChild(blank);
+
+    const passes = (typeof GAME_PASS_CATALOGUE !== 'undefined') ? GAME_PASS_CATALOGUE : FALLBACK_GAME_PASSES;
+    passes.forEach(gp => {
+      const opt = document.createElement('option');
+      opt.value = gp.slug;
+      opt.textContent = `${gp.icon} ${gp.nameEn} — £${gp.priceGbp}/mo`;
+      grantEl.appendChild(opt);
+    });
+  }
 }
 
 // Helper: pack id → display name (word-tier packs only)
@@ -439,6 +461,18 @@ async function revokeGrant(id) {
   await loadAllGrants();
 }
 
+function grantPassName(pack_id) {
+  // Check if the granted pack matches a game pass
+  const pack = allPacks.find(p => p.id === pack_id);
+  if (!pack) return { icon: '⬜', name: '—' };
+  const passes = (typeof GAME_PASS_CATALOGUE !== 'undefined') ? GAME_PASS_CATALOGUE : FALLBACK_GAME_PASSES;
+  const gp = passes.find(g => g.slug === pack.slug);
+  if (gp) return { icon: gp.icon, name: gp.nameEn };
+  // Fallback to tier display
+  const icon = TIER_ICONS_MAP[pack.tier_label] || '⬜';
+  return { icon, name: pack.name_en };
+}
+
 function renderGrantsTable() {
   const tbody = document.getElementById('grants-tbody');
   if (!tbody) return;
@@ -448,13 +482,12 @@ function renderGrantsTable() {
     return;
   }
   allGrants.forEach(g => {
-    const pack = allPacks.find(p => p.id === g.pack_id);
-    const icon = TIER_ICONS_MAP[pack?.tier_label] || '⬜';
+    const { icon, name } = grantPassName(g.pack_id);
     const date = new Date(g.unlocked_at).toLocaleDateString();
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${escHtml(g.user_id)}</td>
-      <td><span class="badge badge--grey">${icon} ${escHtml(pack?.name_en || '—')}</span></td>
+      <td><span class="badge badge--grey">${icon} ${escHtml(name)}</span></td>
       <td>${date}</td>
       <td><button class="btn btn-sm btn-danger" data-id="${g.id}" data-action="revoke">Revoke</button></td>`;
     tbody.appendChild(tr);

@@ -73,10 +73,15 @@ Deno.serve(async (req) => {
   });
   if (insertErr) return err('Failed to grant: ' + insertErr.message, 500);
 
-  // ── Cascade: granting shimagile is the full unlock (no sub-tiers any more) ──
+  // ── Cascade: granting a game pass cascades to its included packs ──
   const CASCADE: Record<string, string[]> = {
+    // Game passes
+    'mayim-pass':  ['shimagile'],
+    'hito-pass':   [],
+    'hinqle-pass': [],
+    'all-games':   ['shimagile', 'mayim-pass', 'hito-pass', 'hinqle-pass'],
+    // Tier packs (legacy)
     shimagile:    [],
-    // legacy slugs kept for admin backwards-compat
     gobez:        [],
     qola:         [],
     expert:       [],
