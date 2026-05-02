@@ -121,11 +121,14 @@
 </head>
 <body class="home-body">
 
-  <!-- Theme toggle: fixed position, outside home-wrap so flex layout can't interfere -->
-  <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
-    <span class="theme-icon-dark">☀</span>
-    <span class="theme-icon-light">☾</span>
-  </button>
+  <!-- Topbar: theme toggle + profile/auth sit side by side, never overlap -->
+  <div id="topbar">
+    <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+      <span class="theme-icon-dark">☀</span>
+      <span class="theme-icon-light">☾</span>
+    </button>
+    <div id="auth-indicator" class="auth-indicator"></div>
+  </div>
 
   <div class="home-wrap">
 
@@ -291,8 +294,6 @@
 
   </div><!-- /.home-wrap -->
 
-  <!-- ── Auth Indicator (top-right) ──────────────────────── -->
-  <div id="auth-indicator" class="auth-indicator"></div>
 
   <!-- ── Auth Modal (Mobile App Style) ──────────────────────── -->
   <div id="auth-modal" class="auth-modal hidden" role="dialog" aria-modal="true">
