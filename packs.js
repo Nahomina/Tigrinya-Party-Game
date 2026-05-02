@@ -24,7 +24,7 @@ const PACK_CATALOGUE = [
     priceGbp: 0,
     isFree:   true,
 
-    wordProfile:    '35 words · everyday vocabulary',
+    wordProfile:    'Easy',
     proverbProfile: '68 proverbs · easy to follow',
   },
   {
@@ -47,7 +47,7 @@ const PACK_CATALOGUE = [
     priceGbp: 0,  // Pricing via game pass only
     isFree:   false,
 
-    wordProfile:    '40 words · weddings & family',
+    wordProfile:    'Medium',
     proverbProfile: '30 proverbs · cultural references',
   },
   {
@@ -70,7 +70,7 @@ const PACK_CATALOGUE = [
     priceGbp: 0,  // Pricing via game pass only
     isFree:   false,
 
-    wordProfile:    '40 words · geography & homeland',
+    wordProfile:    'Hard',
     proverbProfile: '35 proverbs · idioms & deeper meaning',
   },
   {
@@ -93,7 +93,7 @@ const PACK_CATALOGUE = [
     priceGbp: 0,  // Pricing via game pass only
     isFree:   false,
 
-    wordProfile:    'Full word pack · all levels unlocked',
+    wordProfile:    'Expert',
     proverbProfile: 'Full proverb pack · advanced wisdom',
   },
 ];
