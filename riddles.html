@@ -472,22 +472,8 @@
         <p class="section-label">Difficulty Tier</p>
         <div class="tier-selector" id="tier-selector" role="radiogroup" aria-label="Select difficulty tier">
 
-          <label class="tier-option" data-tier="all" style="--tier-color:#00897b">
-            <input class="tier-radio-input" type="radio" name="riddle-tier" value="all" checked />
-            <div class="tier-option-left">
-              <span class="tier-icon">🌟</span>
-              <div>
-                <p class="tier-name">All Tiers</p>
-                <p class="tier-profile">Mixed difficulty · all riddles</p>
-              </div>
-            </div>
-            <div class="tier-option-right">
-              <span class="tier-badge--free">FREE</span>
-            </div>
-          </label>
-
           <label class="tier-option" data-tier="gasha" style="--tier-color:#43a047">
-            <input class="tier-radio-input" type="radio" name="riddle-tier" value="easy" />
+            <input class="tier-radio-input" type="radio" name="riddle-tier" value="easy" checked />
             <div class="tier-option-left">
               <span class="tier-icon">🟢</span>
               <div>
@@ -500,31 +486,17 @@
             </div>
           </label>
 
-          <label class="tier-option tier-option--locked" id="tier-qola" data-tier="qola" style="--tier-color:#1e88e5">
-            <input class="tier-radio-input" type="radio" name="riddle-tier" value="medium" disabled />
-            <div class="tier-option-left">
-              <span class="tier-icon">🔵</span>
-              <div>
-                <p class="tier-name">Qol'a</p>
-                <p class="tier-profile">Medium · cultural knowledge</p>
-              </div>
-            </div>
-            <div class="tier-option-right" id="tier-qola-right">
-              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99</button>
-            </div>
-          </label>
-
-          <label class="tier-option tier-option--locked" id="tier-gobez" data-tier="gobez" style="--tier-color:#8e24aa">
+          <label class="tier-option tier-option--locked" id="tier-shimagile" data-tier="shimagile" style="--tier-color:#f4511e">
             <input class="tier-radio-input" type="radio" name="riddle-tier" value="hard" disabled />
             <div class="tier-option-left">
-              <span class="tier-icon">🟣</span>
+              <span class="tier-icon">🟠</span>
               <div>
-                <p class="tier-name">Gobez</p>
-                <p class="tier-profile">Hard · deep & tricky riddles</p>
+                <p class="tier-name">Shimagile</p>
+                <p class="tier-profile">Expert · challenging riddles</p>
               </div>
             </div>
-            <div class="tier-option-right" id="tier-gobez-right">
-              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99</button>
+            <div class="tier-option-right" id="tier-shimagile-right">
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £9.99/mo</button>
             </div>
           </label>
 
@@ -873,7 +845,7 @@
   }
 
   function applyRiddlesTierUI(access) {
-    ['tier-qola', 'tier-gobez'].forEach(id => {
+    ['tier-shimagile'].forEach(id => {
       const label = document.getElementById(id);
       const radio = label?.querySelector('.tier-radio-input');
       const right = document.getElementById(id + '-right');
@@ -886,7 +858,7 @@
         label.classList.add('tier-option--locked');
         if (radio) radio.disabled = true;
         if (right && !right.querySelector('.tier-unlock-btn')) {
-          right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hinqle-pass\')">🔒 £4.99</button>';
+          right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hinqle-pass\')">🔒 £9.99/mo</button>';
         }
       }
     });
