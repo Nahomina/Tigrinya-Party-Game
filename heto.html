@@ -109,10 +109,11 @@
           <span class="mode-name">🎯 Solo Challenge</span>
           <span class="mode-desc">10 rapid-fire questions, 20 sec each, no going back</span>
         </label>
-        <label class="mode-option">
-          <input type="radio" name="gameMode" value="team" />
+        <label class="mode-option" id="mode-option-team">
+          <input type="radio" name="gameMode" value="team" id="radio-team-mode" />
           <span class="mode-name">👥 Team Competition</span>
           <span class="mode-desc">Multiple teams take turns, configurable rounds</span>
+          <span class="mode-tier-lock" id="mode-team-lock">🔒 Paid tier</span>
         </label>
       </div>
 
@@ -680,6 +681,13 @@ function setupModeSelector() {
       updateModeUI();
     });
   });
+  // Clicking a locked Team Competition label → show upgrade flow
+  document.getElementById('mode-option-team')?.addEventListener('click', (e) => {
+    if (document.getElementById('radio-team-mode')?.disabled) {
+      e.preventDefault();
+      startPaymentFlow('hito-pass');
+    }
+  });
   updateModeUI();
 }
 
@@ -725,6 +733,7 @@ function setCachedHitoAccess(value) {
 }
 
 function applyHitoTierUI(access) {
+  // ── Difficulty tier rows ───────────────────────────────────
   ['hito-tier-qola', 'hito-tier-gobez', 'hito-tier-shimagile'].forEach(id => {
     const label = document.getElementById(id);
     const radio = label?.querySelector('.tier-radio-input');
@@ -737,12 +746,32 @@ function applyHitoTierUI(access) {
     } else {
       label.classList.add('tier-option--locked');
       if (radio) radio.disabled = true;
-      // Only restore the buy button if not already there
       if (right && !right.querySelector('.tier-unlock-btn')) {
         right.innerHTML = '<button class="tier-unlock-btn" type="button" onclick="startPaymentFlow(\'hito-pass\')">🔒 Unlock</button>';
       }
     }
   });
+
+  // ── Team Competition mode lock ─────────────────────────────
+  const teamRadio = document.getElementById('radio-team-mode');
+  const teamLabel = document.getElementById('mode-option-team');
+  const teamLock  = document.getElementById('mode-team-lock');
+  if (access) {
+    if (teamRadio) teamRadio.disabled = false;
+    teamLabel?.classList.remove('mode-option--locked');
+    if (teamLock) teamLock.style.display = 'none';
+  } else {
+    if (teamRadio) teamRadio.disabled = true;
+    teamLabel?.classList.add('mode-option--locked');
+    if (teamLock) teamLock.style.display = '';
+    // If user was on team mode, snap to solo
+    if (gameState.mode === 'team') {
+      gameState.mode = 'solo';
+      const soloR = document.querySelector('input[name="gameMode"][value="solo"]');
+      if (soloR) soloR.checked = true;
+      updateModeUI();
+    }
+  }
 }
 
 async function refreshHitoTierLockState() {
@@ -1557,6 +1586,21 @@ if (document.readyState === 'loading') {
   font-size: 0.75rem;
   color: var(--text-sub);
   transition: color 0.2s;
+}
+
+.mode-option--locked {
+  opacity: 0.5;
+  cursor: pointer;
+}
+.mode-option--locked .mode-name,
+.mode-option--locked .mode-desc { color: var(--text-muted); }
+.mode-tier-lock {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: #f4511e;
+  background: rgba(244,81,30,0.08); border: 1px solid rgba(244,81,30,0.2);
+  border-radius: 20px; padding: 0.18rem 0.5rem; margin-top: 0.15rem;
+  width: fit-content;
 }
 
 /* ═══ DROPDOWN SELECT ═══ */

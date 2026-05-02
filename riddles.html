@@ -123,6 +123,41 @@
     }
     .team-col input:focus { border-color: var(--riddle); }
 
+    /* Mode selector */
+    .riddle-mode-selector {
+      display: flex; flex-direction: column; gap: .5rem;
+    }
+    .riddle-mode-opt {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .6rem;
+      padding: .85rem 1rem; background: var(--bg-card);
+      border: 1.5px solid var(--border-mid); border-radius: 12px;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .riddle-mode-opt:hover { border-color: var(--riddle); }
+    .riddle-mode-opt:has(input:checked) {
+      border-color: var(--riddle); background: var(--riddle-card);
+    }
+    .riddle-mode-opt input[type="radio"] { display: none; }
+    .riddle-mode-name {
+      font-size: .92rem; font-weight: 600; color: var(--text); width: 100%;
+    }
+    .riddle-mode-desc {
+      font-size: .7rem; color: var(--text-muted); width: 100%;
+    }
+    .riddle-mode-lock {
+      display: inline-flex; align-items: center; gap: .2rem;
+      font-size: .62rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: #f4511e;
+      background: rgba(244,81,30,0.08); border: 1px solid rgba(244,81,30,0.2);
+      border-radius: 20px; padding: .18rem .5rem; margin-top: .15rem;
+      width: fit-content;
+    }
+    .riddle-mode-opt--locked {
+      opacity: .5; cursor: pointer;
+    }
+    .riddle-mode-opt--locked .riddle-mode-name,
+    .riddle-mode-opt--locked .riddle-mode-desc { color: var(--text-muted); }
+
     /* Tier selector — no overrides needed; .tier-option from style.css handles all styling */
 
     /* Config rows */
@@ -466,8 +501,26 @@
 
     <div class="setup-body">
 
-      <!-- Team names — stacked -->
+      <!-- Game Mode -->
       <div>
+        <p class="section-label">Game Mode</p>
+        <div class="riddle-mode-selector">
+          <label class="riddle-mode-opt" id="riddle-mode-solo-label">
+            <input type="radio" name="riddleMode" value="solo" checked id="riddle-radio-solo" />
+            <span class="riddle-mode-name">🎯 Solo Practice</span>
+            <span class="riddle-mode-desc">Browse riddles — see question, reveal answer, next</span>
+          </label>
+          <label class="riddle-mode-opt" id="riddle-mode-team-label">
+            <input type="radio" name="riddleMode" value="team" id="riddle-radio-team" />
+            <span class="riddle-mode-name">👥 Team Competition</span>
+            <span class="riddle-mode-desc">Two teams compete with scoring &amp; leaderboard</span>
+            <span class="riddle-mode-lock" id="riddle-mode-team-lock">🔒 Paid tier</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Team names — stacked (hidden in solo mode) -->
+      <div id="riddle-team-section" style="display:none">
         <p class="section-label">Team Names</p>
         <div class="team-col">
           <div class="team-input-wrap">
@@ -655,12 +708,17 @@
       <button id="btn-reveal" class="btn-reveal">Reveal Answer ↓</button>
     </div>
 
-    <!-- State B: judge decides -->
+    <!-- State B: judge decides (team mode) -->
     <div id="actions-judge" class="riddle-actions" style="display:none">
       <div class="actions-row">
         <button id="btn-wrong"   class="btn-wrong">  <span>✕</span><span>Wrong</span></button>
         <button id="btn-correct" class="btn-correct"><span>✓</span><span>Correct</span></button>
       </div>
+    </div>
+
+    <!-- State B: solo mode — just "Next" -->
+    <div id="actions-solo" class="riddle-actions" style="display:none">
+      <button id="btn-solo-next" class="btn-reveal" style="background:linear-gradient(135deg,var(--riddle),var(--riddle-dark))">Next Riddle →</button>
     </div>
 
   </section>
@@ -741,13 +799,14 @@
   let numRounds     = 3;   // total rounds
   let secsEach      = 30;
   let chosenDiff    = 'all';
+  let riddleMode    = 'solo';  // 'solo' or 'team'
   let firstTeam     = 'a';
   let timerInt      = null;
   let timerSecs     = 0;
   let peekOpen      = false;
 
-  // derived
-  function totalCount() { return perRound * numRounds * 2; } // both teams × rounds × per-round
+  // derived — solo = just perRound × numRounds; team = ×2 (both teams)
+  function totalCount() { return perRound * numRounds * (riddleMode === 'team' ? 2 : 1); }
 
   // ── Screen switch (uses .active like heto.html) ───────────
   function showScreen(name) {
@@ -909,6 +968,27 @@
         }
       }
     });
+
+    // Team Competition mode lock (same as HITO)
+    const teamRadio = document.getElementById('riddle-radio-team');
+    const teamLabel = document.getElementById('riddle-mode-team-label');
+    const teamLock  = document.getElementById('riddle-mode-team-lock');
+    if (access) {
+      if (teamRadio) teamRadio.disabled = false;
+      teamLabel?.classList.remove('riddle-mode-opt--locked');
+      if (teamLock) teamLock.style.display = 'none';
+    } else {
+      if (teamRadio) teamRadio.disabled = true;
+      teamLabel?.classList.add('riddle-mode-opt--locked');
+      if (teamLock) teamLock.style.display = '';
+      // Force back to solo if currently on team
+      if (riddleMode === 'team') {
+        riddleMode = 'solo';
+        const soloR = document.getElementById('riddle-radio-solo');
+        if (soloR) soloR.checked = true;
+        updateRiddleModeUI();
+      }
+    }
   }
 
   async function refreshTierLockState() {
@@ -927,6 +1007,33 @@
       chosenDiff = radio.value;
       applyFilter();
     });
+  });
+
+  // ── Mode selector wiring ─────────────────────────────────
+  function updateRiddleModeUI() {
+    const teamSection = document.getElementById('riddle-team-section');
+    if (riddleMode === 'team') {
+      if (teamSection) teamSection.style.display = '';
+    } else {
+      if (teamSection) teamSection.style.display = 'none';
+    }
+    // Refresh hints (total count changes with mode)
+    applyFilter();
+  }
+
+  document.querySelectorAll('input[name="riddleMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      riddleMode = radio.value;
+      updateRiddleModeUI();
+    });
+  });
+
+  // Click intercept: if team radio is disabled (locked), trigger payment flow
+  document.getElementById('riddle-mode-team-label')?.addEventListener('click', (e) => {
+    if (document.getElementById('riddle-radio-team')?.disabled) {
+      e.preventDefault();
+      startPaymentFlow('hinqle-pass');
+    }
   });
 
   function applyFilter() {
@@ -968,10 +1075,11 @@
   function updateHints() {
     const total = totalCount();
     const mins  = Math.max(1, Math.round(total * secsEach / 60));
+    const perTeamLabel = riddleMode === 'team' ? ' per team' : '';
     document.getElementById('hint-rounds').textContent =
-      numRounds + ' round' + (numRounds === 1 ? '' : 's') + ' · ' + (numRounds * perRound) + ' riddles per team';
+      numRounds + ' round' + (numRounds === 1 ? '' : 's') + ' · ' + (numRounds * perRound) + ' riddles' + perTeamLabel;
     document.getElementById('hint-count').textContent =
-      perRound + ' riddle' + (perRound === 1 ? '' : 's') + ' per team each round';
+      perRound + ' riddle' + (perRound === 1 ? '' : 's') + perTeamLabel + ' each round';
     document.getElementById('hint-time').textContent =
       '~' + mins + ' min total · ' + total + ' riddles';
     // Also revalidate available
@@ -1012,11 +1120,16 @@
 
   // ── Start game ────────────────────────────────────────────
   document.getElementById('btn-start').addEventListener('click', () => {
-    names.a = document.getElementById('input-team-a').value.trim() || 'Team A';
-    names.b = document.getElementById('input-team-b').value.trim() || 'Team B';
+    if (riddleMode === 'team') {
+      names.a = document.getElementById('input-team-a').value.trim() || 'Team A';
+      names.b = document.getElementById('input-team-b').value.trim() || 'Team B';
+      firstTeam = Math.random() < 0.5 ? 'a' : 'b';
+    } else {
+      names.a = 'Solo';
+      names.b = '';
+      firstTeam = 'a';
+    }
 
-    // Random first team
-    firstTeam   = Math.random() < 0.5 ? 'a' : 'b';
     gameRiddles = shuffle([...poolRiddles]).slice(0, totalCount());
     scores      = { a: 0, b: 0 };
     idx         = 0;
@@ -1044,9 +1157,17 @@
     const r    = gameRiddles[idx];
     const team = currentTeam();
 
-    // Header
-    document.getElementById('active-team').textContent    = names[team].toUpperCase();
-    const round = Math.floor(idx / (perRound * 2)) + 1;
+    // Header — hide active team label in solo mode
+    const teamLbl = document.getElementById('active-team');
+    if (riddleMode === 'solo') {
+      teamLbl.textContent = '';
+      teamLbl.style.display = 'none';
+    } else {
+      teamLbl.textContent = names[team].toUpperCase();
+      teamLbl.style.display = '';
+    }
+    const divisor = riddleMode === 'team' ? (perRound * 2) : perRound;
+    const round = Math.floor(idx / divisor) + 1;
     document.getElementById('riddle-counter').textContent =
       'R' + round + '/' + numRounds + '  ·  ' + (idx + 1) + '/' + totalCount();
 
@@ -1083,6 +1204,7 @@
     // Action panels
     document.getElementById('actions-pre').style.display   = '';
     document.getElementById('actions-judge').style.display = 'none';
+    document.getElementById('actions-solo').style.display  = 'none';
   }
 
   // ── Judge peek toggle ─────────────────────────────────────
@@ -1133,12 +1255,29 @@
     document.getElementById('answer-panel').style.display = '';
     document.getElementById('time-up').style.display = 'none';
     document.getElementById('actions-pre').style.display   = 'none';
-    document.getElementById('actions-judge').style.display = '';
+    if (riddleMode === 'solo') {
+      document.getElementById('actions-judge').style.display = 'none';
+      document.getElementById('actions-solo').style.display  = '';
+    } else {
+      document.getElementById('actions-judge').style.display = '';
+      document.getElementById('actions-solo').style.display  = 'none';
+    }
   });
 
   // ── Judge decision ────────────────────────────────────────
   document.getElementById('btn-correct').addEventListener('click', () => decide(true));
   document.getElementById('btn-wrong').addEventListener('click',   () => decide(false));
+
+  // Solo "Next →" — no scoring, just advance
+  document.getElementById('btn-solo-next').addEventListener('click', () => {
+    idx++;
+    if (idx >= totalCount()) {
+      // Solo done — return to setup
+      showScreen('setup');
+    } else {
+      renderRiddle();
+    }
+  });
 
   function decide(correct) {
     if (correct) scores[currentTeam()]++;
@@ -1147,7 +1286,7 @@
     else renderRiddle();
   }
 
-  // ── Score ─────────────────────────────────────────────────
+  // ── Score (team mode only — solo returns to setup) ────────
   function showScore() {
     document.getElementById('name-a').textContent = names.a;
     document.getElementById('name-b').textContent = names.b;
