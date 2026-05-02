@@ -2242,13 +2242,15 @@ function updateTeamsTierBadge() {
   const badge = document.getElementById('teams-tier-badge');
   if (!badge) return;
   const slug = getActiveTierSlug();
-  if (slug === 'shimagile') {
-    badge.textContent = '🟠 Expert';
-    badge.dataset.tier = 'expert';
-  } else {
-    badge.textContent = '🟢 Starter';
-    badge.dataset.tier = 'starter';
-  }
+  const TIER_META = {
+    gasha:     { label: '🟢 Gasha',     tier: 'gasha'     },
+    qola:      { label: "🔵 Qol'a",     tier: 'qola'      },
+    gobez:     { label: '🟣 Gobez',     tier: 'gobez'     },
+    shimagile: { label: '🟠 Shimagile', tier: 'shimagile' },
+  };
+  const meta = TIER_META[slug] ?? TIER_META.gasha;
+  badge.textContent    = meta.label;
+  badge.dataset.tier   = meta.tier;
 }
 
 // ── Winner screen upsell ───────────────────────────────────
