@@ -1072,6 +1072,7 @@ function renderSetup() {
   updateSetupComputed();
   updateProverbSetupComputed();
   renderTierSelector();
+  updateTeamsTierBadge();
   checkResumeBanner();
 }
 
@@ -1574,7 +1575,7 @@ function getActiveTierSlug() {
 }
 
 // Returns the PACK_CATALOGUE entries for the active tier and all tiers below it.
-// e.g. selecting "gobez" → [gasha, qola, gobez]
+// e.g. selecting "shimagile" → [gasha, shimagile]
 function getActiveTierPacks() {
   if (typeof PACK_CATALOGUE === 'undefined') return [];
   const slug = getActiveTierSlug();
@@ -1622,12 +1623,10 @@ function deduplicateWords(arr) {
   });
 }
 
-// Which difficulty labels are allowed per tier (cumulative).
-// Gasha (L1) → easy only; Qol'a (L2) → easy+medium; Gobez/Shimagile (L3/4) → all.
+// Which difficulty labels are allowed per tier.
+// Gasha (starter) → easy only; Shimagile (expert, full unlock) → all difficulties.
 const TIER_DIFFICULTIES = {
   gasha:     ['easy'],
-  qola:      ['easy', 'medium'],
-  gobez:     ['easy', 'medium', 'hard'],
   shimagile: ['easy', 'medium', 'hard'],
 };
 
@@ -1818,8 +1817,14 @@ async function fetchAndSyncUnlockedPacks() {
       await fetchPackContent(pack.slug);
       debugLog(`✓ Synced pack from DB: ${pack.slug}`);
     } catch (err) {
-      // 403/Not unlocked = user hasn't bought this pack — expected, not an error
-      if (!err.message.includes('Not unlocked') && !err.message.includes('403')) {
+      if (err.message.includes('Subscription cancelled') || err.message.includes('402')) {
+        // Subscription was cancelled — remove from localStorage so the lock icon reappears
+        const all = getUnlockedPacks();
+        delete all[pack.slug];
+        try { localStorage.setItem(PACK_STORE_KEY, JSON.stringify(all)); } catch(_) {}
+        showNotification(`Your ${pack.nameEn} subscription has ended. Renew to keep access.`, 'error');
+        debugLog(`Evicted cancelled pack from cache: ${pack.slug}`);
+      } else if (!err.message.includes('Not unlocked') && !err.message.includes('403')) {
         console.warn(`[sync] Pack ${pack.slug}:`, err.message);
       }
     }
@@ -1827,6 +1832,7 @@ async function fetchAndSyncUnlockedPacks() {
 
   // Refresh UI after sync
   renderTierSelector();
+  updateTeamsTierBadge();
   if (typeof renderPackCards === 'function') renderPackCards();
 }
 
@@ -2165,6 +2171,7 @@ function renderTierSelector() {
       }
       updateSetupComputed();
       updateProverbSetupComputed();
+      updateTeamsTierBadge();
     });
 
     option.appendChild(radio);
@@ -2244,6 +2251,20 @@ function renderTierSelector() {
 
 // Keep old name as alias so any lingering calls don't crash
 const renderPackToggles = renderTierSelector;
+
+// Update the Teams section badge to reflect the active tier difficulty.
+function updateTeamsTierBadge() {
+  const badge = document.getElementById('teams-tier-badge');
+  if (!badge) return;
+  const slug = getActiveTierSlug();
+  if (slug === 'shimagile') {
+    badge.textContent = '🟠 Expert';
+    badge.dataset.tier = 'expert';
+  } else {
+    badge.textContent = '🟢 Starter';
+    badge.dataset.tier = 'starter';
+  }
+}
 
 // ── Winner screen upsell ───────────────────────────────────
 function renderWinnerUpsell() {

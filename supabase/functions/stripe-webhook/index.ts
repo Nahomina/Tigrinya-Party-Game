@@ -10,21 +10,22 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
 // Game passes unlock all tiers for their game.
 // All-games bundle unlocks every game pass + every tier pack.
 const CASCADE: Record<string, string[]> = {
-  // Legacy per-tier cascades (kept for existing customers)
-  shimagile:    ['qola', 'gobez'],
-  gobez:        ['qola'],
-  qola:         [],
-  expert:       ['qola', 'gobez'],      // legacy slug alias
-  advanced:     ['qola'],               // legacy slug alias
+  // Shimagile is now the single full-unlock tier.
+  // Legacy slugs kept so existing customers who bought qola/gobez keep access.
+  shimagile:    [],                     // full unlock — no further cascade needed
+  gobez:        [],                     // legacy (maps to shimagile-level content)
+  qola:         [],                     // legacy
+  expert:       [],                     // legacy slug alias
+  advanced:     [],                     // legacy slug alias
   intermediate: [],                     // legacy slug alias
 
-  // Game passes
-  'mayim-pass':  ['qola', 'gobez', 'shimagile'],   // unlocks all MAYIM/MISLA tiers
+  // Game passes — mayim-pass unlocks shimagile (the full tier)
+  'mayim-pass':  ['shimagile'],
   'hito-pass':   [],                               // standalone — checked by slug
   'hinqle-pass': [],                               // standalone — checked by slug
 
   // All-games bundle — cascades EVERYTHING
-  'all-games':   ['qola', 'gobez', 'shimagile', 'mayim-pass', 'hito-pass', 'hinqle-pass'],
+  'all-games':   ['shimagile', 'mayim-pass', 'hito-pass', 'hinqle-pass'],
 };
 
 Deno.serve(async (req) => {

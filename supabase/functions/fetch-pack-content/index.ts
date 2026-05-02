@@ -40,15 +40,21 @@ Deno.serve(async (req) => {
     .from('packs').select('id').eq('slug', pack_slug).single();
   if (packErr || !pack) return err('Pack not found', 404);
 
-  // Verify user has paid or unlocked via code
+  // Verify user has an ACTIVE unlock (subscription_status must be active or one_time,
+  // not cancelled or past_due).
   const { data: unlock } = await sb
     .from('user_pack_unlocks')
-    .select('id')
+    .select('id, subscription_status')
     .eq('user_id', user.id)
     .eq('pack_id', pack.id)
     .maybeSingle();
 
   if (!unlock) return err('Not unlocked', 403);
+
+  // Reject if subscription has been cancelled
+  if (unlock.subscription_status === 'cancelled') {
+    return err('Subscription cancelled', 402);
+  }
 
   // Fetch words + proverbs
   const [{ data: words }, { data: proverbs }] = await Promise.all([
@@ -57,10 +63,11 @@ Deno.serve(async (req) => {
   ]);
 
   return new Response(JSON.stringify({
-    success:  true,
+    success:             true,
     pack_slug,
-    words:    words    ?? [],
-    proverbs: proverbs ?? [],
+    subscription_status: unlock.subscription_status,
+    words:               words    ?? [],
+    proverbs:            proverbs ?? [],
   }), {
     status: 200,
     headers: { ...CORS, 'Content-Type': 'application/json' },

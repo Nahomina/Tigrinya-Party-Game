@@ -1,7 +1,11 @@
-// packs.js — Pack / Tier catalogue  (v7)
+// packs.js — Pack / Tier catalogue  (v8)
 // Slugs match the database — do NOT rename them.
 // Premium content unlocked via Stripe payment only.
 // Counts are exact — pulled from DB 2026-04-19.
+//
+// Tier structure: two levels only.
+//   Level 1 — Gasha (Free)       : everyday starter content
+//   Level 2 — Shimagile (Paid)   : full expert unlock — everything
 
 const PACK_CATALOGUE = [
   {
@@ -14,7 +18,7 @@ const PACK_CATALOGUE = [
     nameGeez:    'ጋሻ',
     nameLatin:   'Gasha',
     nameEn:      'Gasha',
-    tierLabel:   'Level 1',
+    tierLabel:   'Starter',
     icon:        '🟢',
     accentColor: '#43a047',
 
@@ -29,79 +33,29 @@ const PACK_CATALOGUE = [
     proverbProfile: '68 proverbs · easy to follow',
   },
   {
-    // ── LEVEL 2 ───────────────────────────────────────────────
-    slug:          'qola',
-    tier:          'intermediate',
-    sequenceOrder: 2,
-
-    nameGeez:    'ቁልዓ',
-    nameLatin:   "Qol'a",
-    nameEn:      "Qol'a",
-    tierLabel:   'Level 2',
-    icon:        '🔵',
-    accentColor: '#1e88e5',
-
-    description:  "The Baby. You know the basics — weddings, family & cultural vocab.",
-    wordCount:    9,
-    proverbCount: 15,
-
-    priceGbp:          1.99,
-    isFree:            false,
-    soldIndividually:  false,   // bundled into mayim-pass — not sold alone
-    bundleSlug:        'mayim-pass',
-
-    wordProfile:    "+9 words · weddings, family & kinship",
-    proverbProfile: "+15 proverbs · cultural references",
-  },
-  {
-    // ── LEVEL 3 ───────────────────────────────────────────────
-    slug:          'gobez',
-    tier:          'advanced',
-    sequenceOrder: 3,
-
-    nameGeez:    'ጎበዝ',
-    nameLatin:   'Gobez',
-    nameEn:      'Gobez',
-    tierLabel:   'Level 3',
-    icon:        '🟣',
-    accentColor: '#8e24aa',
-
-    description:  "The Cool Youth. You navigate a wedding and homeland vocab — but deep proverbs still trip you up.",
-    wordCount:    9,
-    proverbCount: 10,
-
-    priceGbp:         4.99,
-    isFree:           false,
-    soldIndividually: false,
-    bundleSlug:       'mayim-pass',
-
-    wordProfile:    '+9 words · geography & homeland',
-    proverbProfile: '+10 proverbs · idioms & deeper meaning',
-  },
-  {
-    // ── LEVEL 4 ───────────────────────────────────────────────
+    // ── LEVEL 2 (Full Unlock) ─────────────────────────────────
     slug:          'shimagile',
     tier:          'expert',
-    sequenceOrder: 4,
+    sequenceOrder: 2,
 
     nameGeez:    'ሽማግለ',
     nameLatin:   'Shimagile',
     nameEn:      'Shimagile',
-    tierLabel:   'Level 4',
+    tierLabel:   'Expert',
     icon:        '🟠',
     accentColor: '#f4511e',
 
-    description:  "The Village Elder. You are officially the person everyone asks. Advanced vocab, rare proverbs & cultural wisdom.",
-    wordCount:    5,
-    proverbCount: 11,
+    description:  "The Village Elder. You are the person everyone asks — full vocab, all proverbs & cultural wisdom.",
+    wordCount:    58,
+    proverbCount: 104,
 
     priceGbp:         9.99,
     isFree:           false,
     soldIndividually: false,
     bundleSlug:       'mayim-pass',
 
-    wordProfile:    '+5 words · rare & advanced vocab',
-    proverbProfile: '+11 proverbs · advanced metaphors & wisdom',
+    wordProfile:    'Full word pack · all levels unlocked',
+    proverbProfile: 'Full proverb pack · advanced wisdom',
   },
 ];
 
@@ -117,10 +71,10 @@ const GAME_PASS_CATALOGUE = [
     nameLatin:   'Mayim Pass',
     icon:        '🔴',
     accentColor: '#e53935',
-    description: "Unlock every tier for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez & Shimagile.",
+    description: "Unlock the full Shimagile tier for MAYIM (word guessing) and MISLA (proverbs) — every word & proverb unlocked.",
     priceGbp:    6.99,
-    // Buying this cascades: qola + gobez + shimagile
-    cascadeSlugs: ['qola', 'gobez', 'shimagile'],
+    // Buying this cascades: shimagile (includes all content)
+    cascadeSlugs: ['shimagile'],
   },
   {
     slug:        'hito-pass',
@@ -156,6 +110,6 @@ const GAME_PASS_CATALOGUE = [
     accentColor: '#ffd600',
     description: 'All 4 games, every tier, forever. The best value — one purchase, nothing locked.',
     priceGbp:    12.99,
-    cascadeSlugs: ['qola', 'gobez', 'shimagile'], // + hito-pass + hinqle-pass handled in webhook
+    cascadeSlugs: ['shimagile'], // + hito-pass + hinqle-pass handled in webhook
   },
 ];

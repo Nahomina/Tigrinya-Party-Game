@@ -73,14 +73,14 @@ Deno.serve(async (req) => {
   });
   if (insertErr) return err('Failed to grant: ' + insertErr.message, 500);
 
-  // ── Cascade: granting higher tier also grants lower paid tiers ──
+  // ── Cascade: granting shimagile is the full unlock (no sub-tiers any more) ──
   const CASCADE: Record<string, string[]> = {
-    shimagile:    ['qola', 'gobez'],
-    gobez:        ['qola'],
+    shimagile:    [],
+    // legacy slugs kept for admin backwards-compat
+    gobez:        [],
     qola:         [],
-    // legacy slug names for safety
-    expert:       ['qola', 'gobez'],
-    advanced:     ['qola'],
+    expert:       [],
+    advanced:     [],
     intermediate: [],
   };
   const slugsToGrant = CASCADE[pack_slug] ?? [];

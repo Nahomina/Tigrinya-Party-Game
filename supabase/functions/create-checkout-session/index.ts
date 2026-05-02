@@ -6,18 +6,20 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
-// ── Price ID map ───────────────────────────────────────────────────────────
+// ── Subscription (recurring monthly) Price IDs ──────────────────────────────
 const PRICE_IDS: Record<string, string> = {
-  // ── Legacy per-tier packs ────────────────────────────────────────────────
-  qola:      Deno.env.get('STRIPE_PRICE_QOLA')      ?? 'price_1TNLrDFP5Lu45Y0rsGi5Kc5p',
-  gobez:     Deno.env.get('STRIPE_PRICE_GOBEZ')     ?? 'price_1TNLs6FP5Lu45Y0rJmxwQrua',
-  shimagile: Deno.env.get('STRIPE_PRICE_SHIMAGILE') ?? 'price_1TNLsdFP5Lu45Y0rQcimAvV4',
+  // ── Full-tier unlock (subscription) ─────────────────────────────────────
+  shimagile:     Deno.env.get('STRIPE_PRICE_SHIMAGILE_SUB') ?? 'price_1TSPueFP5Lu45Y0r7kyicaCg',
 
-  // ── Game Passes ──────────────────────────────────────────────────────────
-  'mayim-pass':  Deno.env.get('STRIPE_PRICE_MAYIM_PASS')  ?? 'price_1TQAE2FP5Lu45Y0rQQRvEdBk',
-  'hito-pass':   Deno.env.get('STRIPE_PRICE_HITO_PASS')   ?? 'price_1TQAF6FP5Lu45Y0rHhQu5XoK',
-  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS') ?? 'price_1TQAG9FP5Lu45Y0rU75wxdWQ',
-  'all-games':   Deno.env.get('STRIPE_PRICE_ALL_GAMES')   ?? 'price_1TQAHPFP5Lu45Y0r3EjRKeO5',
+  // ── Game Pass subscriptions ──────────────────────────────────────────────
+  'mayim-pass':  Deno.env.get('STRIPE_PRICE_MAYIM_PASS_SUB')  ?? 'price_1TSPufFP5Lu45Y0rpKOQPpR0',
+  'hito-pass':   Deno.env.get('STRIPE_PRICE_HITO_PASS_SUB')   ?? 'price_1TSPufFP5Lu45Y0rKshjm40r',
+  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS_SUB') ?? 'price_1TQAG9FP5Lu45Y0rU75wxdWQ',
+  'all-games':   Deno.env.get('STRIPE_PRICE_ALL_GAMES_SUB')   ?? 'price_1TSPufFP5Lu45Y0r71lCUM84',
+
+  // ── Legacy one-time slugs (kept so old links don't break) ────────────────
+  qola:          Deno.env.get('STRIPE_PRICE_MAYIM_PASS_SUB')  ?? 'price_1TSPufFP5Lu45Y0rpKOQPpR0',
+  gobez:         Deno.env.get('STRIPE_PRICE_MAYIM_PASS_SUB')  ?? 'price_1TSPufFP5Lu45Y0rpKOQPpR0',
 };
 
 const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://habeshagame.com';
@@ -28,9 +30,9 @@ const RETURN_PAGE: Record<string, string> = {
   'hito-pass':   'heto.html',
   'hinqle-pass': 'riddles.html',
   'all-games':   'index.html',
+  shimagile:     'game.html',
   qola:          'game.html',
   gobez:         'game.html',
-  shimagile:     'game.html',
 };
 
 const CORS = {
@@ -65,13 +67,17 @@ Deno.serve(async (req) => {
 
   const returnPage = RETURN_PAGE[pack_slug] ?? 'index.html';
 
-  // ── Create Stripe Checkout Session ────────────────────────────────────────
+  // ── Create Stripe Checkout Session (subscription mode) ────────────────────
   const session = await stripe.checkout.sessions.create({
-    mode:       'payment',
+    mode:       'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
     client_reference_id: user.id,
     metadata:   { pack_slug, user_id: user.id },
     customer_email: user.email,
+    // Pass user_id through subscription metadata so the webhook can read it
+    subscription_data: {
+      metadata: { pack_slug, user_id: user.id },
+    },
     success_url: `${SITE_URL}/${returnPage}?payment=success&slug=${pack_slug}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:  `${SITE_URL}/${returnPage}?payment=cancelled`,
     billing_address_collection: 'auto',

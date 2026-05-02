@@ -3538,6 +3538,30 @@ details[open] > .faq-q::after {
   opacity: .8;
 }
 
+/* ── Teams tier badge ────────────────────────────────────── */
+.teams-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+  vertical-align: middle;
+  margin-left: 6px;
+  background: rgba(255,255,255,.07);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  transition: background .2s, color .2s, border-color .2s;
+}
+.teams-tier-badge[data-tier="expert"] {
+  background: rgba(244,81,30,.12);
+  color: #f4511e;
+  border-color: rgba(244,81,30,.3);
+}
+
 /* ── App Toast ───────────────────────────────────────────── */
 .app-toast {
   position: fixed;
