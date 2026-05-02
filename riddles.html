@@ -418,6 +418,11 @@
 </head>
 <body class="game-body">
 
+  <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+    <span class="theme-icon-dark">☀</span>
+    <span class="theme-icon-light">☾</span>
+  </button>
+
   <div id="update-banner" role="status">
     <span>NEW VERSION AVAILABLE</span>
     <button id="btn-update-reload">RELOAD</button>
@@ -496,7 +501,7 @@
               </div>
             </div>
             <div class="tier-option-right" id="tier-qola-right">
-              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99/mo</button>
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 Unlock</button>
             </div>
           </label>
 
@@ -510,7 +515,7 @@
               </div>
             </div>
             <div class="tier-option-right" id="tier-gobez-right">
-              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99/mo</button>
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 Unlock</button>
             </div>
           </label>
 
@@ -524,7 +529,7 @@
               </div>
             </div>
             <div class="tier-option-right" id="tier-shimagile-right">
-              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 £4.99/mo</button>
+              <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hinqle-pass')">🔒 Unlock</button>
             </div>
           </label>
 
@@ -835,7 +840,7 @@
 
     const { data: { session } } = await _sb.auth.getSession();
     if (!session) {
-      showToast('Please sign in first to purchase a game pass.', 'error');
+      window.location.href = 'index.html?openAuth=login';
       return;
     }
     try {
@@ -1293,6 +1298,31 @@
     }
     return a;
   }
+
+  // ── Theme ─────────────────────────────────────────────────
+  (function setupTheme() {
+    const THEME_KEY = 'mayim_theme';
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      document.body.setAttribute('data-theme', theme);
+      document.documentElement.style.colorScheme = theme;
+    }
+    // Apply saved preference, fall back to OS preference
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'light' || saved === 'dark') {
+      applyTheme(saved);
+    } else if (window.matchMedia?.('(prefers-color-scheme: light)').matches) {
+      applyTheme('light');
+    } else {
+      applyTheme('dark');
+    }
+    // Wire toggle button
+    document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      localStorage.setItem(THEME_KEY, next);
+      applyTheme(next);
+    });
+  })();
 
   // ── Init ──────────────────────────────────────────────────
   boot();

@@ -121,6 +121,12 @@
 </head>
 <body class="home-body">
 
+  <!-- Theme toggle: fixed position, outside home-wrap so flex layout can't interfere -->
+  <button id="btn-theme-toggle" aria-label="Toggle light/dark mode" title="Toggle theme">
+    <span class="theme-icon-dark">☀</span>
+    <span class="theme-icon-light">☾</span>
+  </button>
+
   <div class="home-wrap">
 
     <!-- ── Above-fold hero — fills full viewport ── -->
@@ -670,6 +676,21 @@
     // ── Google Sign-In Buttons ──
     document.getElementById('btn-google-login')?.addEventListener('click', handleGoogleSignIn);
     document.getElementById('btn-google-signup')?.addEventListener('click', handleGoogleSignIn);
+
+    // ── Theme toggle (app.js wireEvents exits early on index.html, wire here) ──
+    document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
+
+    // ── Handle ?openAuth=login redirect from game pages ──
+    // Game pages (heto.html, riddles.html) redirect here when an unauthenticated
+    // user clicks an Unlock button. Open the auth modal automatically.
+    const _openAuthParam = new URLSearchParams(window.location.search).get('openAuth');
+    if (_openAuthParam === 'login' || _openAuthParam === 'signup') {
+      // Wait for app.js initAuth() to settle before opening the modal
+      setTimeout(() => {
+        openAuthModal(_openAuthParam);
+        window.history.replaceState({}, '', window.location.pathname);
+      }, 150);
+    }
   </script>
 
   <div id="app-toast" class="app-toast hidden" role="status" aria-live="polite"></div>

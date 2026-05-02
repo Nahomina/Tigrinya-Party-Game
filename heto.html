@@ -195,7 +195,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-qola-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 Unlock</button>
           </div>
         </label>
 
@@ -209,7 +209,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-gobez-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 Unlock</button>
           </div>
         </label>
 
@@ -223,7 +223,7 @@
             </div>
           </div>
           <div class="tier-option-right" id="hito-tier-shimagile-right">
-            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 £4.99/mo</button>
+            <button class="tier-unlock-btn" type="button" onclick="startPaymentFlow('hito-pass')">🔒 Unlock</button>
           </div>
         </label>
 
@@ -756,7 +756,7 @@ async function startPaymentFlow(slug) {
 
   const { data: { session } } = await _supabase.auth.getSession();
   if (!session) {
-    showToast('Please sign in first to purchase a game pass.', 'error');
+    window.location.href = 'index.html?openAuth=login';
     return;
   }
   try {
