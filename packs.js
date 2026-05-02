@@ -99,8 +99,8 @@ const PACK_CATALOGUE = [
 ];
 
 // ── Game Pass Catalogue ──────────────────────────────────────────────────────
-// One pass unlocks ALL paid tiers for a single game. Better value than buying
-// individual packs. All-games bundle covers every game forever.
+// Monthly recurring subscriptions. One pass unlocks ALL paid tiers for a single game.
+// All-games bundle covers every game for a single monthly price.
 const GAME_PASS_CATALOGUE = [
   {
     slug:        'mayim-pass',
@@ -111,7 +111,7 @@ const GAME_PASS_CATALOGUE = [
     icon:        '🔴',
     accentColor: '#e53935',
     description: "Monthly subscription. Unlock all difficulty tiers for MAYIM (word guessing) and MISLA (proverbs) — Qol'a, Gobez, and Shimagile.",
-    priceGbp:    4.99,
+    priceGbp:    2.99,
     // Buying this cascades: qola, gobez, shimagile (includes all premium tiers)
     cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
@@ -124,7 +124,7 @@ const GAME_PASS_CATALOGUE = [
     icon:        '🟠',
     accentColor: '#f4511e',
     description: "Monthly subscription. Unlock all difficulty tiers for HITO trivia — Qol'a, Gobez, and Shimagile.",
-    priceGbp:    4.99,
+    priceGbp:    1.99,
     cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
   {
@@ -136,19 +136,19 @@ const GAME_PASS_CATALOGUE = [
     icon:        '🟢',
     accentColor: '#00897b',
     description: "Monthly subscription. Unlock all difficulty tiers for Hinqle Hinqilitey — Qol'a, Gobez, and Shimagile.",
-    priceGbp:    4.99,
+    priceGbp:    1.99,
     cascadeSlugs: ['qola', 'gobez', 'shimagile'],
   },
   {
     slug:        'all-games',
     game:        'all',
-    nameEn:      'All Games — Forever',
+    nameEn:      'All Games',
     nameGeez:    'ኩሉ ጸወታ',
     nameLatin:   'All Games',
     icon:        '⭐',
     accentColor: '#ffd600',
-    description: 'Monthly subscription. All 4 games, every tier. Unlimited play — the best value.',
-    priceGbp:    12.99,
+    description: 'Monthly subscription. All 4 games, every tier. The best value — one price, nothing locked.',
+    priceGbp:    4.99,
     cascadeSlugs: ['qola', 'gobez', 'shimagile'], // + hito-pass + hinqle-pass handled in webhook
   },
 ];
