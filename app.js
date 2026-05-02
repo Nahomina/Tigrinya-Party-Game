@@ -2005,7 +2005,7 @@ function openUnlockModal(slug) {
   const errEl     = document.getElementById('unlock-error');
 
   if (nameEl)    nameEl.textContent    = pack ? `${pack.nameGeez} · ${pack.nameEn}` : slug;
-  if (priceEl)   priceEl.textContent   = pack ? `£${pack.priceGbp.toFixed(2)} · one-time` : '';
+  if (priceEl)   priceEl.textContent   = pack ? `£${pack.priceGbp.toFixed(2)}/mo · monthly subscription` : '';
   if (profileEl) profileEl.textContent = pack ? pack.wordProfile : '';
   if (errEl)     errEl.classList.add('hidden');
 
@@ -2101,8 +2101,8 @@ function renderPackCards() {
     const chips = document.createElement('div');
     chips.className = 'pass-card-chips';
     const chipData = isAllGames
-      ? ['All 4 games', 'Every tier', 'One-time payment']
-      : ['One game', 'All tiers', 'One-time payment'];
+      ? ['All 4 games', 'Every tier', 'Monthly · Recurring']
+      : ['One game', 'All tiers', 'Monthly · Recurring'];
     chipData.forEach(label => {
       const chip = document.createElement('span');
       chip.className = 'pass-chip';
