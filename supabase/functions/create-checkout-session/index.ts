@@ -14,7 +14,7 @@ const PRICE_IDS: Record<string, string> = {
   // ── Game Pass subscriptions ──────────────────────────────────────────────
   'mayim-pass':  Deno.env.get('STRIPE_PRICE_MAYIM_PASS_SUB')  ?? 'price_1TSPufFP5Lu45Y0rpKOQPpR0',
   'hito-pass':   Deno.env.get('STRIPE_PRICE_HITO_PASS_SUB')   ?? 'price_1TSPufFP5Lu45Y0rKshjm40r',
-  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS_SUB') ?? 'price_1TQAG9FP5Lu45Y0rU75wxdWQ',
+  'hinqle-pass': Deno.env.get('STRIPE_PRICE_HINQLE_PASS_SUB') ?? 'price_1TSWZZFP5Lu45Y0rTlS42B9L',
   'all-games':   Deno.env.get('STRIPE_PRICE_ALL_GAMES_SUB')   ?? 'price_1TSPufFP5Lu45Y0r71lCUM84',
 
   // ── Legacy one-time slugs (kept so old links don't break) ────────────────
