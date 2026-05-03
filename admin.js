@@ -413,11 +413,7 @@ function filterProverbs() {
 let allGrants = [];
 
 async function loadAllGrants() {
-  const { data, error } = await _sb
-    .from('user_pack_unlocks')
-    .select('id, user_id, pack_id, payment_method, unlocked_at')
-    .eq('payment_method', 'manual')
-    .order('unlocked_at', { ascending: false });
+  const { data, error } = await _sb.rpc('get_manual_grants');
   if (error) { console.warn('Could not load grants:', error.message); return; }
   allGrants = data || [];
   renderGrantsTable();
@@ -490,7 +486,7 @@ function renderGrantsTable() {
     const date = new Date(g.unlocked_at).toLocaleDateString();
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${escHtml(g.user_id)}</td>
+      <td>${escHtml(g.email || g.user_id)}</td>
       <td><span class="badge badge--grey">${icon} ${escHtml(name)}</span></td>
       <td>${date}</td>
       <td><button class="btn btn-sm btn-danger" data-id="${g.id}" data-action="revoke">Revoke</button></td>`;
