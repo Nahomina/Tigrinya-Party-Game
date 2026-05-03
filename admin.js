@@ -676,7 +676,7 @@ function openEditHetoModal(id) {
 
   // Populate options
   if (q.options && Array.isArray(q.options)) {
-    ['A', 'B', 'C', 'D'].forEach((label, idx) => {
+    ['a', 'b', 'c', 'd'].forEach((label, idx) => {
       const opt = q.options[idx];
       if (opt) {
         document.getElementById(`edit-heto-option-${label}`).value = opt.text || '';
@@ -827,8 +827,7 @@ function openEditRiddleModal(id) {
   document.getElementById('edit-riddle-answer').value         = r.answer;
   document.getElementById('edit-riddle-answer-latin').value   = r.answer_latin;
   document.getElementById('edit-riddle-hint').value           = r.hint || '';
-  document.getElementById('edit-riddle-category').value   = r.category;
-  document.getElementById('edit-riddle-difficulty').value = r.difficulty;
+  document.getElementById('edit-riddle-category').value = r.category;
   setTimeout(() => {
     const packEl = document.getElementById('edit-riddle-pack');
     if (packEl) packEl.value = r.pack_id || '';
