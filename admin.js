@@ -112,10 +112,12 @@ async function loadPacks() {
 }
 
 function populatePackSelects() {
-  // Tier selects (words, proverbs, filters)
+  // Tier selects (words, proverbs, heto, riddles, filters)
   const tierSelects = [
     'input-pack', 'edit-word-pack',
     'input-proverb-pack', 'edit-proverb-pack',
+    'input-heto-pack', 'edit-heto-pack',
+    'input-riddle-pack', 'edit-riddle-pack',
     'filter-tier', 'filter-proverb-tier',
   ];
 
@@ -335,10 +337,16 @@ async function deleteProverb(id) {
 }
 
 function updateProverbStats() {
-  document.getElementById('stat-proverbs-total').textContent  = allProverbs.length;
-  document.getElementById('stat-proverbs-easy').textContent   = allProverbs.filter(p => p.difficulty === 'easy').length;
-  document.getElementById('stat-proverbs-medium').textContent = allProverbs.filter(p => p.difficulty === 'medium').length;
-  document.getElementById('stat-proverbs-hard').textContent   = allProverbs.filter(p => p.difficulty === 'hard').length;
+  document.getElementById('stat-proverbs-total').textContent = allProverbs.length;
+  const slugMap = { gasha: 0, qola: 0, gobez: 0, shimagile: 0 };
+  allProverbs.forEach(p => {
+    const pack = allPacks.find(pk => pk.id === p.pack_id);
+    if (pack && slugMap.hasOwnProperty(pack.slug)) slugMap[pack.slug]++;
+  });
+  document.getElementById('stat-proverbs-gasha').textContent     = slugMap.gasha;
+  document.getElementById('stat-proverbs-qola').textContent      = slugMap.qola;
+  document.getElementById('stat-proverbs-gobez').textContent     = slugMap.gobez;
+  document.getElementById('stat-proverbs-shimagile').textContent = slugMap.shimagile;
 }
 
 function renderProverbsTable(proverbs) {
@@ -514,6 +522,7 @@ async function createHeto() {
   const explanation = document.getElementById('input-heto-explanation').value.trim();
   const category = document.getElementById('input-heto-category').value;
   const difficulty = document.getElementById('input-heto-difficulty').value;
+  const pack_id = document.getElementById('input-heto-pack').value || null;
   // Get selected correct answer
   const correct = document.querySelector('input[name="heto-correct"]:checked')?.value;
 
@@ -528,8 +537,8 @@ async function createHeto() {
   const optionD_latin = document.getElementById('input-heto-option-d-latin').value.trim();
 
   // Validate
-  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category) {
-    showToast('❌ Please fill in all required fields', 'error');
+  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category || !difficulty || !pack_id) {
+    showToast('❌ Please fill in all required fields including Tier', 'error');
     return;
   }
 
@@ -557,6 +566,7 @@ async function createHeto() {
     explanation: explanation || null,
     category,
     difficulty,
+    pack_id,
   }]);
 
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
@@ -571,6 +581,7 @@ async function updateHeto(id) {
   const explanation = document.getElementById('edit-heto-explanation').value.trim();
   const category = document.getElementById('edit-heto-category').value;
   const difficulty = document.getElementById('edit-heto-difficulty').value;
+  const pack_id = document.getElementById('edit-heto-pack').value || null;
   const correct = document.querySelector('input[name="edit-heto-correct"]:checked')?.value;
 
   const optionA = document.getElementById('edit-heto-option-a').value.trim();
@@ -602,6 +613,7 @@ async function updateHeto(id) {
     explanation: explanation || null,
     category,
     difficulty,
+    pack_id,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
 
@@ -620,10 +632,16 @@ async function deleteHeto(id) {
 }
 
 function updateHetoStats() {
-  document.getElementById('stat-heto-total').textContent  = allHeto.length;
-  document.getElementById('stat-heto-easy').textContent   = allHeto.filter(q => q.difficulty === 'easy').length;
-  document.getElementById('stat-heto-medium').textContent = allHeto.filter(q => q.difficulty === 'medium').length;
-  document.getElementById('stat-heto-hard').textContent   = allHeto.filter(q => q.difficulty === 'hard').length;
+  document.getElementById('stat-heto-total').textContent = allHeto.length;
+  const slugMap = { gasha: 0, qola: 0, gobez: 0, shimagile: 0 };
+  allHeto.forEach(q => {
+    const pack = allPacks.find(pk => pk.id === q.pack_id);
+    if (pack && slugMap.hasOwnProperty(pack.slug)) slugMap[pack.slug]++;
+  });
+  document.getElementById('stat-heto-gasha').textContent     = slugMap.gasha;
+  document.getElementById('stat-heto-qola').textContent      = slugMap.qola;
+  document.getElementById('stat-heto-gobez').textContent     = slugMap.gobez;
+  document.getElementById('stat-heto-shimagile').textContent = slugMap.shimagile;
 }
 
 function renderHetoTable(questions) {
@@ -682,9 +700,13 @@ function openEditHetoModal(id) {
   document.querySelector(`input[name="edit-heto-correct"][value="${q.correct_option}"]`).checked = true;
 
   document.getElementById('edit-heto-explanation').value = q.explanation || '';
-  document.getElementById('edit-heto-category').value = q.category;
+  document.getElementById('edit-heto-category').value   = q.category;
   document.getElementById('edit-heto-difficulty').value = q.difficulty;
-  document.getElementById('edit-heto-pack').value = q.pack_id || '';
+  // Set pack after select is populated
+  setTimeout(() => {
+    const packEl = document.getElementById('edit-heto-pack');
+    if (packEl) packEl.value = q.pack_id || '';
+  }, 0);
 
   openModal('edit-heto-modal');
 }
@@ -725,13 +747,14 @@ async function createRiddle() {
   const hint           = document.getElementById('input-riddle-hint').value.trim() || null;
   const category       = document.getElementById('input-riddle-category').value;
   const difficulty     = document.getElementById('input-riddle-difficulty').value;
+  const pack_id        = document.getElementById('input-riddle-pack').value || null;
 
-  if (!question || !question_latin || !answer || !answer_latin || !category || !difficulty) {
-    showToast('Fill in all required fields', 'error'); return;
+  if (!question || !question_latin || !answer || !answer_latin || !category || !difficulty || !pack_id) {
+    showToast('❌ Fill in all required fields including Tier', 'error'); return;
   }
 
   const { error } = await _sb.from('riddles').insert([{
-    question, question_latin, answer, answer_latin, hint, category, difficulty
+    question, question_latin, answer, answer_latin, hint, category, difficulty, pack_id
   }]);
 
   if (error) { showToast('Error adding riddle: ' + error.message, 'error'); return; }
@@ -748,9 +771,10 @@ async function updateRiddle(id) {
   const hint           = document.getElementById('edit-riddle-hint').value.trim() || null;
   const category       = document.getElementById('edit-riddle-category').value;
   const difficulty     = document.getElementById('edit-riddle-difficulty').value;
+  const pack_id        = document.getElementById('edit-riddle-pack').value || null;
 
   const { error } = await _sb.from('riddles').update({
-    question, question_latin, answer, answer_latin, hint, category, difficulty
+    question, question_latin, answer, answer_latin, hint, category, difficulty, pack_id
   }).eq('id', id);
 
   if (error) { showToast('Error updating riddle: ' + error.message, 'error'); return; }
@@ -767,10 +791,16 @@ async function deleteRiddle(id) {
 }
 
 function updateRiddlesStats() {
-  document.getElementById('stat-riddles-total').textContent  = allRiddles.length;
-  document.getElementById('stat-riddles-easy').textContent   = allRiddles.filter(r => r.difficulty === 'easy').length;
-  document.getElementById('stat-riddles-medium').textContent = allRiddles.filter(r => r.difficulty === 'medium').length;
-  document.getElementById('stat-riddles-hard').textContent   = allRiddles.filter(r => r.difficulty === 'hard').length;
+  document.getElementById('stat-riddles-total').textContent = allRiddles.length;
+  const slugMap = { gasha: 0, qola: 0, gobez: 0, shimagile: 0 };
+  allRiddles.forEach(r => {
+    const pack = allPacks.find(pk => pk.id === r.pack_id);
+    if (pack && slugMap.hasOwnProperty(pack.slug)) slugMap[pack.slug]++;
+  });
+  document.getElementById('stat-riddles-gasha').textContent     = slugMap.gasha;
+  document.getElementById('stat-riddles-qola').textContent      = slugMap.qola;
+  document.getElementById('stat-riddles-gobez').textContent     = slugMap.gobez;
+  document.getElementById('stat-riddles-shimagile').textContent = slugMap.shimagile;
 }
 
 function renderRiddlesTable(riddles) {
@@ -813,8 +843,12 @@ function openEditRiddleModal(id) {
   document.getElementById('edit-riddle-answer').value         = r.answer;
   document.getElementById('edit-riddle-answer-latin').value   = r.answer_latin;
   document.getElementById('edit-riddle-hint').value           = r.hint || '';
-  document.getElementById('edit-riddle-category').value       = r.category;
-  document.getElementById('edit-riddle-difficulty').value     = r.difficulty;
+  document.getElementById('edit-riddle-category').value   = r.category;
+  document.getElementById('edit-riddle-difficulty').value = r.difficulty;
+  setTimeout(() => {
+    const packEl = document.getElementById('edit-riddle-pack');
+    if (packEl) packEl.value = r.pack_id || '';
+  }, 0);
   openModal('edit-riddle-modal');
 }
 

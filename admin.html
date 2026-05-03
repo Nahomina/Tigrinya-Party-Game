@@ -123,10 +123,11 @@
 
         <!-- Stats -->
         <div class="admin-stats">
-          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-proverbs-total" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Easy</span><span id="stat-proverbs-easy" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Medium</span><span id="stat-proverbs-medium" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Hard</span><span id="stat-proverbs-hard" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Total Proverbs</span><span id="stat-proverbs-total" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--green"><span class="stat-label">🟢 Gasha</span><span id="stat-proverbs-gasha" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Qol'a</span><span id="stat-proverbs-qola" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Gobez</span><span id="stat-proverbs-gobez" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--orange"><span class="stat-label">🟠 Shimagile</span><span id="stat-proverbs-shimagile" class="stat-value">0</span></div>
         </div>
 
         <!-- Add Proverb Form -->
@@ -187,10 +188,11 @@
 
         <!-- Stats -->
         <div class="admin-stats">
-          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-heto-total" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Easy</span><span id="stat-heto-easy" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Medium</span><span id="stat-heto-medium" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Hard</span><span id="stat-heto-hard" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Total Questions</span><span id="stat-heto-total" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--green"><span class="stat-label">🟢 Gasha</span><span id="stat-heto-gasha" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Qol'a</span><span id="stat-heto-qola" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Gobez</span><span id="stat-heto-gobez" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--orange"><span class="stat-label">🟠 Shimagile</span><span id="stat-heto-shimagile" class="stat-value">0</span></div>
         </div>
 
         <!-- Add Question Form -->
@@ -249,6 +251,11 @@
               <option value="expert">Expert</option>
             </select>
 
+            <select id="input-heto-pack" required>
+              <option value="">Tier</option>
+              <!-- Populated by JS -->
+            </select>
+
             <button type="submit" class="btn btn-success">Add Question</button>
           </form>
         </div>
@@ -296,10 +303,11 @@
 
         <!-- Stats -->
         <div class="admin-stats">
-          <div class="stat-card"><span class="stat-label">Total</span><span id="stat-riddles-total" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Easy</span><span id="stat-riddles-easy" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Medium</span><span id="stat-riddles-medium" class="stat-value">0</span></div>
-          <div class="stat-card"><span class="stat-label">Hard</span><span id="stat-riddles-hard" class="stat-value">0</span></div>
+          <div class="stat-card"><span class="stat-label">Total Riddles</span><span id="stat-riddles-total" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--green"><span class="stat-label">🟢 Gasha</span><span id="stat-riddles-gasha" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--blue"><span class="stat-label">🔵 Qol'a</span><span id="stat-riddles-qola" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--purple"><span class="stat-label">🟣 Gobez</span><span id="stat-riddles-gobez" class="stat-value">0</span></div>
+          <div class="stat-card stat-card--orange"><span class="stat-label">🟠 Shimagile</span><span id="stat-riddles-shimagile" class="stat-value">0</span></div>
         </div>
 
         <!-- Add Riddle Form -->
@@ -326,6 +334,10 @@
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
               <option value="expert">Expert</option>
+            </select>
+            <select id="input-riddle-pack" required>
+              <option value="">Tier</option>
+              <!-- Populated by JS -->
             </select>
             <button type="submit" class="btn btn-success">Add Riddle</button>
           </form>
@@ -506,6 +518,8 @@
           <option value="expert">Expert</option>
         </select>
 
+        <select id="edit-heto-pack" required><!-- Populated by JS --></select>
+
         <div class="modal-actions">
           <button type="button" id="btn-cancel-edit-heto" class="btn btn-secondary">Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
@@ -539,6 +553,7 @@
           <option value="hard">Hard</option>
           <option value="expert">Expert</option>
         </select>
+        <select id="edit-riddle-pack" required><!-- Populated by JS --></select>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-edit-riddle" class="btn btn-secondary">Cancel</button>
           <button type="submit" class="btn btn-primary">Save</button>
@@ -564,6 +579,6 @@
 
   <script src="supabase.min.js"></script>
   <script src="packs.js?v=8"></script>
-  <script src="admin.js?v=11"></script>
+  <script src="admin.js?v=12"></script>
 </body>
 </html>
