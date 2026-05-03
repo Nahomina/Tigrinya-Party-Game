@@ -1684,7 +1684,8 @@ function storePack(slug, words, proverbs) {
 }
 
 function isPackUnlocked(slug) {
-  if (slug === 'gasha') return true;
+  if (slug === 'gasha') return true;            // free tier always accessible
+  if (!_currentUser) return false;              // must be logged in for any premium tier
   return !!getUnlockedPacks()[slug];
 }
 
@@ -1707,6 +1708,10 @@ function getActiveTierPacks() {
 }
 
 function getMergedWords() {
+  // No active session → serve only free (gasha) content regardless of localStorage.
+  // Prevents offline/logged-out access to premium words.
+  if (!_currentUser) return [...gameWords];
+
   const unlocked   = getUnlockedPacks();
   const activeTier = getActiveTierSlug();
 
@@ -1753,6 +1758,11 @@ const TIER_DIFFICULTIES = {
 };
 
 function getMergedProverbs() {
+  // No active session → serve only free (gasha) proverbs regardless of localStorage.
+  if (!_currentUser) {
+    return Array.isArray(gameProverbs) ? [...gameProverbs] : [];
+  }
+
   const unlocked     = getUnlockedPacks();
   const activeTier   = getActiveTierSlug();
   const allowedDiffs = TIER_DIFFICULTIES[activeTier] || ['easy', 'medium', 'hard'];
@@ -2756,7 +2766,12 @@ async function handleLogout() {
       await _supabase.auth.signOut();
     }
     _currentUser = null;
+    // Wipe all locally-cached pack content so premium words/proverbs
+    // are not accessible after logout (prevents free riding after sharing credentials).
+    try { localStorage.removeItem(PACK_STORE_KEY); } catch(_) {}
     updateAuthUI(false);
+    renderPackCards();      // re-render pack cards to show locked state
+    renderTierSelector();   // re-render tier selector so only gasha is available
   } catch (err) {
     reportError(err, { action: 'logout' });
   }
