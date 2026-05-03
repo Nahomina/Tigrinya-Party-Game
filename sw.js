@@ -4,7 +4,7 @@
 // Supabase API:  network-first with cache fallback
 // Fonts:         cache-first  (immutable)
 
-const CACHE_VERSION      = 'mayim-v37';
+const CACHE_VERSION      = 'mayim-v38';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 // Assets to precache on install (bare URLs — no version query strings here)
