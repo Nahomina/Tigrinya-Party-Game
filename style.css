@@ -472,7 +472,8 @@ button {
 .setup-hero {
   /* Part of normal flow — scrolls with the page */
   flex-shrink: 0;
-  padding: 1.25rem 2rem 1rem;
+  /* top padding clears the fixed topbar (44px) + safe-area inset on notched iPhones */
+  padding: max(1.25rem, calc(env(safe-area-inset-top) + 0.5rem)) 2rem 1rem;
   border-bottom: 2px solid var(--text);
   text-align: center;
   background: var(--bg);
@@ -1659,7 +1660,8 @@ body.flash-skip    { animation: flash-skip 0.22s ease; }
   align-items: center;
   justify-content: center;
   gap: 2rem;
-  padding: 2.5rem 1.25rem 2rem;
+  /* top padding must clear the fixed topbar (44px button + safe-area inset on notched iPhones) */
+  padding: max(4rem, calc(env(safe-area-inset-top) + 3.5rem)) 1.25rem 2rem;
   box-sizing: border-box;
 }
 

@@ -111,6 +111,14 @@ async function loadPacks() {
   populatePackSelects();
 }
 
+// Derive difficulty from pack slug so the game's tier filter always works.
+// Tier selector in admin sets pack_id; difficulty must stay in sync.
+function difficultyFromPackId(pack_id) {
+  const pack = allPacks.find(p => p.id === pack_id);
+  const slugMap = { gasha: 'easy', qola: 'medium', gobez: 'hard', shimagile: 'expert' };
+  return slugMap[pack?.slug] || 'medium';
+}
+
 function populatePackSelects() {
   // Tier selects (words, proverbs, heto, riddles, filters)
   const tierSelects = [
@@ -549,6 +557,7 @@ async function createHeto() {
     { label: 'D', text: optionD, latin: optionD_latin },
   ];
 
+  const difficulty = difficultyFromPackId(pack_id);
   const { error } = await _sb.from('heto_questions').insert([{
     question,
     question_latin,
@@ -557,6 +566,7 @@ async function createHeto() {
     explanation: explanation || null,
     category,
     pack_id,
+    difficulty,
   }]);
 
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
@@ -594,6 +604,7 @@ async function updateHeto(id) {
     { label: 'D', text: optionD, latin: optionD_latin },
   ];
 
+  const difficulty = difficultyFromPackId(pack_id);
   const { error } = await _sb.from('heto_questions').update({
     question,
     question_latin,
@@ -602,6 +613,7 @@ async function updateHeto(id) {
     explanation: explanation || null,
     category,
     pack_id,
+    difficulty,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
 
@@ -738,8 +750,9 @@ async function createRiddle() {
     showToast('❌ Fill in all required fields including Tier', 'error'); return;
   }
 
+  const difficulty = difficultyFromPackId(pack_id);
   const { error } = await _sb.from('riddles').insert([{
-    question, question_latin, answer, answer_latin, hint, category, pack_id
+    question, question_latin, answer, answer_latin, hint, category, pack_id, difficulty
   }]);
 
   if (error) { showToast('Error adding riddle: ' + error.message, 'error'); return; }
@@ -757,8 +770,9 @@ async function updateRiddle(id) {
   const category       = document.getElementById('edit-riddle-category').value;
   const pack_id        = document.getElementById('edit-riddle-pack').value || null;
 
+  const difficulty = difficultyFromPackId(pack_id);
   const { error } = await _sb.from('riddles').update({
-    question, question_latin, answer, answer_latin, hint, category, pack_id
+    question, question_latin, answer, answer_latin, hint, category, pack_id, difficulty
   }).eq('id', id);
 
   if (error) { showToast('Error updating riddle: ' + error.message, 'error'); return; }
