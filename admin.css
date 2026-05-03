@@ -399,6 +399,8 @@ body {
   max-width: 500px;
   width: 90%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h3 {
