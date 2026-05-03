@@ -304,7 +304,7 @@ async function loadAllProverbs() {
   updateProverbStats();
 }
 
-async function createProverb(tigrinya, latin, english, difficulty, pack_id) {
+async function createProverb(tigrinya, latin, english, pack_id) {
   // Prevent duplicates — check in-memory list before hitting DB
   const isDup = allProverbs.some(p =>
     p.tigrinya.trim().toLowerCase() === tigrinya.trim().toLowerCase() && p.pack_id === pack_id
@@ -313,7 +313,7 @@ async function createProverb(tigrinya, latin, english, difficulty, pack_id) {
     showToast('❌ This proverb already exists in this pack', 'error');
     return;
   }
-  const { error } = await _sb.from('proverbs').insert([{ tigrinya, latin, english, difficulty, pack_id }]);
+  const { error } = await _sb.from('proverbs').insert([{ tigrinya, latin, english, pack_id }]);
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
   showToast(`✓ Added proverb`, 'success');
   document.getElementById('form-add-proverb').reset();
@@ -368,7 +368,6 @@ function renderProverbsTable(proverbs) {
       <td lang="ti" class="proverb-cell">${escHtml(p.tigrinya)}</td>
       <td class="proverb-cell">${escHtml(p.latin)}</td>
       <td class="proverb-cell">${escHtml(p.english)}</td>
-      <td><span class="badge badge--${diffColor}">${p.difficulty}</span></td>
       <td><span class="badge badge--${tierColor}">${packName(p.pack_id)}</span></td>
       <td>
         <div class="action-btns">
@@ -388,24 +387,21 @@ function renderProverbsTable(proverbs) {
 function openEditProverbModal(id) {
   const p = allProverbs.find(x => x.id === id);
   if (!p) return;
-  document.getElementById('edit-proverb-id').value         = p.id;
-  document.getElementById('edit-proverb-tigrinya').value   = p.tigrinya;
-  document.getElementById('edit-proverb-latin').value      = p.latin;
-  document.getElementById('edit-proverb-english').value    = p.english;
-  document.getElementById('edit-proverb-difficulty').value = p.difficulty;
-  document.getElementById('edit-proverb-pack').value       = p.pack_id || '';
+  document.getElementById('edit-proverb-id').value       = p.id;
+  document.getElementById('edit-proverb-tigrinya').value = p.tigrinya;
+  document.getElementById('edit-proverb-latin').value    = p.latin;
+  document.getElementById('edit-proverb-english').value  = p.english;
+  document.getElementById('edit-proverb-pack').value     = p.pack_id || '';
   openModal('edit-proverb-modal');
 }
 
 function filterProverbs() {
-  const search     = document.getElementById('search-proverbs').value.toLowerCase();
-  const difficulty = document.getElementById('filter-proverb-difficulty').value;
-  const tierSlug   = document.getElementById('filter-proverb-tier').value;
+  const search   = document.getElementById('search-proverbs').value.toLowerCase();
+  const tierSlug = document.getElementById('filter-proverb-tier').value;
 
   let list = allProverbs;
-  if (search)     list = list.filter(p =>
+  if (search) list = list.filter(p =>
     p.tigrinya.toLowerCase().includes(search) || p.english.toLowerCase().includes(search));
-  if (difficulty) list = list.filter(p => p.difficulty === difficulty);
   if (tierSlug) {
     const pack = allPacks.find(p => p.slug === tierSlug);
     if (pack) list = list.filter(p => p.pack_id === pack.id);
@@ -521,7 +517,6 @@ async function createHeto() {
   const question_latin = document.getElementById('input-heto-question-latin').value.trim();
   const explanation = document.getElementById('input-heto-explanation').value.trim();
   const category = document.getElementById('input-heto-category').value;
-  const difficulty = document.getElementById('input-heto-difficulty').value;
   const pack_id = document.getElementById('input-heto-pack').value || null;
   // Get selected correct answer
   const correct = document.querySelector('input[name="heto-correct"]:checked')?.value;
@@ -537,7 +532,7 @@ async function createHeto() {
   const optionD_latin = document.getElementById('input-heto-option-d-latin').value.trim();
 
   // Validate
-  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category || !difficulty || !pack_id) {
+  if (!question || !question_latin || !optionA || !optionB || !optionC || !optionD || !correct || !category || !pack_id) {
     showToast('❌ Please fill in all required fields including Tier', 'error');
     return;
   }
@@ -565,7 +560,6 @@ async function createHeto() {
     correct_option: correct,
     explanation: explanation || null,
     category,
-    difficulty,
     pack_id,
   }]);
 
@@ -580,7 +574,6 @@ async function updateHeto(id) {
   const question_latin = document.getElementById('edit-heto-question-latin').value.trim();
   const explanation = document.getElementById('edit-heto-explanation').value.trim();
   const category = document.getElementById('edit-heto-category').value;
-  const difficulty = document.getElementById('edit-heto-difficulty').value;
   const pack_id = document.getElementById('edit-heto-pack').value || null;
   const correct = document.querySelector('input[name="edit-heto-correct"]:checked')?.value;
 
@@ -612,7 +605,6 @@ async function updateHeto(id) {
     correct_option: correct,
     explanation: explanation || null,
     category,
-    difficulty,
     pack_id,
     updated_at: new Date().toISOString(),
   }).eq('id', id);
@@ -655,13 +647,14 @@ function renderHetoTable(questions) {
 
   questions.forEach(q => {
     const tr = document.createElement('tr');
-    const diffColor = { easy: 'green', medium: 'blue', hard: 'orange' }[q.difficulty] || 'grey';
+    const pack = allPacks.find(pk => pk.id === q.pack_id);
+    const tierColor = pack ? { starter:'green', intermediate:'blue', advanced:'purple', expert:'orange' }[pack.tier_label] : 'grey';
 
     tr.innerHTML = `
       <td lang="ti" class="question-cell">${escHtml(q.question.substring(0, 50))}</td>
       <td><strong>${q.correct_option}</strong></td>
       <td><span class="badge badge--grey">${escHtml(q.category)}</span></td>
-      <td><span class="badge badge--${diffColor}">${q.difficulty}</span></td>
+      <td><span class="badge badge--${tierColor}">${packName(q.pack_id)}</span></td>
       <td>
         <div class="action-btns">
           <button class="btn btn-sm btn-primary" data-id="${q.id}" data-action="edit-heto">Edit</button>
@@ -701,7 +694,6 @@ function openEditHetoModal(id) {
 
   document.getElementById('edit-heto-explanation').value = q.explanation || '';
   document.getElementById('edit-heto-category').value   = q.category;
-  document.getElementById('edit-heto-difficulty').value = q.difficulty;
   // Set pack after select is populated
   setTimeout(() => {
     const packEl = document.getElementById('edit-heto-pack');
@@ -712,9 +704,8 @@ function openEditHetoModal(id) {
 }
 
 function filterHeto() {
-  const search = document.getElementById('search-heto').value.toLowerCase();
+  const search   = document.getElementById('search-heto').value.toLowerCase();
   const category = document.getElementById('filter-heto-category').value;
-  const difficulty = document.getElementById('filter-heto-difficulty').value;
 
   let list = allHeto;
   if (search) {
@@ -725,7 +716,6 @@ function filterHeto() {
     );
   }
   if (category) list = list.filter(q => q.category === category);
-  if (difficulty) list = list.filter(q => q.difficulty === difficulty);
 
   renderHetoTable(list);
 }
@@ -746,15 +736,14 @@ async function createRiddle() {
   const answer_latin   = document.getElementById('input-riddle-answer-latin').value.trim();
   const hint           = document.getElementById('input-riddle-hint').value.trim() || null;
   const category       = document.getElementById('input-riddle-category').value;
-  const difficulty     = document.getElementById('input-riddle-difficulty').value;
   const pack_id        = document.getElementById('input-riddle-pack').value || null;
 
-  if (!question || !question_latin || !answer || !answer_latin || !category || !difficulty || !pack_id) {
+  if (!question || !question_latin || !answer || !answer_latin || !category || !pack_id) {
     showToast('❌ Fill in all required fields including Tier', 'error'); return;
   }
 
   const { error } = await _sb.from('riddles').insert([{
-    question, question_latin, answer, answer_latin, hint, category, difficulty, pack_id
+    question, question_latin, answer, answer_latin, hint, category, pack_id
   }]);
 
   if (error) { showToast('Error adding riddle: ' + error.message, 'error'); return; }
@@ -770,11 +759,10 @@ async function updateRiddle(id) {
   const answer_latin   = document.getElementById('edit-riddle-answer-latin').value.trim();
   const hint           = document.getElementById('edit-riddle-hint').value.trim() || null;
   const category       = document.getElementById('edit-riddle-category').value;
-  const difficulty     = document.getElementById('edit-riddle-difficulty').value;
   const pack_id        = document.getElementById('edit-riddle-pack').value || null;
 
   const { error } = await _sb.from('riddles').update({
-    question, question_latin, answer, answer_latin, hint, category, difficulty, pack_id
+    question, question_latin, answer, answer_latin, hint, category, pack_id
   }).eq('id', id);
 
   if (error) { showToast('Error updating riddle: ' + error.message, 'error'); return; }
@@ -818,7 +806,7 @@ function renderRiddlesTable(riddles) {
       <td><span lang="ti">${escHtml(r.question)}</span><br><small style="color:var(--muted)">${escHtml(r.question_latin)}</small></td>
       <td><span lang="ti">${escHtml(r.answer)}</span><br><small style="color:var(--muted)">${escHtml(r.answer_latin)}</small></td>
       <td>${escHtml(r.category)}</td>
-      <td><span class="badge badge-${r.difficulty}">${r.difficulty}</span></td>
+      <td><span class="badge badge--${(() => { const pk = allPacks.find(p => p.id === r.pack_id); return pk ? { starter:'green', intermediate:'blue', advanced:'purple', expert:'orange' }[pk.tier_label] : 'grey'; })()}">${packName(r.pack_id)}</span></td>
       <td>
         <div class="action-btns">
           <button class="btn btn-sm btn-primary" data-id="${r.id}" data-action="edit-riddle">Edit</button>
@@ -853,17 +841,15 @@ function openEditRiddleModal(id) {
 }
 
 function filterRiddles() {
-  const search     = document.getElementById('search-riddles').value.toLowerCase();
-  const category   = document.getElementById('filter-riddle-category').value;
-  const difficulty = document.getElementById('filter-riddle-difficulty').value;
+  const search   = document.getElementById('search-riddles').value.toLowerCase();
+  const category = document.getElementById('filter-riddle-category').value;
 
   let list = allRiddles;
-  if (search)     list = list.filter(r =>
+  if (search)   list = list.filter(r =>
     r.question.toLowerCase().includes(search) ||
     r.question_latin.toLowerCase().includes(search) ||
     r.answer.toLowerCase().includes(search));
-  if (category)   list = list.filter(r => r.category   === category);
-  if (difficulty) list = list.filter(r => r.difficulty === difficulty);
+  if (category) list = list.filter(r => r.category === category);
 
   renderRiddlesTable(list);
 }
@@ -961,7 +947,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('input-proverb-tigrinya').value.trim(),
       document.getElementById('input-proverb-latin').value.trim(),
       document.getElementById('input-proverb-english').value.trim(),
-      document.getElementById('input-proverb-difficulty').value,
       document.getElementById('input-proverb-pack').value,
     );
   });
@@ -970,11 +955,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('form-edit-proverb').addEventListener('submit', e => {
     e.preventDefault();
     updateProverb(document.getElementById('edit-proverb-id').value, {
-      tigrinya:   document.getElementById('edit-proverb-tigrinya').value.trim(),
-      latin:      document.getElementById('edit-proverb-latin').value.trim(),
-      english:    document.getElementById('edit-proverb-english').value.trim(),
-      difficulty: document.getElementById('edit-proverb-difficulty').value,
-      pack_id:    document.getElementById('edit-proverb-pack').value,
+      tigrinya: document.getElementById('edit-proverb-tigrinya').value.trim(),
+      latin:    document.getElementById('edit-proverb-latin').value.trim(),
+      english:  document.getElementById('edit-proverb-english').value.trim(),
+      pack_id:  document.getElementById('edit-proverb-pack').value,
     });
   });
   document.getElementById('btn-cancel-edit-proverb').addEventListener('click', () => closeModal('edit-proverb-modal'));
@@ -995,7 +979,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Proverb filters
   document.getElementById('search-proverbs').addEventListener('input', filterProverbs);
-  document.getElementById('filter-proverb-difficulty').addEventListener('change', filterProverbs);
   document.getElementById('filter-proverb-tier').addEventListener('change', filterProverbs);
 
   // ── Add heto question
@@ -1014,7 +997,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Heto filters
   document.getElementById('search-heto').addEventListener('input', filterHeto);
   document.getElementById('filter-heto-category').addEventListener('change', filterHeto);
-  document.getElementById('filter-heto-difficulty').addEventListener('change', filterHeto);
 
   // ── Add riddle
   document.getElementById('form-add-riddle').addEventListener('submit', e => {
@@ -1032,7 +1014,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Riddle filters
   document.getElementById('search-riddles').addEventListener('input', filterRiddles);
   document.getElementById('filter-riddle-category').addEventListener('change', filterRiddles);
-  document.getElementById('filter-riddle-difficulty').addEventListener('change', filterRiddles);
 
   // ── Grant access form
   document.getElementById('form-grant')?.addEventListener('submit', e => {

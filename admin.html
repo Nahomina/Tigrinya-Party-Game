@@ -137,12 +137,6 @@
             <input type="text" id="input-proverb-tigrinya" placeholder="Tigrinya (Ge'ez script)" required lang="ti" />
             <input type="text" id="input-proverb-latin"    placeholder="Romanization (Latin)" required />
             <input type="text" id="input-proverb-english"  placeholder="English meaning" required />
-            <select id="input-proverb-difficulty" required>
-              <option value="">Difficulty</option>
-              <option value="easy">Easy (2–4 words)</option>
-              <option value="medium">Medium (4–7 words)</option>
-              <option value="hard">Hard (8+ words)</option>
-            </select>
             <select id="input-proverb-pack" required>
               <option value="">Tier</option>
               <!-- Populated by JS -->
@@ -156,12 +150,6 @@
           <h2>📋 All Proverbs</h2>
           <div class="filter-controls">
             <input type="text" id="search-proverbs" placeholder="Search Tigrinya or English…" class="search-input" />
-            <select id="filter-proverb-difficulty" class="filter-select">
-              <option value="">All Difficulties</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
             <select id="filter-proverb-tier" class="filter-select">
               <option value="">All Tiers</option>
               <!-- Populated by JS -->
@@ -172,7 +160,7 @@
               <thead>
                 <tr>
                   <th>Tigrinya</th><th>Latin</th><th>English</th>
-                  <th>Difficulty</th><th>Tier</th><th>Actions</th>
+                  <th>Tier</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="proverbs-tbody"></tbody>
@@ -243,14 +231,6 @@
               <option value="Sports">⚽ Sports</option>
             </select>
 
-            <select id="input-heto-difficulty" required>
-              <option value="">Difficulty</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-              <option value="expert">Expert</option>
-            </select>
-
             <select id="input-heto-pack" required>
               <option value="">Tier</option>
               <!-- Populated by JS -->
@@ -275,19 +255,12 @@
               <option value="General">🧠 General Knowledge</option>
               <option value="Sports">⚽ Sports</option>
             </select>
-            <select id="filter-heto-difficulty" class="filter-select">
-              <option value="">All Difficulties</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-              <option value="expert">Expert</option>
-            </select>
           </div>
           <div class="table-wrap">
             <table id="heto-table" class="admin-table">
               <thead>
                 <tr>
-                  <th>Question (Tigrinya)</th><th>Correct</th><th>Category</th><th>Difficulty</th><th>Actions</th>
+                  <th>Question (Tigrinya)</th><th>Correct</th><th>Category</th><th>Tier</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="heto-tbody"></tbody>
@@ -328,13 +301,6 @@
               <option value="Animals">🐾 Animals</option>
               <option value="Food">🍲 Food</option>
             </select>
-            <select id="input-riddle-difficulty" required>
-              <option value="">Difficulty</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-              <option value="expert">Expert</option>
-            </select>
             <select id="input-riddle-pack" required>
               <option value="">Tier</option>
               <!-- Populated by JS -->
@@ -357,19 +323,12 @@
               <option value="Animals">Animals</option>
               <option value="Food">Food</option>
             </select>
-            <select id="filter-riddle-difficulty" class="filter-select">
-              <option value="">All Difficulties</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-              <option value="expert">Expert</option>
-            </select>
           </div>
           <div class="table-wrap">
             <table id="riddles-table" class="admin-table">
               <thead>
                 <tr>
-                  <th>Question</th><th>Answer</th><th>Category</th><th>Difficulty</th><th>Actions</th>
+                  <th>Question</th><th>Answer</th><th>Category</th><th>Tier</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody id="riddles-tbody"></tbody>
@@ -448,11 +407,6 @@
         <input type="text" id="edit-proverb-tigrinya" placeholder="Tigrinya (Ge'ez)" required lang="ti" />
         <input type="text" id="edit-proverb-latin"    placeholder="Romanization (Latin)" required />
         <input type="text" id="edit-proverb-english"  placeholder="English meaning" required />
-        <select id="edit-proverb-difficulty" required>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
         <select id="edit-proverb-pack" required><!-- Populated by JS --></select>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-edit-proverb" class="btn btn-secondary">Cancel</button>
@@ -511,13 +465,6 @@
           <option value="Sports">Sports</option>
         </select>
 
-        <select id="edit-heto-difficulty" required>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-          <option value="expert">Expert</option>
-        </select>
-
         <select id="edit-heto-pack" required><!-- Populated by JS --></select>
 
         <div class="modal-actions">
@@ -547,12 +494,6 @@
           <option value="Animals">Animals</option>
           <option value="Food">Food</option>
         </select>
-        <select id="edit-riddle-difficulty" required>
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-          <option value="expert">Expert</option>
-        </select>
         <select id="edit-riddle-pack" required><!-- Populated by JS --></select>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-edit-riddle" class="btn btn-secondary">Cancel</button>
@@ -579,6 +520,6 @@
 
   <script src="supabase.min.js"></script>
   <script src="packs.js?v=8"></script>
-  <script src="admin.js?v=12"></script>
+  <script src="admin.js?v=13"></script>
 </body>
 </html>
