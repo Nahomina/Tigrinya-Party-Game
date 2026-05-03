@@ -448,7 +448,7 @@ async function grantPackAccess(email, packSlug) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'Grant failed');
 
-    succEl.textContent = `✓ ${json.message}`;
+    succEl.textContent = json.message;
     succEl.classList.remove('hidden');
     document.getElementById('form-grant').reset();
     await loadAllGrants();
