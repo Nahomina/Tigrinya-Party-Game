@@ -1002,6 +1002,10 @@
     applyRiddlesTierUI(access);
   }
 
+  // Sync chosenDiff with the HTML-checked radio on page load
+  const checkedTier = document.querySelector('input[name="riddle-tier"]:checked');
+  if (checkedTier) chosenDiff = checkedTier.value;
+
   document.querySelectorAll('input[name="riddle-tier"]').forEach(radio => {
     radio.addEventListener('change', () => {
       chosenDiff = radio.value;
@@ -1054,21 +1058,34 @@
 
     const avail = poolRiddles.length;
     const msg   = document.getElementById('avail-msg');
-    const needed = totalCount();
 
     if (avail === 0) {
       msg.textContent = '⚠ No riddles for this tier. Choose another.';
       msg.style.color = '#e53935';
       document.getElementById('btn-start').disabled = true;
-    } else if (avail < needed) {
-      msg.textContent = '⚠ Only ' + avail + ' riddles available — reduce rounds or riddles per round.';
-      msg.style.color = '#e65100';
-      document.getElementById('btn-start').disabled = true;
-    } else {
-      msg.textContent = avail + ' riddle' + (avail === 1 ? '' : 's') + ' available';
-      msg.style.color = 'var(--text-muted)';
-      document.getElementById('btn-start').disabled = false;
+      updateHints();
+      return;
     }
+
+    // Auto-cap perRound so total never exceeds available — no manual adjustment needed
+    const needed = totalCount();
+    if (avail < needed) {
+      const maxPer = Math.floor(avail / numRounds);
+      if (maxPer >= 1) {
+        perRound = maxPer;
+        document.getElementById('val-count').textContent = perRound;
+      } else {
+        // Even 1 riddle per round × numRounds is too many — reduce rounds too
+        numRounds = Math.min(avail, numRounds);
+        perRound  = 1;
+        document.getElementById('val-rounds').textContent = numRounds;
+        document.getElementById('val-count').textContent  = perRound;
+      }
+    }
+
+    msg.textContent = avail + ' riddle' + (avail === 1 ? '' : 's') + ' available';
+    msg.style.color = 'var(--text-muted)';
+    document.getElementById('btn-start').disabled = false;
     updateHints();
   }
 

@@ -1,10 +1,11 @@
-// Mayim Service Worker — v35
+// Mayim Service Worker — v36
 // HTML pages:    network-first  (always fresh)
+// Admin files:   network-first  (always fresh — never serve stale admin code)
 // JS/CSS assets: stale-while-revalidate  (fast + always up-to-date)
 // Supabase API:  network-first with cache fallback
 // Fonts:         cache-first  (immutable)
 
-const CACHE_VERSION      = 'mayim-v39';
+const CACHE_VERSION      = 'mayim-v40';
 const SUPABASE_API_CACHE = 'mayim-supabase-v1';
 
 // Assets to precache on install (bare URLs — no version query strings here)
@@ -82,9 +83,25 @@ self.addEventListener('fetch', event => {
 
   const url      = new URL(event.request.url);
   const isHtml   = url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname === '';
+  const isAdmin  = url.pathname.startsWith('/admin');  // admin.html + admin.js — always fresh
   const isSbApi  = url.hostname.includes('supabase.co');
   const isCdn    = url.hostname.includes('jsdelivr.net') || url.hostname.includes('fonts.gstatic.com') || url.hostname.includes('fonts.googleapis.com');
   const isFont   = url.pathname.endsWith('.woff2') || url.pathname.endsWith('.woff') || url.pathname.endsWith('.ttf');
+
+  // ── Admin files: always network-first — never serve stale admin code ─────
+  if (isAdmin) {
+    event.respondWith(
+      fetch(event.request)
+        .then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE_VERSION).then(c => c.put(event.request, res.clone())).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   // ── HTML + Supabase API: network-first, cache fallback ───────────────────
   if (isHtml || isSbApi) {
